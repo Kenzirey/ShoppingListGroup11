@@ -43,5 +43,5 @@ app.*.map.json
 /android/app/release
 
 .vscode/
-
+pubspec.lock
 /windows
