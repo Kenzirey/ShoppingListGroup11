@@ -23,13 +23,6 @@ class MyApp extends StatelessWidget {
           surface: Colors.black87,
           background: Colors.grey[900],
         ),
-
-        bottomNavigationBarTheme: BottomNavigationBarThemeData(
-          backgroundColor: Colors.black54,
-          selectedItemColor: Colors.amber[800],
-          unselectedItemColor: Colors.white70,
-        ),
-
       ),
       home: const HomeScreen(),
     );
