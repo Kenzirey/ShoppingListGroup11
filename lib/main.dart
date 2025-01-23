@@ -1,20 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:shopping_list_g11/src/screen/homeScreen.dart';
 
-import 'src/app.dart';
-import 'src/settings/settings_controller.dart';
-import 'src/settings/settings_service.dart';
+void main() {
+  runApp(const MyApp());
+}
 
-void main() async {
-  // Set up the SettingsController, which will glue user settings to multiple
-  // Flutter Widgets.
-  final settingsController = SettingsController(SettingsService());
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
-  // Load the user's preferred theme while the splash screen is displayed.
-  // This prevents a sudden theme change when the app is first displayed.
-  await settingsController.loadSettings();
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Shopping List',
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: Colors.grey[900],
 
-  // Run the app and pass in the SettingsController. The app listens to the
-  // SettingsController for changes, then passes it further down to the
-  // SettingsView.
-  runApp(MyApp(settingsController: settingsController));
+        colorScheme: ColorScheme.dark(
+          primary: Colors.red,
+          secondary: Colors.amber,
+          tertiary: Colors.white,
+          surface: Colors.black87,
+          background: Colors.grey[900],
+        ),
+
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
+          backgroundColor: Colors.black54,
+          selectedItemColor: Colors.amber[800],
+          unselectedItemColor: Colors.white70,
+        ),
+
+      ),
+      home: const HomeScreen(),
+    );
+  }
 }
