@@ -1,5 +1,10 @@
 # shopping_list_g11
 
+## Required packages
+flutter pub add go_router
+
+# Remove gitignore for the pubspec.lock when we deliver project. Only keep ignored during development!
+
 A new Flutter project.
 
 ## Getting Started

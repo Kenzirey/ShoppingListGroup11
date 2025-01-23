@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shopping_list_g11/src/widget/my_drawer.dart';
+import 'package:go_router/go_router.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,6 +16,15 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _selectedIndex = index;
     });
+
+    // Keeps track of the BottomNav tab's index. Though need to tweak this.
+    if (index == 0) {
+      context.goNamed('list'); // To-Buy?
+    } else if (index == 1) {
+      context.goNamed('home');
+    } else if (index == 2) {
+      context.goNamed('shoppingList');
+    }
   }
 
   @override
@@ -29,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-             Text(
+            Text(
               'Home',
               style: TextStyle(
                 fontSize: 24,
@@ -58,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
               margin: const EdgeInsets.only(bottom: 8.0),
               padding: const EdgeInsets.symmetric(vertical: 16.0),
               decoration: BoxDecoration(
-                color:Theme.of(context).colorScheme.primary,
+                color: Theme.of(context).colorScheme.primary,
                 borderRadius: BorderRadius.circular(8.0),
               ),
               child: Center(
@@ -111,6 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
       /// TODO: Refactor this to a separate widget
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor:Theme.of(context).colorScheme.surface,
+        currentIndex: _selectedIndex,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.list),
@@ -125,9 +136,6 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Shopping List',
           ),
         ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Theme.of(context).colorScheme.secondary,
-        unselectedItemColor: Theme.of(context).colorScheme.tertiary,
         onTap: _onItemTapped,
       ),
     );
