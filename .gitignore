@@ -44,4 +44,4 @@ app.*.map.json
 
 .vscode/
 
-windows
+/windows
