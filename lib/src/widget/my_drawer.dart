@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 /// Drawer widget for the app.
 class MyDrawer extends StatelessWidget {
@@ -15,17 +16,27 @@ class MyDrawer extends StatelessWidget {
             const SizedBox(height: 40),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                children: [
-                  Icon(Icons.account_circle, color: Theme.of(context).colorScheme.tertiary,
-                      size: 36),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Log in or sign up',
-                    style: TextStyle(color: Theme.of(context).colorScheme.tertiary,
-                        fontSize: 16),
-                  ),
-                ],
+              child: InkWell(
+                onTap: () {
+                  context.goNamed('loginPage'); // GoRoute to login page.
+                },
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.account_circle,
+                      color: Theme.of(context).colorScheme.tertiary,
+                      size: 36,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Log in or sign up',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.tertiary,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 

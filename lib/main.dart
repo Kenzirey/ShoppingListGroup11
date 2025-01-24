@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.grey[900],
         colorScheme: ColorScheme.dark(
           primary: Colors.red,
-          secondary: Colors.amber,
+          secondary: const Color(0xFFEBFF00), // Solwr fargen
           tertiary: Colors.white,
           surface: Colors.black87,
           background: Colors.grey[900],

@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:shopping_list_g11/src/screen/login.dart';
 import '../src/screen/homeScreen.dart';
 import '../src/screen/shopping_list.dart';
 
@@ -20,6 +21,11 @@ class AppRouter {
         path: '/shopping-list',
         name: 'shoppingList',
         builder: (context, state) => const ShoppingList(),
+      ),
+      GoRoute(
+        path: '/login',
+        name: 'loginPage',
+        builder: (context, state) => const LoginScreen(),
       ),
       // TODO: Set up screen and route for the To-Buy list screen. 
     ],
