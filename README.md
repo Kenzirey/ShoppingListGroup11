@@ -2,6 +2,7 @@
 
 ## Required packages
 flutter pub add go_router
+flutter pub add flutter_riverpod
 
 # Remove gitignore for the pubspec.lock when we deliver project. Only keep ignored during development!
 

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:shopping_list_g11/routes/routes.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+
 
 void main() {
-  runApp(const MyApp());
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -13,6 +16,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'Shopping List',
       theme: ThemeData(
+        textTheme: GoogleFonts.robotoTextTheme(),
         brightness: Brightness.dark,
         scaffoldBackgroundColor: Colors.grey[900],
         colorScheme: ColorScheme.dark(
