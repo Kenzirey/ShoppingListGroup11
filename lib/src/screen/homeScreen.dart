@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shopping_list_g11/src/widget/my_drawer.dart';
+import 'package:shopping_list_g11/src/widget/bottom_nav_bar.dart';
 import 'package:go_router/go_router.dart';
 
+/// Home screen for the app.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -118,25 +120,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
 
       /// Bottom Navigation Bar
-      /// TODO: Refactor this to a separate widget
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor:Theme.of(context).colorScheme.surface,
-        currentIndex: _selectedIndex,
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list),
-            label: 'List',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
-            label: 'Shopping List',
-          ),
-        ],
-        onTap: _onItemTapped,
+      bottomNavigationBar: BottomNavBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
       ),
     );
   }
