@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shopping_list_g11/controllers/auth_controller.dart';
+
+
 
 /// Login entry point for the application.
 /// Allows user to register & login via email, google or apple.
@@ -163,8 +167,31 @@ class _LoginState extends ConsumerState<LoginScreen> {
 
             // Login Button (without logic)
             ElevatedButton(
-              onPressed: () {
-                // logic
+              onPressed: () async {
+                final email = _emailController.text.trim();
+                final password = _passwordController.text.trim();
+
+                if (email.isEmpty || password.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please fill in all fields')),
+                  );
+                  return;
+                }
+
+                try {
+                  final authController = AuthController();
+                  await authController.login(email, password);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Login Successful')),
+                  );
+
+                  // Navigate to the home screen after successful login
+                  context.go('/'); // GoRouter navigation
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Login failed: $e')),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 foregroundColor: theme.colorScheme.onPrimary,
