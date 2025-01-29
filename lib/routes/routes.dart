@@ -4,9 +4,11 @@ import 'package:shopping_list_g11/src/screen/home_screen.dart';
 import 'package:shopping_list_g11/src/screen/login.dart';
 import 'package:shopping_list_g11/src/screen/to_buy.dart';
 import 'package:shopping_list_g11/src/screen/shopping_list.dart';
+import 'package:shopping_list_g11/src/screen/signup_screen.dart';
 import 'package:shopping_list_g11/src/widget/bottom_nav_bar.dart';
 import 'package:shopping_list_g11/src/widget/my_drawer.dart';
 import 'package:shopping_list_g11/src/widget/top_bar.dart';
+
 
 class AppRouter {
   static final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -61,6 +63,11 @@ class AppRouter {
             path: '/login',
             name: 'loginPage',
             builder: (context, state) => const LoginScreen(),
+          ),
+          GoRoute(
+            path: '/sign-up',
+            name: 'signUp',
+            builder: (context, state) => const SignUpScreen(),
           ),
         ],
       ),
