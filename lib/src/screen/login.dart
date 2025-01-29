@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shopping_list_g11/controllers/auth_controller.dart';
-
-
+import 'package:flutter/gestures.dart';
 
 /// Login entry point for the application.
 /// Allows user to register & login via email, google or apple.
@@ -31,195 +30,205 @@ class _LoginState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context); // Access our theme so it can be manipulated.
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0), // Added "margins" on sides, work in progress.
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Align(
-              alignment: Alignment.centerLeft, // Align text to left, more dyslexic friendly?
-              child: Text(
-                "Log In",
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Log In",
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.tertiary,
+                      ),
+                    ),
+                    const SizedBox(
+                        height:
+                            8), // space between the Login and sign up text
+                    RichText(
+                      text: TextSpan(
+                        text: 'or ',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: theme.colorScheme.tertiary.withOpacity(0.7),
+                        ),
+                        children: [
+                          TextSpan(
+                            text: 'sign up here',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: theme.colorScheme.primary,
+                              decoration: TextDecoration.underline,
+                              fontWeight:
+                                  FontWeight.bold,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                context.go(
+                                    '/sign-up'); // Navigate to sign-up screen (not implemented yet)
+                              },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 22),
+              ElevatedButton(
+                onPressed: () {
+                  // add logic :)
+                },
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  backgroundColor: theme.colorScheme.primary,
+                  minimumSize: const Size.fromHeight(56),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.apple,
+                      color: theme.colorScheme.onPrimary,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    const Text("Apple Login"),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  // add google login logic :)
+                },
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  backgroundColor: theme.colorScheme.primary,
+                  minimumSize: const Size.fromHeight(56),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.g_translate,
+                      color: theme.colorScheme.onPrimary,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 16),
+                    const Text("Google Login"),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 22),
+              Text(
+                "Email",
                 style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
                   color: theme.colorScheme.tertiary,
                 ),
               ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // Apple setup with temporary icon
-            ElevatedButton(
-              onPressed: () {
-                // add logic :)
-              },
-              style: ElevatedButton.styleFrom(
-                foregroundColor: theme.colorScheme.onPrimary,
-                backgroundColor: theme.colorScheme.primary,
-                minimumSize: const Size.fromHeight(56),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.apple,
-                    color: theme.colorScheme.onPrimary,
-                    size: 24,
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  hintText: 'Lisanordmann@hotmail.com',
+                  hintStyle: TextStyle(
+                    color: theme.colorScheme.tertiary.withOpacity(0.6),
+                    fontSize: 16,
                   ),
-                  const SizedBox(width: 16),
-                  const Text("Apple Login"),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Google button, with temporary icon (will be replaced with svg)
-            ElevatedButton(
-              onPressed: () {
-                // add google login logic :)
-              },
-              style: ElevatedButton.styleFrom(
-                foregroundColor: theme.colorScheme.onPrimary,
-                backgroundColor: theme.colorScheme.primary,
-                minimumSize: const Size.fromHeight(56),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.g_translate,
-                    color: theme.colorScheme.onPrimary,
-                    size: 24,
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: theme.colorScheme.tertiary),
                   ),
-                  const SizedBox(width: 16),
-                  const Text("Google Login"),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            // Email field section
-            Text(
-              "Email",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: theme.colorScheme.tertiary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(
-                hintText: 'Lisanordmann@hotmail.com',
-                hintStyle: TextStyle(
-                  color: theme.colorScheme.tertiary.withOpacity(0.6),
-                  fontSize: 16,
+                  border: const OutlineInputBorder(),
+                  floatingLabelBehavior: FloatingLabelBehavior.never,
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: theme.colorScheme.tertiary),
-                ),
-                border: const OutlineInputBorder(),
-                floatingLabelBehavior: FloatingLabelBehavior.never,
-              ),
-              style: TextStyle(color: theme.colorScheme.tertiary),
-            ),
-            const SizedBox(height: 16),
-
-            // Password Field section
-            Text(
-              "Password",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: theme.colorScheme.tertiary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                hintText: '********',
-                hintStyle: TextStyle(
-                  color: theme.colorScheme.tertiary.withOpacity(0.6),
-                  fontSize: 16,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: theme.colorScheme.tertiary),
-                ),
-                border: const OutlineInputBorder(),
-                floatingLabelBehavior: FloatingLabelBehavior.never,
-              ),
-              style: TextStyle(color: theme.colorScheme.tertiary),
-            ),
-            const SizedBox(height: 16),
-
-            // Login Button (without logic)
-            ElevatedButton(
-              onPressed: () async {
-                final email = _emailController.text.trim();
-                final password = _passwordController.text.trim();
-
-                if (email.isEmpty || password.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please fill in all fields')),
-                  );
-                  return;
-                }
-
-                try {
-                  final authController = AuthController();
-                  await authController.login(email, password);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Login Successful')),
-                  );
-
-                  // Navigate to the home screen after successful login
-                  context.go('/'); // GoRouter navigation
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Login failed: $e')),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                foregroundColor: theme.colorScheme.onPrimary,
-                backgroundColor: theme.colorScheme.secondary,
-                minimumSize: const Size.fromHeight(56),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text("Login"),
-            ),
-            const SizedBox(height: 16),
-
-            // Sign Up - temporary placement. Discuss.
-            TextButton(
-              onPressed: () {
-                // Navigate to sign-up screen
-              },
-              child: Text(
-                //TODO: temporary placing, maybe have it under login directly on top? Discuss.
-                "Sign Up",
                 style: TextStyle(color: theme.colorScheme.tertiary),
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              Text(
+                "Password",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: theme.colorScheme.tertiary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  hintText: '********',
+                  hintStyle: TextStyle(
+                    color: theme.colorScheme.tertiary.withOpacity(0.6),
+                    fontSize: 16,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: theme.colorScheme.tertiary),
+                  ),
+                  border: const OutlineInputBorder(),
+                  floatingLabelBehavior: FloatingLabelBehavior.never,
+                ),
+                style: TextStyle(color: theme.colorScheme.tertiary),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () async {
+                  final email = _emailController.text.trim();
+                  final password = _passwordController.text.trim();
+
+                  if (email.isEmpty || password.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Please fill in all fields')),
+                    );
+                    return;
+                  }
+
+                  try {
+                    final authController = AuthController();
+                    await authController.login(email, password);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Login Successful')),
+                    );
+                    context.go('/'); // GoRouter navigation
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Login failed: $e')),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  backgroundColor: theme.colorScheme.secondary,
+                  minimumSize: const Size.fromHeight(56),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text("Login"),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
-

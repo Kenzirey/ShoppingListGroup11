@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shopping_list_g11/src/widget/my_drawer.dart';
-import 'package:shopping_list_g11/src/widget/bottom_nav_bar.dart';
-import 'package:go_router/go_router.dart';
 
 /// Home screen for the app.
+/// Items about to expire is visible, Work in progress.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -12,57 +10,17 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 1;
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
-    // Keeps track of the BottomNav tab's index. Though need to tweak this.
-    if (index == 0) {
-      context.goNamed('list'); // To-Buy?
-    } else if (index == 1) {
-      context.goNamed('home');
-    } else if (index == 2) {
-      context.goNamed('shoppingList');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
-
-      drawer: const MyDrawer(),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Home',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.tertiary,
-              ),
-            ),
-
-            /// Drawer
-            const SizedBox(height: 8),
-            Builder(
-              builder: (BuildContext context) {
-                return IconButton(
-                  icon: Icon(Icons.menu, color: Theme.of(context).colorScheme.tertiary),
-                  onPressed: () {
-                    Scaffold.of(context).openDrawer();
-                  },
-                );
-              },
-            ),
-
             /// Expiring Soon
             const SizedBox(height: 16),
             Container(
@@ -70,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
               margin: const EdgeInsets.only(bottom: 8.0),
               padding: const EdgeInsets.symmetric(vertical: 16.0),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary,
+                color: Theme.of(context).colorScheme.secondary,
                 borderRadius: BorderRadius.circular(8.0),
               ),
               child: Center(
@@ -92,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Center(
                 child: Text(
                   'Item 2',
-                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary,
+                  style: TextStyle(color: Theme.of(context).colorScheme.primary,
                       fontSize: 16),
                 ),
               ),
@@ -117,12 +75,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-      ),
-
-      /// Bottom Navigation Bar
-      bottomNavigationBar: BottomNavBar(
-        selectedIndex: _selectedIndex,
-        onItemTapped: _onItemTapped,
       ),
     );
   }

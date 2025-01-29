@@ -26,16 +26,21 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         textTheme: GoogleFonts.robotoTextTheme(),
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: Colors.grey[900],
-        colorScheme: ColorScheme.dark(
-          primary: Colors.red,
-          secondary: const Color(0xFFEBFF00), // Solwr fargen
-          tertiary: Colors.white,
-          surface: Colors.black87,
-          background: Colors.grey[900],
+        scaffoldBackgroundColor: const Color(0xFF212121),
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFFEBFF00), // Solwr fargen
+          secondary: Colors.red, // Midlertidig
+          tertiary: Color(0xffefefef),
+          surface: Color(0xFF212121), // Night from Solwr design guide.
+          primaryContainer: Color(0xff424242),
         ),
       ),
       routerConfig: AppRouter.router, // Routes similar to vue, logic is in the routes folder.
+          builder: (context, child) {
+        return SafeArea(
+          child: child ?? const SizedBox(),
+        );
+      },
     );
   }
 }
