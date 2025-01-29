@@ -204,7 +204,7 @@ class _LoginState extends ConsumerState<LoginScreen> {
 
                   try {
                     final authController = AuthController();
-                    await authController.login(email, password);
+                    await authController.login(ref, email, password);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Login Successful')),
                     );
