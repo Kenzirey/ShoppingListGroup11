@@ -9,108 +9,245 @@ class ToBuyScreen extends ConsumerStatefulWidget {
 }
 
 class ToBuyState extends ConsumerState<ToBuyScreen> {
-  int? _clickedIndex; // Track which item is being clicked
+  // Track item quantities
+  Map<String, int> itemQuantities = {
+    'Apples': 1,
+    'Bananas': 1,
+    'Carrots': 1,
+    'Eggs': 1,
+    'Milk': 1,
+    'Bread': 1,
+    'Cheese': 1,
+  };
+
+  // Store deleted item details for undo
+  String? lastDeletedItem;
+  int? lastDeletedQuantity;
+  int? lastDeletedIndex;
 
   @override
   Widget build(BuildContext context) {
-    final shoppingItems = [
-      'Apples',
-      'Bananas',
-      'Carrots',
-      'Eggs',
-      'Milk',
-      'Bread',
-      'Cheese',
-    ];
+    final shoppingItems = itemQuantities.keys.toList();
 
     return Scaffold(
-      appBar: AppBar(
-        titleSpacing: 0,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0), // ✅ Matches LoginScreen padding
-          child: Text(
-            'To Buy List',
-            style: TextStyle(
-              fontSize: 24, // ✅ Matches "Log In" title size
-              fontWeight: FontWeight.bold,
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Title and Sort icon
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'To Buy List',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.normal,
+                    color: Theme.of(context).colorScheme.tertiary,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    // TODO: Implement filter toggle logic
+                  },
+                  icon: Icon(
+                    Icons.swap_vert,
+                    color: Theme.of(context).colorScheme.tertiary,
+                  ),
+                ),
+              ],
+            ),
+
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 64.0),
+                child: ListView.builder(
+                  physics: const BouncingScrollPhysics(), // Scrolling
+                  padding: const EdgeInsets.only(
+                      bottom:
+                          120.0), // Permanent space between bottom item list + the FAB.
+                  itemCount: shoppingItems.length,
+                  itemBuilder: (context, index) {
+                    final item = shoppingItems[index];
+
+                    return Dismissible(
+                      key: Key(item),
+                      direction: DismissDirection
+                          .endToStart, // Swipe left to delete, with undo snackbar
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 16),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
+                      onDismissed: (direction) {
+                        setState(() {
+                          lastDeletedItem = item;
+                          lastDeletedQuantity = itemQuantities[item];
+                          lastDeletedIndex = index;
+                          itemQuantities.remove(item);
+                        });
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('$item removed'),
+                            duration: const Duration(seconds: 4),
+                            action: SnackBarAction(
+                              label: 'Undo',
+                              textColor:
+                                  Theme.of(context).colorScheme.secondary,
+                              onPressed: () {
+                                if (lastDeletedItem != null &&
+                                    lastDeletedQuantity != null &&
+                                    lastDeletedIndex != null) {
+                                  setState(() {
+                                    final List<MapEntry<String, int>> entries =
+                                        itemQuantities.entries.toList();
+
+                                    entries.insert(
+                                        lastDeletedIndex!,
+                                        MapEntry(lastDeletedItem!,
+                                            lastDeletedQuantity!));
+
+                                    itemQuantities = Map.fromEntries(entries);
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 14),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            // Grocery Icon & Item Name
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Icon(Icons.local_grocery_store,
+                                      size: 20,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .tertiary),
+                                  const SizedBox(width: 10),
+                                  Flexible(
+                                    child: Text(
+                                      item,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .tertiary,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            // The item quantity selector (where we have + and -)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width: 32,
+                                  child: IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        if (itemQuantities[item]! > 1) {
+                                          itemQuantities[item] =
+                                              itemQuantities[item]! - 1;
+                                        }
+                                      });
+                                    },
+                                    icon: Icon(Icons.remove,
+                                        size: 18,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .tertiary),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 24,
+                                  child: Center(
+                                    child: Text(
+                                      '${itemQuantities[item]}',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .tertiary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 32,
+                                  child: IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        itemQuantities[item] =
+                                            itemQuantities[item]! + 1;
+                                      });
+                                    },
+                                    icon: Icon(Icons.add,
+                                        size: 18,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .tertiary),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+
+      floatingActionButton: Align(
+        alignment: Alignment.bottomRight,
+        child: Transform.translate(
+          offset: const Offset(-20, 0),
+          child: FloatingActionButton(
+            onPressed: () {
+              // TODO: Implement add item logic
+            },
+            backgroundColor: Theme.of(context)
+                .colorScheme
+                .primaryContainer, // Match item background, or change it?
+            shape: const CircleBorder(),
+            child: Icon(
+              Icons.add,
+              size: 24,
               color: Theme.of(context).colorScheme.tertiary,
             ),
           ),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0), // ✅ Matches LoginScreen
-        child: ListView.builder(
-          itemCount: shoppingItems.length,
-          itemBuilder: (context, index) {
-            return Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.local_grocery_store, color: Theme.of(context).colorScheme.tertiary),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          shoppingItems[index],
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                color: Theme.of(context).colorScheme.tertiary,
-                              ),
-                        ),
-                      ),
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 200), // ✅ Smooth animation
-                        decoration: BoxDecoration(
-                          color: _clickedIndex == index
-                              ? Colors.red.withOpacity(0.2) // ✅ Background turns red when clicked
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: InkWell(
-                          onTap: () {
-                            setState(() {
-                              _clickedIndex = index;
-                            });
-
-                            // TODO: Implement delete logic here
-
-                            // Reset after delay for feedback effect
-                            Future.delayed(const Duration(milliseconds: 300), () {
-                              if (mounted) {
-                                setState(() {
-                                  _clickedIndex = null;
-                                });
-                              }
-                            });
-                          },
-                          borderRadius: BorderRadius.circular(8),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Icon(
-                              Icons.delete,
-                              color: _clickedIndex == index
-                                  ? Colors.red // ✅ Icon turns red when clicked
-                                  : Theme.of(context).colorScheme.tertiary, // ✅ Default color
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
-            );
-          },
-        ),
-      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation
+          .endFloat, // keep button anchored to the bottom
     );
   }
 }
