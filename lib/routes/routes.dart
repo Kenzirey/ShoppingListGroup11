@@ -8,6 +8,7 @@ import 'package:shopping_list_g11/src/screen/signup_screen.dart';
 import 'package:shopping_list_g11/src/widget/bottom_nav_bar.dart';
 import 'package:shopping_list_g11/src/widget/my_drawer.dart';
 import 'package:shopping_list_g11/src/widget/top_bar.dart';
+import '../src/screen/scan_receipt_screen.dart';
 
 
 class AppRouter {
@@ -68,6 +69,11 @@ class AppRouter {
             path: '/sign-up',
             name: 'signUp',
             builder: (context, state) => const SignUpScreen(),
+          ),
+          GoRoute(
+            name: 'scanReceipt',
+            path: '/scan-receipt',
+            builder: (context, state) => const ScanReceiptScreen(),
           ),
         ],
       ),
