@@ -81,4 +81,17 @@ class AuthController {
       rethrow;
     }
   }
+
+
+  Future<AppUser> signInWithGoogle(WidgetRef ref) async {
+    try {
+      final user = await _authService.signInWithGoogleNative();
+      ref.read(currentUserProvider.notifier).state = user;
+      print('Google Sign-In: stored ${user.email} in provider');
+      return user;
+    } catch (e) {
+      print('Google Sign-In failed: $e');
+      rethrow;
+    }
+  }
 }

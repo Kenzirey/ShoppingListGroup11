@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/app_user.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 // Handles Supabase communication
 
@@ -130,5 +131,60 @@ class AuthService {
     throw Exception('Error updating profile: $e');
   }
 }
+
+  Future<AppUser> signInWithGoogleNative() async {
+  final GoogleSignIn googleSignIn = GoogleSignIn(
+    clientId: '235387261747-j5fhreodgr19sfb6hb18n4hv9o4u1mui.apps.googleusercontent.com',  // iOS Client ID
+    serverClientId: '235387261747-4j0m8os04p7pdkcg9romdamosko3av1o.apps.googleusercontent.com', // Web Client ID
+    scopes: <String>['email'],
+  );
+
+  final googleUser = await googleSignIn.signIn();
+  if (googleUser == null) {
+    throw Exception('Google Sign-In canceled');
+  }
+
+  final googleAuth = await googleUser.authentication;
+  final idToken = googleAuth.idToken;
+  final accessToken = googleAuth.accessToken;
+
+  if (idToken == null || accessToken == null) {
+    throw Exception('No idToken or accessToken from Google');
+  }
+
+  await _client.auth.signInWithIdToken(
+    provider: OAuthProvider.google,
+    idToken: idToken,
+    accessToken: accessToken,
+  );
+
+  final supabaseUser = _client.auth.currentUser;
+  if (supabaseUser == null) {
+    throw Exception('Supabase user is null after Google sign-in');
+  }
+
+  Map<String, dynamic>? profileData;
+  for (int i = 0; i < 3; i++) {
+    profileData = await _client
+        .from('profiles')
+        .select()
+        .eq('auth_id', supabaseUser.id)
+        .maybeSingle();
+
+    if (profileData != null) break;
+    await Future.delayed(const Duration(seconds: 2));
+  }
+
+  profileData ??= await _client.from('profiles').insert({
+    'auth_id': supabaseUser.id,
+    'name': googleUser.displayName ?? '',
+    'dietary_preferences': [],
+  }).select().single();
+
+  final loggedInUser = AppUser.fromMap(profileData, supabaseUser.email ?? '');
+  print('Google Sign-In successful: ${loggedInUser.email}');
+  return loggedInUser;
+}
+
 }
 

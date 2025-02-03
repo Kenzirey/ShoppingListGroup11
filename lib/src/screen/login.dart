@@ -110,8 +110,20 @@ class _LoginState extends ConsumerState<LoginScreen> {
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () {
-                  // add google login logic :)
+                onPressed: () async {
+                  try {
+                    final authController = AuthController();
+                    await authController.signInWithGoogle(ref);
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Google Login Successful')),
+                    );
+                    context.go('/');
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Google login failed: $e')),
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   foregroundColor: theme.colorScheme.onPrimary,
