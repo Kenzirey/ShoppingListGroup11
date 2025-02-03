@@ -6,6 +6,13 @@ import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 import 'dart:math' as math;
 
+/// A small helper class to hold each OCR line plus its bounding box.
+class OcrLine {
+  final Rect box;
+  final String text;
+  OcrLine({required this.box, required this.text});
+}
+
 /// Data class to hold the parsed receipt data
 class ReceiptData {
   final String storeName;
@@ -13,7 +20,6 @@ class ReceiptData {
   final List<ReceiptItem> items;
   final double total;
 
-  /// Constructor
   ReceiptData({
     required this.storeName,
     required this.date,
@@ -33,7 +39,6 @@ class ReceiptItem {
   final double price;
   final String? weight;
 
-  /// Constructor
   ReceiptItem({
     required this.name,
     required this.price,
@@ -41,9 +46,7 @@ class ReceiptItem {
   });
 
   @override
-  String toString() {
-    return 'ReceiptItem(name: $name, price: $price)';
-  }
+  String toString() => 'ReceiptItem(name: $name, price: $price)';
 }
 
 /// Screen widget for scanning a receipt
@@ -54,17 +57,17 @@ class ScanReceiptScreen extends StatefulWidget {
   ScanReceiptScreenState createState() => ScanReceiptScreenState();
 }
 
-/// State class for the ScanReceiptScreen widget
 class ScanReceiptScreenState extends State<ScanReceiptScreen> {
   final TextRecognizer _textRecognizer =
   TextRecognizer(script: TextRecognitionScript.latin);
+
   ReceiptData? _receiptData;
   bool _isProcessing = false;
   File? _image;
 
   Future<void> _scanReceipt(ImageSource source) async {
     try {
-      final ImagePicker picker = ImagePicker();
+      final picker = ImagePicker();
       final XFile? image = await picker.pickImage(source: source);
 
       if (image != null) {
@@ -74,16 +77,23 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
         });
 
         // Preprocess the image
-        File processedImage = await _preprocessImage(_image!);
+        final processedImage = await _preprocessImage(_image!);
 
-        // Extract text
+        // Extract text with ML Kit
         final inputImage = InputImage.fromFile(processedImage);
-        final RecognizedText recognizedText =
+        final recognizedText =
         await _textRecognizer.processImage(inputImage);
-        print("OCR Result:\n${recognizedText.text}");
+
+        // Print lines for debugging
+        List<String> debugLines = recognizedText.text.split('\n');
+        print("===== OCR Lines =====");
+        for (int i = 0; i < debugLines.length; i++) {
+          print('Line $i: "${debugLines[i]}"');
+        }
+        print("===== End of OCR Lines =====");
 
         // Parse receipt data
-        final receiptData = await _parseReceiptText(recognizedText.text);
+        final receiptData = await _parseReceiptData(recognizedText);
         print("Parsed Receipt Data: $receiptData");
 
         setState(() {
@@ -99,40 +109,29 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
     }
   }
 
-  /// Preprocess the image to improve OCR accuracy
+  /// Preprocess the image (resize & blur) to improve OCR accuracy
   Future<File> _preprocessImage(File imageFile) async {
-    img.Image? image = img.decodeImage(await imageFile.readAsBytes());
-    if (image == null) return imageFile;
-    image = img.copyResize(image, width: 1000);
-    image = img.gaussianBlur(image, radius: 1);
+    img.Image? decoded = img.decodeImage(await imageFile.readAsBytes());
+    if (decoded == null) return imageFile;
 
-    /// Save the processed image
+    decoded = img.copyResize(decoded, width: 1000);
+    decoded = img.gaussianBlur(decoded, radius: 1);
+
     final tempDir = await getTemporaryDirectory();
     final processedPath = '${tempDir.path}/processed_receipt.jpg';
     File processedImage = File(processedPath);
-    await processedImage.writeAsBytes(img.encodeJpg(image));
-
+    await processedImage.writeAsBytes(img.encodeJpg(decoded));
     return processedImage;
   }
 
-  /// Parse the OCR text to extract receipt data
-  Future<ReceiptData> _parseReceiptText(String text) async {
-    /// Split text into lines
-    List<String> lines = text.split('\n');
+  /// Main function to parse recognized text into ReceiptData
+  Future<ReceiptData> _parseReceiptData(RecognizedText recognizedText) async {
+    final rawLines = recognizedText.text.split('\n');
+    final storeName = _extractStoreName(rawLines);
+    final date = _extractDate(rawLines);
+    final total = _extractTotal(rawLines);
+    final items = _extractItemsByBoundingBox(recognizedText);
 
-    /// Extract store name
-    String storeName = _extractStoreName(lines);
-
-    /// Extract date
-    String date = _extractDate(lines);
-
-    /// Extract items
-    List<ReceiptItem> items = _extractItems(lines);
-
-    /// Extract total
-    double total = _extractTotal(lines);
-
-    /// Return the parsed receipt data
     return ReceiptData(
       storeName: storeName,
       date: date,
@@ -141,10 +140,10 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
     );
   }
 
-  /// Extract store name from the receipt text
+  /// Extract store name from first ~5 lines (line-based approach)
   String _extractStoreName(List<String> lines) {
     for (int i = 0; i < math.min(5, lines.length); i++) {
-      String line = lines[i].trim().toUpperCase();
+      final line = lines[i].trim().toUpperCase();
       if (line.contains('MENY') ||
           line.contains('REMA 1000') ||
           line.contains('KIWI') ||
@@ -156,19 +155,18 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
     return 'Unknown Store';
   }
 
-  /// Extract date from the receipt text
+  /// Extract date from any line that matches typical date patterns
   String _extractDate(List<String> lines) {
-    // Expanded date patterns
     final datePatterns = [
       RegExp(r'\b\d{2}[./-]\d{2}[./-]\d{2,4}\b'),
       RegExp(r'\b\d{4}[./-]\d{2}[./-]\d{2}\b'),
       RegExp(
-          r'\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{1,2},? \d{4}\b'),
+          r'\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*\d{1,2},?\s*\d{4}\b'),
     ];
 
     for (String line in lines) {
       for (final pattern in datePatterns) {
-        Match? match = pattern.firstMatch(line);
+        final match = pattern.firstMatch(line);
         if (match != null) {
           return match.group(0) ?? '';
         }
@@ -177,78 +175,117 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
     return '';
   }
 
-  /// Extract items from the receipt text
-  List<ReceiptItem> _extractItems(List<String> lines) {
-    List<ReceiptItem> items = [];
-    RegExp priceRegex = RegExp(r'(\d+,\d{2})\s*$');
-
-    // Keywords to skip
-    bool isItemSection = false;
-    List<String> skipKeywords = [
-      'salgskvittering',
-      'org.nr',
-      'foretaksregisteret',
-      'tlf:',
-      'kvitt:',
-      'kasse:',
-      'opernr:',
-      'serienr',
-      '---------------',
-    ];
-
-    for (String originalLine in lines) {
-      String line = originalLine.trim();
-
-      if (line.isEmpty ||
-          skipKeywords.any((keyword) =>
-              line.toLowerCase().contains(keyword.toLowerCase()))) {
-        continue;
-      }
-
-      final lowerLine = line.toLowerCase();
-      if (lowerLine.contains('subtotal') ||
-          lowerLine.contains('sum') ||
-          lowerLine.contains('bank')) {
-        isItemSection = false;
-        continue;
-      }
-
-      if (isItemSection) {
-        // Extract price
-        final priceMatch = priceRegex.firstMatch(line);
-        if (priceMatch != null) {
-          String rawPrice = priceMatch.group(1) ?? '0,00';
-          double price = double.parse(rawPrice.replaceAll(',', '.'));
-
-          // Extract name by removing the price portion
-          String name = line.substring(0, priceMatch.start).trim();
-
-          if (name.isNotEmpty) {
-            items.add(ReceiptItem(
-              name: name,
-              price: price,
-            ));
-          }
-        }
-      }
-    }
-
-    return items;
-  }
-
-  /// Extract total from the receipt text
+  /// Extract the total from any line containing "total" or "sum"
   double _extractTotal(List<String> lines) {
+    final RegExp pricePattern = RegExp(r'(\d+[.,]\d{2})');
+
     for (String line in lines) {
-      // Use case-insensitive checks in real usage
-      if (line.contains('TOTAL') || line.contains('SUM')) {
-        RegExp totalRegex = RegExp(r'\d+,\d{2}');
-        Match? match = totalRegex.firstMatch(line);
+      final lower = line.toLowerCase();
+
+      if (lower.contains('subtotal') ||
+          lower.contains('total') ||
+          lower.contains('totalt') ||
+          lower.contains('sum'))
+      {
+        final match = pricePattern.firstMatch(line);
         if (match != null) {
-          return double.parse(match.group(0)!.replaceAll(',', '.'));
+          final raw = match.group(0)!;
+          return double.parse(raw.replaceAll(',', '.'));
         }
       }
     }
     return 0.0;
+  }
+
+
+  /// 2 Column bounding-box approach to extract item names and get corresponding prices
+  List<ReceiptItem> _extractItemsByBoundingBox(RecognizedText recognizedText) {
+
+    final List<OcrLine> allLines = [];
+    for (TextBlock block in recognizedText.blocks) {
+      for (TextLine line in block.lines) {
+        allLines.add(OcrLine(box: line.boundingBox, text: line.text));
+      }
+    }
+
+    // sort by top position
+    allLines.sort((a, b) => a.box.top.compareTo(b.box.top));
+
+    // Group lines into rows based on vertical proximity
+    const double rowThreshold = 20.0;
+    final List<List<OcrLine>> rows = [];
+    for (var line in allLines) {
+      bool placed = false;
+      for (var row in rows) {
+        double avgTop = row.map((l) => l.box.top).reduce((a, b) => a + b) / row.length;
+        if ((line.box.top - avgTop).abs() < rowThreshold) {
+          row.add(line);
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) {
+        rows.add([line]);
+      }
+    }
+    List<ReceiptItem> items = [];
+    bool stopParsing = false;
+
+    for (var row in rows) {
+      if (stopParsing) break;
+      final combinedLower = row.map((l) => l.text.toLowerCase()).join(' ');
+
+      if (combinedLower.contains('subtotal') ||
+          combinedLower.contains('bank') ||
+          combinedLower.contains('sum 22 varer') ||
+          combinedLower.contains('sum x varer')
+      ) {
+        stopParsing = true;
+        break;
+      }
+
+      row.sort((a, b) => a.box.left.compareTo(b.box.left));
+
+      if (row.length == 2) {
+        final nameText = row[0].text.trim();
+        final priceText = row[1].text.trim();
+        final priceVal = _parsePrice(priceText);
+        if (priceVal != null && nameText.isNotEmpty) {
+          items.add(ReceiptItem(name: nameText, price: priceVal));
+        }
+      } else if (row.length == 1) {
+        final singleText = row[0].text.trim();
+        final priceVal = _parsePrice(singleText);
+        if (priceVal != null) {
+          final match = RegExp(r'(\d+[.,]\d{2})').firstMatch(singleText);
+          if (match != null) {
+            final namePart = singleText.substring(0, match.start).trim();
+            if (namePart.isNotEmpty) {
+              items.add(ReceiptItem(name: namePart, price: priceVal));
+            }
+          }
+        }
+      } else {
+        final leftText = row.sublist(0, row.length - 1).map((l) => l.text).join(' ');
+        final rightText = row.last.text.trim();
+        final priceVal = _parsePrice(rightText);
+        if (priceVal != null && leftText.isNotEmpty) {
+          items.add(ReceiptItem(name: leftText, price: priceVal));
+        }
+      }
+    }
+    return items;
+  }
+
+  /// Parse a price from a string
+  double? _parsePrice(String text) {
+    final regex = RegExp(r'(\d+[.,]\d{2})');
+    final match = regex.firstMatch(text);
+    if (match != null) {
+      final raw = match.group(1)!;
+      return double.parse(raw.replaceAll(',', '.'));
+    }
+    return null;
   }
 
   @override
@@ -289,8 +326,8 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
             Text(
               receipt.storeName,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: Theme.of(context).colorScheme.tertiary,
                 fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.tertiary,
               ),
             ),
             Text(
@@ -301,8 +338,9 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            ...receipt.items.map(
-                  (item) => Padding(
+            // List of items
+            ...receipt.items.map((item) {
+              return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -326,8 +364,8 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
                     ),
                   ],
                 ),
-              ),
-            ),
+              );
+            }),
             const Divider(thickness: 1, color: Colors.black26),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -356,7 +394,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
     );
   }
 
-  /// Dispose the text recognizer
+  /// Clean up
   @override
   void dispose() {
     _textRecognizer.close();
