@@ -32,28 +32,28 @@ class BottomNavBar extends StatelessWidget {
         AppRouter.isDrawerNavigation = false;
         switch (index) {
           case 0:
-            context.goNamed('toBuy');
+            context.goNamed('shoppingList');
             break;
           case 1:
             context.goNamed('home');
             break;
           case 2:
-            context.goNamed('shoppingList');
+            context.goNamed('purchaseHistory');
             break;
         }
       },
       items: const [
         BottomNavigationBarItem(
           icon: Icon(Icons.shopping_cart),
-          label: 'To Buy',
+          label: 'Shopping List',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.home),
           label: 'Home',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.list),
-          label: 'Shopping List',
+          icon: Icon(Icons.history),
+          label: 'Purchase History',
         ),
       ],
     );

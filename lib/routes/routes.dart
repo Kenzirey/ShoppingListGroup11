@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shopping_list_g11/src/screen/home_screen.dart';
 import 'package:shopping_list_g11/src/screen/login.dart';
-import 'package:shopping_list_g11/src/screen/to_buy.dart';
 import 'package:shopping_list_g11/src/screen/shopping_list.dart';
+import 'package:shopping_list_g11/src/screen/purchase_history.dart';
 import 'package:shopping_list_g11/src/screen/signup_screen.dart';
 import 'package:shopping_list_g11/src/widget/bottom_nav_bar.dart';
 import 'package:shopping_list_g11/src/widget/my_drawer.dart';
@@ -50,16 +50,17 @@ class AppRouter {
             name: 'home',
             builder: (context, state) => const HomeScreen(),
           ),
-          GoRoute(
-            path: '/to-buy',
-            name: 'toBuy',
-            builder: (context, state) => const ToBuyScreen(),
-          ),
-          GoRoute(
+         GoRoute(
             path: '/shopping-list',
             name: 'shoppingList',
-            builder: (context, state) => const ShoppingList(),
+            builder: (context, state) => const ShoppingListScreen(),
           ),
+          GoRoute(
+            path: '/purchase-history',
+            name: 'purchaseHistory',
+            builder: (context, state) => const PurchaseHistoryScreen(),
+          ),
+
           GoRoute(
             path: '/login',
             name: 'loginPage',
@@ -82,18 +83,18 @@ class AppRouter {
 
   // Helper method to check if the location is a valid tab
   static bool isValidTab(String location) {
-    return location == '/' || location == '/to-buy' || location == '/shopping-list';
+    return location == '/' || location == '/shopping-list' || location == '/purchase-history';
   }
 
   // Determine index based on route
   static int _getSelectedIndexForRoute(String location) {
     switch (location) {
-      case '/to-buy':
-        return 0; // "To Buy" tab
+      case '/shopping-list':
+        return 0; // shopping list
       case '/':
         return 1; // "Home" tab
-      case '/shopping-list':
-        return 2; // "Shopping List" tab
+      case '/purchase-history':
+        return 2; // purchase history
       default:
         return 1; // Invalid route, no index selected
     }
