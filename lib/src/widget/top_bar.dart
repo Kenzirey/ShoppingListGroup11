@@ -13,42 +13,35 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
     required this.onLeadingIconPressed,
   });
 
-  // Added padding so that it doesn't kiss the top bar of the phone.
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 20.0),
-      child: AppBar(
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
+    return AppBar(
+      // Set a custom toolbar height to add vertical space.
+      toolbarHeight: 80, // or kToolbarHeight + 20, etc.
+
+      title: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
         ),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        leading: Builder(
-          builder: (context) {
-            return Padding(
-              padding:
-                  const EdgeInsets.only(left: 20.0),
-              child: IconButton(
-                icon: Icon(
-                  leadingIcon,
-                  size: 30,
-                ),
-                onPressed: onLeadingIconPressed,
-              ),
-            );
-          },
-        ),
+      ),
+      centerTitle: true,
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+
+      leadingWidth: 82, // LEFT MARGIN
+
+      leading: IconButton(
+        // Control the splash radius to keep it roouuund.
+        splashRadius: 24,
+        iconSize: 30,
+        icon: Icon(leadingIcon),
+        onPressed: onLeadingIconPressed,
       ),
     );
   }
 
   @override
-  Size get preferredSize =>
-      const Size.fromHeight(kToolbarHeight + 20); // NO SMUSH
+  Size get preferredSize => const Size.fromHeight(80);
 }
