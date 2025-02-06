@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shopping_list_g11/src/screen/home_screen.dart';
 import 'package:shopping_list_g11/src/screen/login.dart';
+import 'package:shopping_list_g11/src/screen/meal_recipe.dart';
 import 'package:shopping_list_g11/src/screen/shopping_list.dart';
 import 'package:shopping_list_g11/src/screen/purchase_history.dart';
 import 'package:shopping_list_g11/src/screen/signup_screen.dart';
@@ -10,9 +11,9 @@ import 'package:shopping_list_g11/src/widget/my_drawer.dart';
 import 'package:shopping_list_g11/src/widget/top_bar.dart';
 import '../src/screen/scan_receipt_screen.dart';
 
-
 class AppRouter {
-  static final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  static final GlobalKey<ScaffoldState> _scaffoldKey =
+      GlobalKey<ScaffoldState>();
 
   static bool isDrawerNavigation = false;
 
@@ -24,7 +25,10 @@ class AppRouter {
           final matchedLocation = state.matchedLocation;
 
           // Set selectedIndex to -1 if the location is not a valid tab (drawer navigation or invalid route)
-          final selectedIndex = (isDrawerNavigation || !isValidTab(matchedLocation)) ? -1 : _getSelectedIndexForRoute(matchedLocation);
+          final selectedIndex =
+              (isDrawerNavigation || !isValidTab(matchedLocation))
+                  ? -1
+                  : _getSelectedIndexForRoute(matchedLocation);
 
           //TODO: figure out a better solution for this.
           return Scaffold(
@@ -50,7 +54,7 @@ class AppRouter {
             name: 'home',
             builder: (context, state) => const HomeScreen(),
           ),
-         GoRoute(
+          GoRoute(
             path: '/shopping-list',
             name: 'shoppingList',
             builder: (context, state) => const ShoppingListScreen(),
@@ -60,7 +64,6 @@ class AppRouter {
             name: 'purchaseHistory',
             builder: (context, state) => const PurchaseHistoryScreen(),
           ),
-
           GoRoute(
             path: '/login',
             name: 'loginPage',
@@ -72,10 +75,15 @@ class AppRouter {
             builder: (context, state) => const SignUpScreen(),
           ),
           GoRoute(
-            name: 'scanReceipt',
             path: '/scan-receipt',
+            name: 'scanReceipt',
             builder: (context, state) => const ScanReceiptScreen(),
           ),
+          GoRoute(
+            path: '/chat', // meal recipe chat
+            name: 'chat',
+            builder: (context, state) => const MealRecipeScreen(),
+          )
         ],
       ),
     ],
@@ -83,7 +91,9 @@ class AppRouter {
 
   // Helper method to check if the location is a valid tab
   static bool isValidTab(String location) {
-    return location == '/' || location == '/shopping-list' || location == '/purchase-history';
+    return location == '/' ||
+        location == '/shopping-list' ||
+        location == '/purchase-history';
   }
 
   // Determine index based on route
