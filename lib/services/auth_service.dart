@@ -136,7 +136,7 @@ class AuthService {
   final GoogleSignIn googleSignIn = GoogleSignIn(
     clientId: '235387261747-j5fhreodgr19sfb6hb18n4hv9o4u1mui.apps.googleusercontent.com',  // iOS Client ID
     serverClientId: '235387261747-4j0m8os04p7pdkcg9romdamosko3av1o.apps.googleusercontent.com', // Web Client ID
-    scopes: <String>['email'],
+    scopes: <String>['email', 'profile'],
   );
 
   final googleUser = await googleSignIn.signIn();
@@ -178,6 +178,7 @@ class AuthService {
   profileData ??= await _client.from('profiles').insert({
     'auth_id': supabaseUser.id,
     'name': googleUser.displayName ?? '',
+    'avatar_url': googleUser.photoUrl ?? '',
     'dietary_preferences': [],
   }).select().single();
 

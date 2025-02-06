@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shopping_list_g11/routes/routes.dart';
+import 'package:shopping_list_g11/providers/current_user_provider.dart';
 
 /// Drawer widget for the app.
-class MyDrawer extends StatelessWidget {
+class MyDrawer extends ConsumerWidget {
   const MyDrawer({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentUser = ref.watch(currentUserProvider);
     return SizedBox(
       width: 240,
       child: Drawer(
@@ -18,26 +21,58 @@ class MyDrawer extends StatelessWidget {
             children: <Widget>[
               const SizedBox(height: 40),
 
-              // Login / Sign-up row
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: InkWell(
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    AppRouter.isDrawerNavigation = true; // Mark navigation as from the drawer
-                    context.goNamed('loginPage');
-                    AppRouter.isDrawerNavigation = false; // Reset after navigation
-                  },
+              // If no user, show Log in or sign up
+              if (currentUser == null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      AppRouter.isDrawerNavigation = true;
+                      context.goNamed('loginPage');
+                      AppRouter.isDrawerNavigation = false;
+                    },
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.account_circle,
+                          color: Theme.of(context).colorScheme.tertiary,
+                          size: 36,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Log in or sign up',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.tertiary,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                // If user IS logged in, show avatar + name
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.account_circle,
-                        color: Theme.of(context).colorScheme.tertiary,
-                        size: 36,
-                      ),
+                      if (currentUser.avatarUrl?.isNotEmpty == true)
+                        CircleAvatar(
+                          backgroundImage: NetworkImage(currentUser.avatarUrl!),
+                          radius: 18,
+                        )
+                      else
+                        Icon(
+                          Icons.account_circle,
+                          color: Theme.of(context).colorScheme.tertiary,
+                          size: 36,
+                        ),
                       const SizedBox(width: 12),
                       Text(
-                        'Log in or sign up',
+                        currentUser.name.isEmpty
+                            ? 'No Name'
+                            : currentUser.name,
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.tertiary,
                           fontSize: 16,
@@ -46,7 +81,6 @@ class MyDrawer extends StatelessWidget {
                     ],
                   ),
                 ),
-              ),
 
               const SizedBox(height: 20),
 
