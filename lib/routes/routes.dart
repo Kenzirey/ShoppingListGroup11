@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shopping_list_g11/src/screen/chat_screen.dart';
 import 'package:shopping_list_g11/src/screen/home_screen.dart';
 import 'package:shopping_list_g11/src/screen/login.dart';
 import 'package:shopping_list_g11/src/screen/meal_recipe.dart';
@@ -82,8 +83,13 @@ class AppRouter {
           GoRoute(
             path: '/chat', // meal recipe chat
             name: 'chat',
+            builder: (context, state) => const ChatScreen(),
+          ),
+          GoRoute(
+            path: '/recipe', // meal recipe chat
+            name: 'mealPlanner',
             builder: (context, state) => const MealRecipeScreen(),
-          )
+          ),
         ],
       ),
     ],

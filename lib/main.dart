@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gemini/flutter_gemini.dart';
 import 'package:shopping_list_g11/routes/routes.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shopping_list_g11/providers/current_user_provider.dart';
 
+// https://pub.dev/packages/flutter_gemini
+const gemApi = 'AIzaSyD0lMRQQP0rx4D024lV55WX1SoaeyFrzPg';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  // Initialize Gemini (with Emma's key)
+  Gemini.init(apiKey: gemApi);
   // Initialize Supabase
   await Supabase.initialize(
     url: 'https://ympkztethjtejhdajsol.supabase.co',

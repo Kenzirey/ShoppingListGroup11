@@ -16,8 +16,8 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      // Set a custom toolbar height to add vertical space.
-      toolbarHeight: 80, // or kToolbarHeight + 20, etc.
+      // Add vertical space to not make it kiss the top part of phone.
+      toolbarHeight: 80,
 
       title: Text(
         title,
