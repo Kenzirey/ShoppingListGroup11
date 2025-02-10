@@ -11,6 +11,7 @@ import 'package:shopping_list_g11/src/widget/bottom_nav_bar.dart';
 import 'package:shopping_list_g11/src/widget/my_drawer.dart';
 import 'package:shopping_list_g11/src/widget/top_bar.dart';
 import '../src/screen/scan_receipt_screen.dart';
+import 'package:shopping_list_g11/src/screen/account_page_screen.dart';
 
 class AppRouter {
   static final GlobalKey<ScaffoldState> _scaffoldKey =
@@ -89,6 +90,11 @@ class AppRouter {
             path: '/recipe', // meal recipe chat
             name: 'mealPlanner',
             builder: (context, state) => const MealRecipeScreen(),
+          ),
+          GoRoute(
+            path: '/account',
+            name: 'accountPage',
+            builder: (context, state) => const AccountPageScreen(),
           ),
         ],
       ),
