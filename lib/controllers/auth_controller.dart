@@ -7,6 +7,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Manages logic between views and services
 
+
+final authControllerProvider = Provider<AuthController>((ref) {
+  return AuthController();
+});
+
 class AuthController {
   final AuthService _authService = AuthService();
 
