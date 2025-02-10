@@ -175,32 +175,54 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
     return '';
   }
 
-  /// Extract the total from any line containing "total" or "sum"
+  /// Extract the total from the last occurrence of relevant total-related words
   double _extractTotal(List<String> lines) {
     final RegExp pricePattern = RegExp(r'(\d+[.,]\d{2})');
+    // Pattern to skip intermediate totals (like "sum 2 varer")
+    final RegExp intermediateTotalPattern =
+    RegExp(r'sum\s+\d+\s+varer', caseSensitive: false);
+    // Keywords that indicate a total line.
+    final List<String> keywords = ['total', 'totalt', 'sum', 'bank'];
+    double total = 0.0;
 
-    for (String line in lines) {
-      final lower = line.toLowerCase();
+    // Start from the end and work backwards
+    for (int i = lines.length - 1; i >= 0; i--) {
+      final String lineLower = lines[i].toLowerCase();
 
-      if (lower.contains('subtotal') ||
-          lower.contains('total') ||
-          lower.contains('totalt') ||
-          lower.contains('sum'))
-      {
-        final match = pricePattern.firstMatch(line);
+      // Skip intermediate totals (like "sum 2 varer")
+      if (intermediateTotalPattern.hasMatch(lineLower)) {
+        continue;
+      }
+
+      // Check if this line contains any of our keywords.
+      if (keywords.any((keyword) => lineLower.contains(keyword))) {
+        // Try to extract a price from this line.
+        final match = pricePattern.firstMatch(lines[i]);
         if (match != null) {
-          final raw = match.group(0)!;
-          return double.parse(raw.replaceAll(',', '.'));
+          total = double.tryParse(match.group(1)!.replaceAll(',', '.')) ?? 0.0;
+          return total;
+        } else {
+          List<double> candidatePrices = [];
+          for (int j = i + 1; j < math.min(i + 4, lines.length); j++) {
+            final nextMatch = pricePattern.firstMatch(lines[j]);
+            if (nextMatch != null) {
+              double price =
+                  double.tryParse(nextMatch.group(1)!.replaceAll(',', '.')) ?? 0.0;
+              candidatePrices.add(price);
+            }
+          }
+          if (candidatePrices.isNotEmpty) {
+            total = candidatePrices.last;
+            return total;
+          }
         }
       }
     }
-    return 0.0;
+    return total;
   }
-
 
   /// 2 Column bounding-box approach to extract item names and get corresponding prices
   List<ReceiptItem> _extractItemsByBoundingBox(RecognizedText recognizedText) {
-
     final List<OcrLine> allLines = [];
     for (TextBlock block in recognizedText.blocks) {
       for (TextLine line in block.lines) {
@@ -208,7 +230,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
       }
     }
 
-    // sort by top position
+    // Sort by top position
     allLines.sort((a, b) => a.box.top.compareTo(b.box.top));
 
     // Group lines into rows based on vertical proximity
@@ -228,6 +250,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
         rows.add([line]);
       }
     }
+
     List<ReceiptItem> items = [];
     bool stopParsing = false;
 
@@ -235,15 +258,15 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
       if (stopParsing) break;
       final combinedLower = row.map((l) => l.text.toLowerCase()).join(' ');
 
-      if (combinedLower.contains('subtotal') ||
-          combinedLower.contains('bank') ||
-          combinedLower.contains('sum 22 varer') ||
-          combinedLower.contains('sum x varer')
-      ) {
+      // Updated filtering: Skip rows that appear to be intermediate totals
+      if (RegExp(r'sum\s+\d+\s+varer', caseSensitive: false).hasMatch(combinedLower) ||
+          combinedLower.contains('subtotal') ||
+          combinedLower.contains('bank')) {
         stopParsing = true;
         break;
       }
 
+      // Sort row items by their left position
       row.sort((a, b) => a.box.left.compareTo(b.box.left));
 
       if (row.length == 2) {
