@@ -52,36 +52,41 @@ class MyDrawer extends ConsumerWidget {
                   ),
                 )
               else
-                // If user IS logged in, show avatar + name
+                // If user IS logged in, show clickable avatar + name
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Row(
-                    children: [
-                      if (currentUser.avatarUrl?.isNotEmpty == true)
-                        CircleAvatar(
-                          backgroundImage: NetworkImage(currentUser.avatarUrl!),
-                          radius: 18,
-                        )
-                      else
-                        Icon(
-                          Icons.account_circle,
-                          color: Theme.of(context).colorScheme.tertiary,
-                          size: 36,
-                        ),
-                      const SizedBox(width: 12),
-                      Text(
-                        currentUser.name.isEmpty
-                            ? 'No Name'
-                            : currentUser.name,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.tertiary,
-                          fontSize: 16,
+		              child: InkWell(
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      AppRouter.isDrawerNavigation = true;
+                      context.goNamed('accountPage');
+                      AppRouter.isDrawerNavigation = false;
+                    },
+                    child: Row(
+                      children: [
+                        if (currentUser.avatarUrl?.isNotEmpty == true)
+                          CircleAvatar(
+                            backgroundImage: NetworkImage(currentUser.avatarUrl!),
+                            radius: 18,
+                          )
+                        else
+                          Icon(
+                            Icons.account_circle,
+                            color: Theme.of(context).colorScheme.tertiary,
+                            size: 36,
+                          ),
+                        const SizedBox(width: 12),
+                        Text(
+                          currentUser.name.isEmpty ? 'No Name' : currentUser.name,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.tertiary,
+                            fontSize: 16,
                         ),
                       ),
                     ],
                   ),
                 ),
-
+              ),
               const SizedBox(height: 20),
 
               // Filter
