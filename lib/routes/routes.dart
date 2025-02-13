@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:shopping_list_g11/src/screen/chat_screen.dart';
 import 'package:shopping_list_g11/src/screen/home_screen.dart';
 import 'package:shopping_list_g11/src/screen/login.dart';
+import 'package:shopping_list_g11/src/screen/meal_planner.dart';
 import 'package:shopping_list_g11/src/screen/meal_recipe.dart';
+import 'package:shopping_list_g11/src/screen/saved_recipes.dart';
 import 'package:shopping_list_g11/src/screen/shopping_list.dart';
 import 'package:shopping_list_g11/src/screen/purchase_history.dart';
 import 'package:shopping_list_g11/src/screen/signup_screen.dart';
@@ -82,20 +84,30 @@ class AppRouter {
             builder: (context, state) => const ScanReceiptScreen(),
           ),
           GoRoute(
-            path: '/chat', // meal recipe chat
+            path: '/chat', // chat screen (for asking for recipes)
             name: 'chat',
             builder: (context, state) => const ChatScreen(),
           ),
           GoRoute(
             path: '/recipe', // meal recipe chat
-            name: 'mealPlanner',
+            name: 'recipe',
             builder: (context, state) => const MealRecipeScreen(),
+          ),
+          GoRoute(
+            path: '/meal-planner',
+            name: 'mealPlanner',
+            builder: (context, state) => const MealPlannerScreen(),
           ),
           GoRoute(
             path: '/account',
             name: 'accountPage',
             builder: (context, state) => const AccountPageScreen(),
           ),
+          GoRoute(
+            path: '/savedRecipes',
+            name: 'savedRecipes',
+            builder: (context, state) => const SavedRecipesScreen(),
+          )
         ],
       ),
     ],

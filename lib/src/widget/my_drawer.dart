@@ -55,7 +55,7 @@ class MyDrawer extends ConsumerWidget {
                 // If user IS logged in, show clickable avatar + name
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-		              child: InkWell(
+                  child: InkWell(
                     onTap: () {
                       Navigator.of(context).pop();
                       AppRouter.isDrawerNavigation = true;
@@ -66,7 +66,8 @@ class MyDrawer extends ConsumerWidget {
                       children: [
                         if (currentUser.avatarUrl?.isNotEmpty == true)
                           CircleAvatar(
-                            backgroundImage: NetworkImage(currentUser.avatarUrl!),
+                            backgroundImage:
+                                NetworkImage(currentUser.avatarUrl!),
                             radius: 18,
                           )
                         else
@@ -77,59 +78,75 @@ class MyDrawer extends ConsumerWidget {
                           ),
                         const SizedBox(width: 12),
                         Text(
-                          currentUser.name.isEmpty ? 'No Name' : currentUser.name,
+                          currentUser.name.isEmpty
+                              ? 'No Name'
+                              : currentUser.name,
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.tertiary,
                             fontSize: 16,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
               const SizedBox(height: 20),
 
               // Filter
               ListTile(
-                leading: Icon(Icons.filter_list, color: Theme.of(context).colorScheme.tertiary),
+                leading: Icon(Icons.filter_list,
+                    color: Theme.of(context).colorScheme.tertiary),
                 title: Text(
                   'Filter',
-                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                ),
-                onTap: () {},
-              ),
-
-              // Wishlist
-              ListTile(
-                leading: Icon(Icons.star, color: Theme.of(context).colorScheme.tertiary),
-                title: Text(
-                  'Wishlist',
-                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                  style:
+                      TextStyle(color: Theme.of(context).colorScheme.tertiary),
                 ),
                 onTap: () {},
               ),
 
               // Chat
               ListTile(
-                leading: Icon(Icons.chat, color: Theme.of(context).colorScheme.tertiary),
+                leading: Icon(Icons.chat,
+                    color: Theme.of(context).colorScheme.tertiary),
                 title: Text(
                   'Chat',
-                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                  style:
+                      TextStyle(color: Theme.of(context).colorScheme.tertiary),
                 ),
                 onTap: () {
                   Navigator.of(context).pop();
-                  AppRouter.isDrawerNavigation = true; // Mark navigation as from the drawer
+                  AppRouter.isDrawerNavigation =
+                      true; // Mark navigation as from the drawer
                   context.goNamed('chat');
                   AppRouter.isDrawerNavigation = false;
                 },
               ),
 
-              // Meal planner
+              // Recipe screen. Temporary placement for testing.
               ListTile(
-                leading: Icon(Icons.calendar_today, color: Theme.of(context).colorScheme.tertiary),
+                leading: Icon(Icons.restaurant,
+                    color: Theme.of(context).colorScheme.tertiary),
                 title: Text(
-                  'Meal planner',
-                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                  'RECIPE TEMPORARY',
+                  style:
+                      TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                ),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  AppRouter.isDrawerNavigation = true;
+                  context.goNamed('recipe');
+                  AppRouter.isDrawerNavigation = false;
+                },
+              ),
+
+              // Meal planner for the week (Mon-Sun).
+              ListTile(
+                leading: Icon(Icons.calendar_today,
+                    color: Theme.of(context).colorScheme.tertiary),
+                title: Text(
+                  'Meal Recipe',
+                  style:
+                      TextStyle(color: Theme.of(context).colorScheme.tertiary),
                 ),
                 onTap: () {
                   Navigator.of(context).pop();
@@ -139,12 +156,31 @@ class MyDrawer extends ConsumerWidget {
                 },
               ),
 
+              // Saved recipes
+              ListTile(
+                leading: Icon(Icons.bookmarks,
+                    color: Theme.of(context).colorScheme.tertiary),
+                title: Text(
+                  'Saved Recipes',
+                  style:
+                      TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                ),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  AppRouter.isDrawerNavigation = true;
+                  context.goNamed('savedRecipes');
+                  AppRouter.isDrawerNavigation = false;
+                },
+              ),
+
               // Scan Receipt
               ListTile(
-                leading: Icon(Icons.receipt, color: Theme.of(context).colorScheme.tertiary),
+                leading: Icon(Icons.receipt,
+                    color: Theme.of(context).colorScheme.tertiary),
                 title: Text(
                   'Scan Receipt',
-                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                  style:
+                      TextStyle(color: Theme.of(context).colorScheme.tertiary),
                 ),
                 onTap: () {
                   Navigator.of(context).pop();
