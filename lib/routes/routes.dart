@@ -9,6 +9,7 @@ import 'package:shopping_list_g11/src/screen/saved_recipes.dart';
 import 'package:shopping_list_g11/src/screen/shopping_list.dart';
 import 'package:shopping_list_g11/src/screen/purchase_history.dart';
 import 'package:shopping_list_g11/src/screen/signup_screen.dart';
+import 'package:shopping_list_g11/src/screen/trending_meal.dart';
 import 'package:shopping_list_g11/src/widget/bottom_nav_bar.dart';
 import 'package:shopping_list_g11/src/widget/my_drawer.dart';
 import 'package:shopping_list_g11/src/widget/top_bar.dart';
@@ -89,7 +90,7 @@ class AppRouter {
             builder: (context, state) => const ChatScreen(),
           ),
           GoRoute(
-            path: '/recipe', // meal recipe chat
+            path: '/recipe', // Recipe screen (showing ONE recipe)
             name: 'recipe',
             builder: (context, state) => const MealRecipeScreen(),
           ),
@@ -97,6 +98,11 @@ class AppRouter {
             path: '/meal-planner',
             name: 'mealPlanner',
             builder: (context, state) => const MealPlannerScreen(),
+          ),
+          GoRoute(
+            path: '/trending',
+            name: 'trending',
+            builder: (context, state) => const TrendingRecipeScreen(),
           ),
           GoRoute(
             path: '/account',

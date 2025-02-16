@@ -121,6 +121,22 @@ class MyDrawer extends ConsumerWidget {
                   AppRouter.isDrawerNavigation = false;
                 },
               ),
+              // Trending recipe (weekly? Biweekly?)
+              ListTile(
+                leading: Icon(Icons.restaurant,
+                    color: Theme.of(context).colorScheme.tertiary),
+                title: Text(
+                  'Trending Recipe',
+                  style:
+                      TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                ),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  AppRouter.isDrawerNavigation = true;
+                  context.goNamed('trending');
+                  AppRouter.isDrawerNavigation = false;
+                },
+              ),
 
               // Recipe screen. Temporary placement for testing.
               ListTile(

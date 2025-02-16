@@ -20,6 +20,8 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
     'Milk': 1,
     'Bread': 1,
     'Cheese': 1,
+    'Monster Ultra Violet': 50,
+    "Billy's Pizza": 5,
   };
 
   // Store deleted item details for undo
@@ -238,7 +240,7 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
             },
             backgroundColor: Theme.of(context)
                 .colorScheme
-                .primaryContainer, // Match item background, or change it?
+                .secondary, // Match item background, or change it?
             shape: const CircleBorder(),
             child: Icon(
               Icons.add,

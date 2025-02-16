@@ -69,7 +69,7 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.symmetric(
-                        vertical: 24,
+                        vertical: 20,
                         horizontal: 14,
                       ),
                       decoration: BoxDecoration(
