@@ -34,8 +34,9 @@ class MyApp extends ConsumerWidget {
         brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color(0xFF212121),
         colorScheme: const ColorScheme.dark(
-          primary: Color(0xFFEBFF00), // Solwr fargen
-          secondary: Colors.red, // Midlertidig
+          primary: Color(0xFFADEBB3), // Mint green
+          secondary: Color(0xFF58855C), // darker mint green
+          inversePrimary: Color(0xFF0D3311),
           tertiary: Color(0xffefefef),
           surface: Color(0xFF212121), // Night from Solwr design guide.
           primaryContainer: Color(0xff424242),
