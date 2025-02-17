@@ -64,18 +64,20 @@ class MyDrawer extends ConsumerWidget {
                     },
                     child: Row(
                       children: [
-                        if (currentUser.avatarUrl?.isNotEmpty == true)
-                          CircleAvatar(
-                            backgroundImage:
-                                NetworkImage(currentUser.avatarUrl!),
-                            radius: 18,
-                          )
-                        else
-                          Icon(
-                            Icons.account_circle,
-                            color: Theme.of(context).colorScheme.tertiary,
-                            size: 36,
-                          ),
+                       if (currentUser.avatarUrl?.isNotEmpty == true)
+                        CircleAvatar(
+                          backgroundImage: currentUser.avatarUrl!.startsWith('assets/')
+                            ? AssetImage(currentUser.avatarUrl!) as ImageProvider
+                            : NetworkImage(currentUser.avatarUrl!),
+                          radius: 18,
+                        )
+                      else
+                        Icon(
+                          Icons.account_circle,
+                          color: Theme.of(context).colorScheme.tertiary,
+                          size: 36,
+                        ),
+
                         const SizedBox(width: 12),
                         Text(
                           currentUser.name.isEmpty
