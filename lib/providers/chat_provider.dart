@@ -1,24 +1,58 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shopping_list_g11/models/message.dart';
+import 'package:shopping_list_g11/models/recipe.dart';
+import 'package:flutter/material.dart';
 
-/// StateNotifier to manage the list of messages from message bot.
-/// TODO: move this to a controller?
-class ChatNotifier extends StateNotifier<List<Message>> {
-  ChatNotifier() : super([]);
+/// Holds both chat messages and parsed recipe.
+class ChatState {
+  final List<Message> messages;
+  final Recipe? recipe;
 
-  /// Handle user and bot messages.
+  ChatState({required this.messages, this.recipe});
+}
+
+/// StateNotifier to manage chat messages and recipe.
+/// TODO: create a separate service/controller for this.
+class ChatNotifier extends StateNotifier<ChatState> {
+  ChatNotifier() : super(ChatState(messages: []));
+
+  /// Adds user or bot message.
   void sendMessage({required String text, required bool isUser}) {
-    state = [...state, Message(text: text, isUser: isUser)];
+    state = ChatState(
+      messages: [...state.messages, Message(text: text, isUser: isUser)],
+      recipe: state.recipe, // save the existing recipe.
+    );
   }
 
+  /// Updates the last bot message, attempt to parse a recipe.
   void updateLastBotMessage(String newText) {
-    if (state.isNotEmpty && !state.last.isUser) {
-      state = [
-        ...state.sublist(0, state.length - 1),
-        Message(text: newText, isUser: false),
-      ];
+    List<String> chunks = newText.split("\n\n");
+
+    final parsedRecipe = Recipe.fromChunks(chunks);
+
+    if (parsedRecipe.name.isEmpty ||
+        parsedRecipe.ingredients.isEmpty ||
+        parsedRecipe.instructions.isEmpty) {
+      debugPrint("⚠️ Error: Parsed recipe is missing critical data.");
+      return;
     }
+
+    final summaryText = parsedRecipe
+        .summary; // As we only want the summary shown in the chat screen.
+
+    final newMessages = [...state.messages];
+
+    if (newMessages.isNotEmpty && !newMessages.last.isUser) {
+      newMessages.removeLast();
+    }
+
+    newMessages.add(Message(text: summaryText, isUser: false));
+
+    state = ChatState(messages: newMessages, recipe: parsedRecipe);
   }
 }
 
-final chatProvider = StateNotifierProvider<ChatNotifier, List<Message>>((ref) => ChatNotifier());
+/// Chat provider with both messages and parsed recipe.
+final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
+  return ChatNotifier();
+});

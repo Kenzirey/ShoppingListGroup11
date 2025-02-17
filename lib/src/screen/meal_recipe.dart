@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shopping_list_g11/providers/recipe_provider.dart';
 import 'package:shopping_list_g11/src/widget/ingredient_list.dart';
 
-/// Screen for showing the recipe details for a meal,
+/// Screen for showing the recipe details for a meal.
 /// with both ingredients and instructions.
 class MealRecipeScreen extends ConsumerStatefulWidget {
   const MealRecipeScreen({super.key});
@@ -16,23 +17,37 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final recipe = ref.watch(recipeProvider);
+
+    if (recipe == null) {
+      debugPrint("ERROR: Recipe data is missing.");
+      return const Scaffold(
+        body: Center(
+          child: Text("Error: No recipe data available."),
+        ),
+      );
+    }
+
+    debugPrint("MealRecipeScreen received recipe: ${recipe.name}");
+
     return Scaffold(
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(
-            horizontal: 32, vertical: 16), // same as purchase history and shopping list.
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Title of the recipe (hard coded atm)
+            // Title for the recipe
             Text(
-              'Pesto Pasta',
+              recipe.name,
               style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.tertiary),
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.tertiary,
+              ),
             ),
             const SizedBox(height: 12),
-            // Icons section (person, time)
+
+            // Time for recipe and serving size (person)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -41,7 +56,7 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                     const Icon(Icons.access_time, size: 16),
                     const SizedBox(width: 4),
                     Text(
-                      'Over 60 min',
+                      recipe.totalTime,
                       style: TextStyle(
                           color: Theme.of(context).colorScheme.tertiary),
                     ),
@@ -52,7 +67,7 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                     const Icon(Icons.people, size: 16),
                     const SizedBox(width: 4),
                     Text(
-                      '4 Personer',
+                      recipe.yields,
                       style: TextStyle(
                           color: Theme.of(context).colorScheme.tertiary),
                     ),
@@ -62,7 +77,7 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
             ),
             const SizedBox(height: 8),
 
-            // Ingredients
+            // Ingredients Section ⏬
             Column(
               children: [
                 ListTileTheme(
@@ -78,60 +93,25 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                     ),
                     trailing: const Icon(Icons.keyboard_arrow_down),
                     initiallyExpanded: true,
-                    childrenPadding: EdgeInsets.zero,
-                    expandedCrossAxisAlignment: CrossAxisAlignment.start,
                     onExpansionChanged: (bool expanded) {
                       setState(() {
-                        _isExpanded = expanded; // keep track of expanded / not expanded :)
+                        _isExpanded = expanded;
                       });
                     },
                     children: [
+                      // Wrap the ingredient list + that extra 16px space
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Pasta',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.tertiary),
-                          ),
-                          const SizedBox(
-                            height: 4,
-                          ),
-                          const IngredientList(ingredients: [
-                            'Tonys salte tårer',
-                            'Sitronsaft',
-                            'Hvitløk',
-                            'Basilikum',
-                            'Revet parmesan',
-                            'Flaksalt',
-                            'Olivenolje',
-                          ]),
-                          const SizedBox(
-                            height: 12,
-                          ),
-                          Text(
-                            'Pesto',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.tertiary),
-                          ),
-                          const IngredientList(ingredients: [
-                            '250 g hvetemel gjerne fint pastamel eller durumhvete',
-                            '0,5 ts salt',
-                            '2 stk. egg',
-                            '2 stk. eggeplomme',
-                          ]),
-                          const SizedBox(
-                            height: 16,
-                          ),
+                          IngredientList(ingredients: recipe.ingredients),
+                          const SizedBox(height: 16),
                         ],
                       ),
                     ],
                   ),
                 ),
+                // Divider when ingredients are collapsed (the _ line)
                 Visibility(
-                  // Only show divider via expanded condition.
                   visible: !_isExpanded,
                   child: Divider(
                     color: Theme.of(context).colorScheme.tertiary,
@@ -140,30 +120,29 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                 ),
               ],
             ),
-            const SizedBox(
-              height: 8,
-            ),
+            const SizedBox(height: 8),
 
-            // Instructions. Make it into its own widget too?
+            // Instructions
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Instructions',
                   style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.tertiary),
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.tertiary,
+                  ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  '1. Rist pinjekjerner i en tørr stekepanne til de er lett gylne.\n'
-                  '2. Ha alle ingrediensene i en foodprosessor og kjør til pestoen er jevn.\n'
-                  '3. Kok pasta etter anvisning på pakken.\n'
-                  '4. Bland pastaen med pestoen og server.',
-                  style:
-                      TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                ),
+                ...recipe.instructions.map((step) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        "• $step",
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.tertiary),
+                      ),
+                    )),
               ],
             ),
           ],
