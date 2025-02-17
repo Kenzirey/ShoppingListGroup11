@@ -1,10 +1,13 @@
-import 'package:flutter/material.dart';
-import 'package:google_ml_kit/google_ml_kit.dart';
-import 'package:image_picker/image_picker.dart';
+import 'dart:convert';
 import 'dart:io';
-import 'package:image/image.dart' as img;
-import 'package:path_provider/path_provider.dart';
 import 'dart:math' as math;
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:image/image.dart' as img;
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// A small helper class to hold each OCR line plus its bounding box.
 class OcrLine {
@@ -43,6 +46,7 @@ class ReceiptItem {
     required this.name,
     required this.price,
     this.weight,
+    // this.category,
   });
 
   @override
@@ -58,12 +62,38 @@ class ScanReceiptScreen extends StatefulWidget {
 }
 
 class ScanReceiptScreenState extends State<ScanReceiptScreen> {
+  // Kassal constants:
+  static const String _kBearerToken = 'jen8hGeedph78wDfqR37345l5lcIxCNjBHjjzjL4';
+  static const String _kKassalBaseUrl = 'https://kassal.app/api/v1/products';
+
   final TextRecognizer _textRecognizer =
   TextRecognizer(script: TextRecognitionScript.latin);
 
   ReceiptData? _receiptData;
   bool _isProcessing = false;
   File? _image;
+
+  // Helper: search Kassal for a product name, returning a list of matches
+  Future<List<dynamic>> _searchKassalProducts(String query) async {
+    final url = Uri.parse('$_kKassalBaseUrl?search=$query&sort=price_desc');
+    try {
+      final response = await http.get(url, headers: {
+        'Authorization': 'Bearer $_kBearerToken',
+      });
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data is List) {
+          return data;
+        }
+      } else {
+        debugPrint(
+            'Kassal API error: ${response.statusCode} => ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('Error in Kassal search: $e');
+    }
+    return [];
+  }
 
   Future<void> _scanReceipt(ImageSource source) async {
     try {
@@ -81,28 +111,38 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
 
         // Extract text with ML Kit
         final inputImage = InputImage.fromFile(processedImage);
-        final recognizedText =
-        await _textRecognizer.processImage(inputImage);
+        final recognizedText = await _textRecognizer.processImage(inputImage);
 
-        // Print lines for debugging
-        List<String> debugLines = recognizedText.text.split('\n');
-        print("===== OCR Lines =====");
+        // Debug: print lines
+        final debugLines = recognizedText.text.split('\n');
+        debugPrint("===== OCR Lines =====");
         for (int i = 0; i < debugLines.length; i++) {
-          print('Line $i: "${debugLines[i]}"');
+          debugPrint('Line $i: "${debugLines[i]}"');
         }
-        print("===== End of OCR Lines =====");
+        debugPrint("===== End of OCR Lines =====");
 
-        // Parse receipt data
+        // Parse receipt data from recognized text
         final receiptData = await _parseReceiptData(recognizedText);
-        print("Parsed Receipt Data: $receiptData");
 
+        // Optionally, for each item, call Kassal to get extra info
+        for (final item in receiptData.items) {
+          final results = await _searchKassalProducts(item.name);
+          if (results.isNotEmpty) {
+            final bestMatch = results.first;
+          }
+        }
+
+        // Insert into Supabase
+        await _saveToSupabase(receiptData);
+
+        // Update UI
         setState(() {
           _receiptData = receiptData;
           _isProcessing = false;
         });
       }
     } catch (e) {
-      print('Error scanning receipt: $e');
+      debugPrint('Error scanning receipt: $e');
       setState(() {
         _isProcessing = false;
       });
@@ -111,7 +151,8 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
 
   /// Preprocess the image (resize & blur) to improve OCR accuracy
   Future<File> _preprocessImage(File imageFile) async {
-    img.Image? decoded = img.decodeImage(await imageFile.readAsBytes());
+    final bytes = await imageFile.readAsBytes();
+    img.Image? decoded = img.decodeImage(bytes);
     if (decoded == null) return imageFile;
 
     decoded = img.copyResize(decoded, width: 1000);
@@ -119,7 +160,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
 
     final tempDir = await getTemporaryDirectory();
     final processedPath = '${tempDir.path}/processed_receipt.jpg';
-    File processedImage = File(processedPath);
+    final processedImage = File(processedPath);
     await processedImage.writeAsBytes(img.encodeJpg(decoded));
     return processedImage;
   }
@@ -140,7 +181,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
     );
   }
 
-  /// Extract store name from first ~5 lines (line-based approach)
+  /// Extract store name from first ~5 lines
   String _extractStoreName(List<String> lines) {
     for (int i = 0; i < math.min(5, lines.length); i++) {
       final line = lines[i].trim().toUpperCase();
@@ -178,10 +219,8 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
   /// Extract the total from the last occurrence of relevant total-related words
   double _extractTotal(List<String> lines) {
     final RegExp pricePattern = RegExp(r'(\d+[.,]\d{2})');
-    // Pattern to skip intermediate totals (like "sum 2 varer")
     final RegExp intermediateTotalPattern =
     RegExp(r'sum\s+\d+\s+varer', caseSensitive: false);
-    // Keywords that indicate a total line.
     final List<String> keywords = ['total', 'totalt', 'sum', 'bank'];
     double total = 0.0;
 
@@ -189,31 +228,33 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
     for (int i = lines.length - 1; i >= 0; i--) {
       final String lineLower = lines[i].toLowerCase();
 
-      // Skip intermediate totals (like "sum 2 varer")
+      // Skip intermediate totals
       if (intermediateTotalPattern.hasMatch(lineLower)) {
         continue;
       }
 
-      // Check if this line contains any of our keywords.
-      if (keywords.any((keyword) => lineLower.contains(keyword))) {
-        // Try to extract a price from this line.
+      // Check if this line contains any of our keywords
+      if (keywords.any((k) => lineLower.contains(k))) {
         final match = pricePattern.firstMatch(lines[i]);
         if (match != null) {
-          total = double.tryParse(match.group(1)!.replaceAll(',', '.')) ?? 0.0;
+          total =
+              double.tryParse(match.group(1)!.replaceAll(',', '.')) ?? 0.0;
           return total;
         } else {
-          List<double> candidatePrices = [];
+          // Try lines following it (some receipts print total below)
+          final candidatePrices = <double>[];
           for (int j = i + 1; j < math.min(i + 4, lines.length); j++) {
             final nextMatch = pricePattern.firstMatch(lines[j]);
             if (nextMatch != null) {
-              double price =
-                  double.tryParse(nextMatch.group(1)!.replaceAll(',', '.')) ?? 0.0;
-              candidatePrices.add(price);
+              final p = double.tryParse(
+                nextMatch.group(1)!.replaceAll(',', '.'),
+              ) ??
+                  0.0;
+              candidatePrices.add(p);
             }
           }
           if (candidatePrices.isNotEmpty) {
-            total = candidatePrices.last;
-            return total;
+            return candidatePrices.last;
           }
         }
       }
@@ -221,7 +262,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
     return total;
   }
 
-  /// 2 Column bounding-box approach to extract item names and get corresponding prices
+  /// 2 Column bounding-box approach to extract item names and corresponding prices
   List<ReceiptItem> _extractItemsByBoundingBox(RecognizedText recognizedText) {
     final List<OcrLine> allLines = [];
     for (TextBlock block in recognizedText.blocks) {
@@ -230,16 +271,18 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
       }
     }
 
-    // Sort by top position
+    // Sort by top
     allLines.sort((a, b) => a.box.top.compareTo(b.box.top));
 
-    // Group lines into rows based on vertical proximity
+    // Group lines into rows by vertical proximity
     const double rowThreshold = 20.0;
     final List<List<OcrLine>> rows = [];
+
     for (var line in allLines) {
       bool placed = false;
       for (var row in rows) {
-        double avgTop = row.map((l) => l.box.top).reduce((a, b) => a + b) / row.length;
+        final avgTop =
+            row.map((l) => l.box.top).reduce((a, b) => a + b) / row.length;
         if ((line.box.top - avgTop).abs() < rowThreshold) {
           row.add(line);
           placed = true;
@@ -251,22 +294,24 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
       }
     }
 
-    List<ReceiptItem> items = [];
+    final items = <ReceiptItem>[];
     bool stopParsing = false;
 
-    for (var row in rows) {
+    for (final row in rows) {
       if (stopParsing) break;
-      final combinedLower = row.map((l) => l.text.toLowerCase()).join(' ');
+      final combinedLower =
+      row.map((l) => l.text.toLowerCase()).join(' ');
 
-      // Updated filtering: Skip rows that appear to be intermediate totals
-      if (RegExp(r'sum\s+\d+\s+varer', caseSensitive: false).hasMatch(combinedLower) ||
+      // Skip certain lines that might indicate totals
+      if (RegExp(r'sum\s+\d+\s+varer', caseSensitive: false)
+          .hasMatch(combinedLower) ||
           combinedLower.contains('subtotal') ||
           combinedLower.contains('bank')) {
         stopParsing = true;
         break;
       }
 
-      // Sort row items by their left position
+      // Sort row elements by left
       row.sort((a, b) => a.box.left.compareTo(b.box.left));
 
       if (row.length == 2) {
@@ -289,7 +334,12 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
           }
         }
       } else {
-        final leftText = row.sublist(0, row.length - 1).map((l) => l.text).join(' ');
+        // If more than 2 lines in a row, combine all left ones as name,
+        // last one as price
+        final leftText = row
+            .sublist(0, row.length - 1)
+            .map((l) => l.text)
+            .join(' ');
         final rightText = row.last.text.trim();
         final priceVal = _parsePrice(rightText);
         if (priceVal != null && leftText.isNotEmpty) {
@@ -300,7 +350,6 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
     return items;
   }
 
-  /// Parse a price from a string
   double? _parsePrice(String text) {
     final regex = RegExp(r'(\d+[.,]\d{2})');
     final match = regex.firstMatch(text);
@@ -310,6 +359,57 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
     }
     return null;
   }
+
+  /// Insert the receipt + items into Supabase
+  Future<void> _saveToSupabase(ReceiptData receiptData) async {
+    final supabase = Supabase.instance.client;
+
+    // 1) Insert the receipt row and get it back
+    Map<String, dynamic> insertedReceipt;
+    try {
+      insertedReceipt = await supabase
+          .from('receipts')
+          .insert({
+        'user_id': 'someUserId',
+        'store_name': receiptData.storeName,
+        'total_amount': receiptData.total,
+        'uploaded_at': DateTime.now().toIso8601String(),
+      }).select().single();
+
+      debugPrint('Inserted receipt: $insertedReceipt');
+
+    } catch (e) {
+      debugPrint('Error inserting receipt: $e');
+      return;
+    }
+
+    final receiptId = insertedReceipt['id'];
+    debugPrint('Newly created receipt_id = $receiptId');
+
+    // 2) Insert each item. We'll do each insert in a try/catch too:
+    for (final item in receiptData.items) {
+      try {
+        final insertedItem = await supabase
+            .from('receipt_items')
+            .insert({
+          'receipt_id': receiptId,
+          'name': item.name,
+          'category': 'Uncategorized',
+          'quantity': 1,
+          'price': item.price,
+          'added_at': DateTime.now().toIso8601String(),
+        })
+            .select()
+            .single();
+
+        debugPrint('Inserted item => $insertedItem');
+
+      } catch (e) {
+        debugPrint('Error inserting item "${item.name}": $e');
+      }
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -361,7 +461,6 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            // List of items
             ...receipt.items.map((item) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
