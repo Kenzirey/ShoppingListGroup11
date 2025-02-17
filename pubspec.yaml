@@ -19,7 +19,6 @@ dependencies:
   google_fonts: ^6.2.1
   supabase_flutter: ^2.8.3
   google_sign_in: ^6.2.2
-  sign_in_with_apple: ^6.1.4
   lottie: ^3.3.1
 
   # For OCR
@@ -51,3 +50,9 @@ flutter:
     - assets/animations/success.json
     - assets/animations/logout_confirmation.json
     - assets/animations/error.json
+    - assets/avatars/avatar1.png
+    - assets/avatars/avatar2.png
+    - assets/avatars/avatar3.png
+    - assets/avatars/avatar4.png
+    - assets/avatars/avatar5.png
+    - assets/avatars/avatar6.png
