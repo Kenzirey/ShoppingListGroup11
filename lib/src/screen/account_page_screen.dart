@@ -87,8 +87,6 @@ class AccountPageScreen extends ConsumerWidget {
             end: Alignment.bottomCenter,
           ),
         ),
-        child: SafeArea(
-          child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
             child: Column(
               children: [
@@ -246,8 +244,7 @@ class AccountPageScreen extends ConsumerWidget {
               ],
             ),
           ),
-        ),
-      ),
+
     );
   }
 }

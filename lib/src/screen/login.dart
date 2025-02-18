@@ -29,7 +29,6 @@ class _LoginState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-
   void _showSuccessOverlay(BuildContext context) {
     _successOverlayEntry = OverlayEntry(
       builder: (context) {
@@ -78,8 +77,7 @@ class _LoginState extends ConsumerState<LoginScreen> {
     }
   }
 
-
-void _showErrorOverlay(BuildContext context, String errorMessage) {
+  void _showErrorOverlay(BuildContext context, String errorMessage) {
     _errorOverlayEntry = OverlayEntry(
       builder: (context) {
         final size = MediaQuery.of(context).size;
@@ -128,199 +126,188 @@ void _showErrorOverlay(BuildContext context, String errorMessage) {
       _errorOverlayEntry = null;
     }
   }
+
   @override
   Widget build(BuildContext context) {
-    final theme =
-        Theme.of(context);
+    final theme = Theme.of(context);
     return Scaffold(
-      body: SingleChildScrollView(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight: MediaQuery.of(context).size.height,
-          ),
-          child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Log In",
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.tertiary,
-                        ),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Log In",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.tertiary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  RichText(
+                    text: TextSpan(
+                      text: 'or ',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: theme.colorScheme.tertiary.withOpacity(0.7),
                       ),
-                      const SizedBox(
-                          height:
-                              8),
-                      RichText(
-                        text: TextSpan(
-                          text: 'or ',
+                      children: [
+                        TextSpan(
+                          text: 'sign up here',
                           style: TextStyle(
                             fontSize: 14,
-                            color: theme.colorScheme.tertiary.withOpacity(0.7),
+                            color: theme.colorScheme.primary,
+                            decoration: TextDecoration.underline,
+                            fontWeight: FontWeight.bold,
                           ),
-                          children: [
-                            TextSpan(
-                              text: 'sign up here',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: theme.colorScheme.primary,
-                                decoration: TextDecoration.underline,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  context.go(
-                                      '/sign-up');
-                                },
-                            ),
-                          ],
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () {
+                              context.go('/sign-up');
+                            },
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () async {
-                    try {
-                      final authController = AuthController();
-                      await authController.signInWithGoogle(ref);
-
-                      _showSuccessOverlay(context);
-                      await Future.delayed(const Duration(seconds: 2));
-                      _removeSuccessOverlay();
-                      context.go('/');
-                    } catch (e) {
-                      _showErrorOverlay(context, 'Google login failed. Please try again.');
-                      await Future.delayed(const Duration(seconds: 2));
-                      _removeErrorOverlay();
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    backgroundColor: theme.colorScheme.primary,
-                    minimumSize: const Size.fromHeight(56),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      ],
                     ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.g_translate,
-                        color: theme.colorScheme.onPrimary,
-                        size: 24,
-                      ),
-                      const SizedBox(width: 16),
-                      const Text("Google Login"),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 22),
-                Text(
-                  "Email",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: theme.colorScheme.tertiary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    hintText: 'Lisanordmann@hotmail.com',
-                    hintStyle: TextStyle(
-                      color: theme.colorScheme.tertiary.withOpacity(0.6),
-                      fontSize: 16,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: theme.colorScheme.tertiary),
-                    ),
-                    border: const OutlineInputBorder(),
-                    floatingLabelBehavior: FloatingLabelBehavior.never,
-                  ),
-                  style: TextStyle(color: theme.colorScheme.tertiary),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  "Password",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: theme.colorScheme.tertiary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    hintText: '********',
-                    hintStyle: TextStyle(
-                      color: theme.colorScheme.tertiary.withOpacity(0.6),
-                      fontSize: 16,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: theme.colorScheme.tertiary),
-                    ),
-                    border: const OutlineInputBorder(),
-                    floatingLabelBehavior: FloatingLabelBehavior.never,
-                  ),
-                  style: TextStyle(color: theme.colorScheme.tertiary),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () async {
-                    final email = _emailController.text.trim();
-                    final password = _passwordController.text.trim();
-
-                    if (email.isEmpty || password.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Please fill in all fields')),
-                      );
-                      return;
-                    }
-
-                    try {
-                      final authController = AuthController();
-                      await authController.login(ref, email, password);
-                      _showSuccessOverlay(context);
-                      await Future.delayed(const Duration(seconds: 2));
-                      _removeSuccessOverlay();
-                      context.go('/');
-                    } catch (e) {
-                      _showErrorOverlay(context, 'Wrong username or password');
-                      await Future.delayed(const Duration(seconds: 2));
-                      _removeErrorOverlay();
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    backgroundColor: theme.colorScheme.secondary,
-                    minimumSize: const Size.fromHeight(56),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text("Login"),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  final authController = AuthController();
+                  await authController.signInWithGoogle(ref);
+                  if (mounted) {}
+                  _showSuccessOverlay(context);
+                  await Future.delayed(const Duration(seconds: 2));
+                  _removeSuccessOverlay();
+                  context.go('/');
+                } catch (e) {
+                  _showErrorOverlay(
+                      context, 'Google login failed. Please try again.');
+                  await Future.delayed(const Duration(seconds: 2));
+                  _removeErrorOverlay();
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                foregroundColor: theme.colorScheme.onPrimary,
+                backgroundColor: theme.colorScheme.primary,
+                minimumSize: const Size.fromHeight(56),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.g_translate,
+                    color: theme.colorScheme.onPrimary,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 16),
+                  const Text("Google Login"),
+                ],
+              ),
+            ),
+            const SizedBox(height: 22),
+            Text(
+              "Email",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: theme.colorScheme.tertiary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                hintText: 'Lisanordmann@hotmail.com',
+                hintStyle: TextStyle(
+                  color: theme.colorScheme.tertiary.withOpacity(0.6),
+                  fontSize: 16,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: theme.colorScheme.tertiary),
+                ),
+                border: const OutlineInputBorder(),
+                floatingLabelBehavior: FloatingLabelBehavior.never,
+              ),
+              style: TextStyle(color: theme.colorScheme.tertiary),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              "Password",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: theme.colorScheme.tertiary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _passwordController,
+              obscureText: true,
+              decoration: InputDecoration(
+                hintText: '********',
+                hintStyle: TextStyle(
+                  color: theme.colorScheme.tertiary.withOpacity(0.6),
+                  fontSize: 16,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: theme.colorScheme.tertiary),
+                ),
+                border: const OutlineInputBorder(),
+                floatingLabelBehavior: FloatingLabelBehavior.never,
+              ),
+              style: TextStyle(color: theme.colorScheme.tertiary),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () async {
+                final email = _emailController.text.trim();
+                final password = _passwordController.text.trim();
+
+                if (email.isEmpty || password.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please fill in all fields')),
+                  );
+                  return;
+                }
+
+                try {
+                  final authController = AuthController();
+                  await authController.login(ref, email, password);
+                  _showSuccessOverlay(context);
+                  await Future.delayed(const Duration(seconds: 2));
+                  _removeSuccessOverlay();
+                  context.go('/');
+                } catch (e) {
+                  _showErrorOverlay(context, 'Wrong username or password');
+                  await Future.delayed(const Duration(seconds: 2));
+                  _removeErrorOverlay();
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                foregroundColor: theme.colorScheme.onPrimary,
+                backgroundColor: theme.colorScheme.primary,
+                minimumSize: const Size.fromHeight(56),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text("Login"),
+            ),
+          ],
         ),
       ),
     );
