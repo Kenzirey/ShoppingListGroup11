@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class InformationScreen extends StatelessWidget {
   const InformationScreen({Key? key}) : super(key: key);
@@ -7,7 +8,23 @@ class InformationScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Information'),
+        leading: IconButton(
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              context.goNamed('accountPage');
+            }
+          },
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+        ),
+        title: const Text(
+          'Information',
+          style: TextStyle(color: Colors.white),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body: DefaultTextStyle(
         style: const TextStyle(color: Colors.white),
