@@ -124,7 +124,7 @@ class AccountPageScreen extends ConsumerWidget {
                   right: 0,
                   child: GestureDetector(
                     onTap: () {
-                      context.pushNamed('updateProfile');
+                      context.pushNamed('updateAvatarScreen');
                     },
                     child: Container(
                       width: 35,
