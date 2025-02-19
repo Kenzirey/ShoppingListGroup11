@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shopping_list_g11/models/recipe.dart';
+import 'package:shopping_list_g11/controllers/gemini_controller.dart';
 import 'package:shopping_list_g11/providers/chat_provider.dart';
 import 'package:shopping_list_g11/providers/recipe_provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_gemini/flutter_gemini.dart';
 
 /// Screen for asking AI for a specific recipe.
 /// Allows user to save a recipe for later, ask for a new one, or view recipe in recipe screen.
@@ -29,83 +28,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
-  }
-
-  Future<String> _getGeminiResponse(String message) async {
-    StringBuffer fullResponseBuffer = StringBuffer();
-
-    // So that the response is predictable, and user doesn't need to specify things.
-    String systemPrompt = """
-You are an AI assistant that provides recipes. Please structure your response as follows:
-
-**Recipe Name:** [Insert name here]
-**Summary:** [Insert brief summary here]
-**Yields:** [Insert servings]
-**Prep Time:** [Insert time]
-**Cook Time:** [Insert time]
-
-**Ingredients:**
-[Insert ingredients]
-
-**Instructions:**
-[Insert step-by-step instructions]
-
-Ensure that the recipe name is a distinct section, separate from the summary.
-""";
-
-    try {
-      await for (var value in Gemini.instance.promptStream(
-        parts: [Part.text("$systemPrompt\n\nUser request: $message")],
-      )) {
-        final textOutput = value?.output ?? "";
-        fullResponseBuffer.write(textOutput);
-      }
-
-      final fullResponseText = fullResponseBuffer.toString().trim();
-
-      return fullResponseText.isNotEmpty
-          ? fullResponseText
-          : "Error: No output from Gemini.";
-    } catch (exception) {
-      debugPrint("Gemini Error: $exception"); //temporary debug
-
-      if (exception.toString().contains("Status Code: 429")) {
-        // Should set up user feedback instead of exceptions later on. 429 is the rate exceeded code.
-        return "Error: Rate limit exceeded. Please wait and try again.";
-      }
-
-      return "Error: Could not get response.";
-    }
-  }
-
-  void _sendMessage() async {
-    if (_controller.text.trim().isEmpty) return;
-
-    final userMessage = _controller.text;
-    ref
-        .read(chatProvider.notifier)
-        .sendMessage(text: userMessage, isUser: true);
-
-    _controller.clear();
-
-    ref.read(chatProvider.notifier).sendMessage(
-          text: 'Thinking of recipe...',
-          isUser: false,
-        );
-
-    final geminiResponse = await _getGeminiResponse(userMessage);
-
-    // Parse response into a "Recipe" object.
-    final parsedRecipe = Recipe.fromChunks(geminiResponse.split("\n\n"));
-
-    if (parsedRecipe.name.isNotEmpty &&
-        parsedRecipe.ingredients.isNotEmpty &&
-        parsedRecipe.instructions.isNotEmpty) {
-      ref.read(recipeProvider.notifier).state = parsedRecipe;
-      ref.read(chatProvider.notifier).updateLastBotMessage(geminiResponse);
-    } else {
-      debugPrint("Error: Recipe parsing failed.");
-    }
   }
 
   @override
@@ -268,10 +190,10 @@ Ensure that the recipe name is a distinct section, separate from the summary.
                         suffixIcon: IconButton(
                           icon: const Icon(Icons.send),
                           color: Theme.of(context).colorScheme.tertiary,
-                          onPressed: _sendMessage,
+                          onPressed: () => GeminiController(ref: ref, controller: _controller).sendMessage(),
                         ),
                       ),
-                      onSubmitted: (_) => _sendMessage(),
+                      onSubmitted: (_) => GeminiController(ref: ref, controller: _controller).sendMessage(),
                     ),
                   ),
                 ],

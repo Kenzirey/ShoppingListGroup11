@@ -15,7 +15,6 @@ import 'package:shopping_list_g11/src/widget/my_drawer.dart';
 import 'package:shopping_list_g11/src/widget/top_bar.dart';
 import '../src/screen/scan_receipt_screen.dart';
 import 'package:shopping_list_g11/src/screen/account_page_screen.dart';
-import 'package:shopping_list_g11/src/screen/account_page_screen.dart';
 import 'package:shopping_list_g11/src/screen/update_profile_screen.dart';
 import 'package:shopping_list_g11/src/screen/information_screen.dart';
 
