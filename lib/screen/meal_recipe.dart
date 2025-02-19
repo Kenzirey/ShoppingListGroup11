@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shopping_list_g11/providers/recipe_provider.dart';
-import 'package:shopping_list_g11/src/widget/ingredient_list.dart';
+import 'package:shopping_list_g11/widget/ingredient_list.dart';
+import '../controllers/recipe_controller.dart';
+import '../models/recipe.dart';
 
 /// Screen for showing the recipe details for a meal.
 /// with both ingredients and instructions.
@@ -16,19 +18,24 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
   bool _isExpanded = true; // Track expansion state, initially expanded
 
   @override
-  Widget build(BuildContext context) {
-    final recipe = ref.watch(recipeProvider);
+  void initState() {
+    super.initState();
+    // If no recipe is present (none from chat bot, or from clicking a meal etc, fetch one from Supa. Temporary!)
+    if (ref.read(recipeProvider) == null) {
+      RecipeController(ref: ref).loadRecipeFromSupabase();
+    }
+  }
 
+  @override
+  Widget build(BuildContext context) {
+    final Recipe? recipe = ref.watch(recipeProvider);
+
+    // While loading in recipe for visual feedback.
     if (recipe == null) {
-      debugPrint("ERROR: Recipe data is missing.");
       return const Scaffold(
-        body: Center(
-          child: Text("Error: No recipe data available."),
-        ),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
-
-    debugPrint("MealRecipeScreen received recipe: ${recipe.name}");
 
     return Scaffold(
       body: SingleChildScrollView(
@@ -138,7 +145,7 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                 ...recipe.instructions.map((step) => Padding(
                       padding: const EdgeInsets.only(bottom: 4),
                       child: Text(
-                        "• $step",
+                        step,
                         style: TextStyle(
                             color: Theme.of(context).colorScheme.tertiary),
                       ),

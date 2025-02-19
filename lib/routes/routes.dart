@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shopping_list_g11/src/screen/chat_screen.dart';
-import 'package:shopping_list_g11/src/screen/home_screen.dart';
-import 'package:shopping_list_g11/src/screen/login.dart';
-import 'package:shopping_list_g11/src/screen/meal_planner.dart';
-import 'package:shopping_list_g11/src/screen/meal_recipe.dart';
-import 'package:shopping_list_g11/src/screen/saved_recipes.dart';
-import 'package:shopping_list_g11/src/screen/shopping_list.dart';
-import 'package:shopping_list_g11/src/screen/purchase_history.dart';
-import 'package:shopping_list_g11/src/screen/signup_screen.dart';
-import 'package:shopping_list_g11/src/screen/trending_meal.dart';
-import 'package:shopping_list_g11/src/widget/bottom_nav_bar.dart';
-import 'package:shopping_list_g11/src/widget/my_drawer.dart';
-import 'package:shopping_list_g11/src/widget/top_bar.dart';
-import '../src/screen/scan_receipt_screen.dart';
-import 'package:shopping_list_g11/src/screen/account_page_screen.dart';
-import 'package:shopping_list_g11/src/screen/update_profile_screen.dart';
-import 'package:shopping_list_g11/src/screen/information_screen.dart';
+import 'package:shopping_list_g11/screen/chat_screen.dart';
+import 'package:shopping_list_g11/screen/home_screen.dart';
+import 'package:shopping_list_g11/screen/login.dart';
+import 'package:shopping_list_g11/screen/meal_planner.dart';
+import 'package:shopping_list_g11/screen/meal_recipe.dart';
+import 'package:shopping_list_g11/screen/saved_recipes.dart';
+import 'package:shopping_list_g11/screen/shopping_list.dart';
+import 'package:shopping_list_g11/screen/purchase_history.dart';
+import 'package:shopping_list_g11/screen/signup_screen.dart';
+import 'package:shopping_list_g11/screen/trending_meal.dart';
+import 'package:shopping_list_g11/widget/bottom_nav_bar.dart';
+import 'package:shopping_list_g11/widget/my_drawer.dart';
+import 'package:shopping_list_g11/widget/top_bar.dart';
+import '../screen/scan_receipt_screen.dart';
+import 'package:shopping_list_g11/screen/account_page_screen.dart';
+import 'package:shopping_list_g11/screen/update_profile_screen.dart';
+import 'package:shopping_list_g11/screen/information_screen.dart';
 
 class AppRouter {
   static final GlobalKey<ScaffoldState> _scaffoldKey =

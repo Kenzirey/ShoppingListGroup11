@@ -6,7 +6,7 @@ import 'package:shopping_list_g11/providers/current_user_provider.dart';
 
 /// Drawer widget for the app.
 class MyDrawer extends ConsumerWidget {
-  const MyDrawer({Key? key}) : super(key: key);
+  const MyDrawer({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

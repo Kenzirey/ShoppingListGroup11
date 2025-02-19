@@ -4,6 +4,7 @@ import 'package:shopping_list_g11/controllers/gemini_controller.dart';
 import 'package:shopping_list_g11/providers/chat_provider.dart';
 import 'package:shopping_list_g11/providers/recipe_provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shopping_list_g11/widget/styles/chat_button_styles.dart';
 
 /// Screen for asking AI for a specific recipe.
 /// Allows user to save a recipe for later, ask for a new one, or view recipe in recipe screen.
@@ -137,67 +138,112 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
             // Show recipe section, temporary setup.
             if (hasRecipe)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12.0),
-                child: ElevatedButton(
-                  onPressed: () {
-                    context.goNamed('recipe');
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 12, horizontal: 24),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Text("View Full Recipe",
-                      style: TextStyle(fontSize: 18)),
-                ),
-              ),
-
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.tertiary,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Type a message...',
-                        hintStyle: TextStyle(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .tertiary
-                              .withOpacity(0.6),
-                        ),
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Theme.of(context).colorScheme.primary,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // need to add recipe to supabase + save it to the user's saved recipe list here.
+                      },
+                      style: ButtonStyles.addForLater(
+                          Theme.of(context).colorScheme.primaryContainer),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.add,
+                              size: 20,
+                              color: Theme.of(context).colorScheme.tertiary),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Add for later",
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Theme.of(context).colorScheme.tertiary,
+                            ),
                           ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Theme.of(context).colorScheme.primary,
-                            width: 2,
-                          ),
-                        ),
-                        // Send button inside textfield
-                        // https://api.flutter.dev/flutter/material/InputDecoration/suffixIcon.html
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.send),
-                          color: Theme.of(context).colorScheme.tertiary,
-                          onPressed: () => GeminiController(ref: ref, controller: _controller).sendMessage(),
-                        ),
+                        ],
                       ),
-                      onSubmitted: (_) => GeminiController(ref: ref, controller: _controller).sendMessage(),
+                    ),
+                  ),
+                  const SizedBox(
+                      width:
+                          16), // Space between the buttons above the textform
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        context.goNamed('recipe');
+                      },
+                      style: ButtonStyles.viewRecipe(
+                          Theme.of(context).colorScheme.primaryContainer),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.restaurant_menu,
+                              size: 20,
+                              color: Theme.of(context).colorScheme.tertiary),
+                          const SizedBox(width: 8),
+                          Text(
+                            "View Recipe",
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Theme.of(context).colorScheme.tertiary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
+
+            const SizedBox(height: 12),
+
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.tertiary,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Type a message...',
+                      hintStyle: TextStyle(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .tertiary
+                            .withOpacity(0.6),
+                      ),
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.primary,
+                          width: 2,
+                        ),
+                      ),
+                      // Send button inside textfield
+                      // https://api.flutter.dev/flutter/material/InputDecoration/suffixIcon.html
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.send),
+                        color: Theme.of(context).colorScheme.tertiary,
+                        onPressed: () =>
+                            GeminiController(ref: ref, controller: _controller)
+                                .sendMessage(),
+                      ),
+                    ),
+                    onSubmitted: (_) =>
+                        GeminiController(ref: ref, controller: _controller)
+                            .sendMessage(),
+                  ),
+                ),
+              ],
             ),
             // adds distance between bottom nav bar and the text field.
             const SizedBox(
