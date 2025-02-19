@@ -132,9 +132,9 @@ class _LoginState extends ConsumerState<LoginScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 12),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Align(
@@ -178,7 +178,7 @@ class _LoginState extends ConsumerState<LoginScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             ElevatedButton(
               onPressed: () async {
                 try {
@@ -217,7 +217,7 @@ class _LoginState extends ConsumerState<LoginScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 14),
             Text(
               "Email",
               style: TextStyle(
@@ -226,7 +226,6 @@ class _LoginState extends ConsumerState<LoginScreen> {
                 color: theme.colorScheme.tertiary,
               ),
             ),
-            const SizedBox(height: 8),
             TextFormField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
@@ -244,7 +243,7 @@ class _LoginState extends ConsumerState<LoginScreen> {
               ),
               style: TextStyle(color: theme.colorScheme.tertiary),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
               "Password",
               style: TextStyle(
@@ -253,7 +252,6 @@ class _LoginState extends ConsumerState<LoginScreen> {
                 color: theme.colorScheme.tertiary,
               ),
             ),
-            const SizedBox(height: 8),
             TextFormField(
               controller: _passwordController,
               obscureText: true,
