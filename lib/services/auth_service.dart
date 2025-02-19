@@ -187,5 +187,16 @@ class AuthService {
   return loggedInUser;
 }
 
+Future<void> changePassword(String newPassword) async {
+  try {
+    await _client.auth.updateUser(
+      UserAttributes(password: newPassword),
+    );
+    print('Password updated successfully.');
+  } catch (e) {
+    throw Exception('Error updating password: $e');
+  }
+}
+
 }
 
