@@ -4,7 +4,8 @@ class AppUser {
   final String userName;
   final String email;
   final List<String> dietaryPreferences;
-  final String? avatarUrl; 
+  final String? avatarUrl;
+  final String authId;
   //final String image; //path to the image (since we plan on letting them choose from pre-set images)
   String get name => userName;
   AppUser(
@@ -12,10 +13,12 @@ class AppUser {
       required this.email,
       required this.dietaryPreferences,
       this.avatarUrl,
+      required this.authId,
 });
 
 factory AppUser.fromMap(Map<String, dynamic> map, String email) {
     return AppUser(
+      authId: map['auth_id'] ?? '',
       userName: map['name'] ?? '',
       email: email,
       dietaryPreferences: map['dietary_preferences'] == null
