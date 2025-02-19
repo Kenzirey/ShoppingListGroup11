@@ -99,4 +99,14 @@ class AuthController {
       rethrow;
     }
   }
+
+Future<void> changePassword(WidgetRef ref, String newPassword) async {
+  try {
+    await _authService.changePassword(newPassword);
+  } catch (e) {
+    print('Password change failed: $e');
+    rethrow;
+  }
+}
+
 }
