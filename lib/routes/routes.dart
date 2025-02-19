@@ -15,8 +15,9 @@ import 'package:shopping_list_g11/widget/my_drawer.dart';
 import 'package:shopping_list_g11/widget/top_bar.dart';
 import '../screen/scan_receipt_screen.dart';
 import 'package:shopping_list_g11/screen/account_page_screen.dart';
-import 'package:shopping_list_g11/screen/update_profile_screen.dart';
+import 'package:shopping_list_g11/screen/update_avatar_screen.dart';
 import 'package:shopping_list_g11/screen/information_screen.dart';
+import 'package:shopping_list_g11/screen/edit_account_details_screen.dart';
 
 class AppRouter {
   static final GlobalKey<ScaffoldState> _scaffoldKey =
@@ -117,14 +118,20 @@ class AppRouter {
             builder: (context, state) => const SavedRecipesScreen(),
           ),
           GoRoute(
-            path: '/update-profile',
-            name: 'updateProfile',
-            builder: (context, state) => const UpdateProfileScreen(),
+            path: '/edit-account-details',
+            name: 'editAccountDetails',
+            builder: (context, state) => const EditAccountDetailsScreen(),
           ),
           GoRoute(
             path: '/information',
             name: 'informationPage',
             builder: (context, state) => const InformationScreen(),
+          ),
+
+          GoRoute(
+            path: '/update_avatar_screen',
+            name: 'updateAvatarScreen',
+            builder: (context, state) => const UpdateAvatarScreen(),
           ),
         ],
       ),
