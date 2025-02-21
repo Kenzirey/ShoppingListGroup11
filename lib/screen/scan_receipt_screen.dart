@@ -46,7 +46,6 @@ class ReceiptItem {
     required this.name,
     required this.price,
     this.weight,
-    // this.category,
   });
 
   @override
@@ -86,8 +85,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
           return data;
         }
       } else {
-        debugPrint(
-            'Kassal API error: ${response.statusCode} => ${response.body}');
+        debugPrint('Kassal API error: ${response.statusCode} => ${response.body}');
       }
     } catch (e) {
       debugPrint('Error in Kassal search: $e');
@@ -95,6 +93,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
     return [];
   }
 
+  /// The main entry point for scanning a receipt (via camera or gallery).
   Future<void> _scanReceipt(ImageSource source) async {
     try {
       final picker = ImagePicker();
@@ -129,10 +128,12 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
           final results = await _searchKassalProducts(item.name);
           if (results.isNotEmpty) {
             final bestMatch = results.first;
+            debugPrint('Kassal best match for "${item.name}": $bestMatch');
+            // You can store or use this data if you want, e.g. item.category = bestMatch['category']
           }
         }
 
-        // Insert into Supabase
+        // Insert into Supabase (requires a logged-in user for user_id)
         await _saveToSupabase(receiptData);
 
         // Update UI
@@ -181,7 +182,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
     );
   }
 
-  /// Extract store name from first ~5 lines
+  /// Extract store name from the first ~5 lines (line-based approach)
   String _extractStoreName(List<String> lines) {
     for (int i = 0; i < math.min(5, lines.length); i++) {
       final line = lines[i].trim().toUpperCase();
@@ -201,8 +202,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
     final datePatterns = [
       RegExp(r'\b\d{2}[./-]\d{2}[./-]\d{2,4}\b'),
       RegExp(r'\b\d{4}[./-]\d{2}[./-]\d{2}\b'),
-      RegExp(
-          r'\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*\d{1,2},?\s*\d{4}\b'),
+      RegExp(r'\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*\d{1,2},?\s*\d{4}\b'),
     ];
 
     for (String line in lines) {
@@ -237,8 +237,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
       if (keywords.any((k) => lineLower.contains(k))) {
         final match = pricePattern.firstMatch(lines[i]);
         if (match != null) {
-          total =
-              double.tryParse(match.group(1)!.replaceAll(',', '.')) ?? 0.0;
+          total = double.tryParse(match.group(1)!.replaceAll(',', '.')) ?? 0.0;
           return total;
         } else {
           // Try lines following it (some receipts print total below)
@@ -278,9 +277,9 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
     const double rowThreshold = 20.0;
     final List<List<OcrLine>> rows = [];
 
-    for (var line in allLines) {
+    for (final line in allLines) {
       bool placed = false;
-      for (var row in rows) {
+      for (final row in rows) {
         final avgTop =
             row.map((l) => l.box.top).reduce((a, b) => a + b) / row.length;
         if ((line.box.top - avgTop).abs() < rowThreshold) {
@@ -299,8 +298,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
 
     for (final row in rows) {
       if (stopParsing) break;
-      final combinedLower =
-      row.map((l) => l.text.toLowerCase()).join(' ');
+      final combinedLower = row.map((l) => l.text.toLowerCase()).join(' ');
 
       // Skip certain lines that might indicate totals
       if (RegExp(r'sum\s+\d+\s+varer', caseSensitive: false)
@@ -334,12 +332,9 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
           }
         }
       } else {
-        // If more than 2 lines in a row, combine all left ones as name,
-        // last one as price
-        final leftText = row
-            .sublist(0, row.length - 1)
-            .map((l) => l.text)
-            .join(' ');
+        // If more than 2 lines in a row, combine all left ones as name, last one as price
+        final leftText =
+        row.sublist(0, row.length - 1).map((l) => l.text).join(' ');
         final rightText = row.last.text.trim();
         final priceVal = _parsePrice(rightText);
         if (priceVal != null && leftText.isNotEmpty) {
@@ -360,24 +355,52 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
     return null;
   }
 
-  /// Insert the receipt + items into Supabase
+  /// Insert the receipt + items into Supabase,
   Future<void> _saveToSupabase(ReceiptData receiptData) async {
     final supabase = Supabase.instance.client;
 
-    // 1) Insert the receipt row and get it back
+    final user = supabase.auth.currentUser;
+    if (user == null) {
+      debugPrint('User is not logged in! Cannot insert receipt.');
+      return;
+    }
+
+    Map<String, dynamic>? profileRow;
+    try {
+      final response = await supabase
+          .from('profiles')
+          .select()
+          .eq('auth_id', user.id)
+          .single();
+
+      profileRow = response;
+    } catch (e) {
+      debugPrint('Error fetching profile row: $e');
+      return;
+    }
+
+    if (profileRow == null) {
+      debugPrint('No profile row found for this user.');
+      return;
+    }
+
+    final profileId = profileRow['id'];
+    debugPrint('Profile ID for user ${user.id} => $profileId');
+
     Map<String, dynamic> insertedReceipt;
     try {
       insertedReceipt = await supabase
           .from('receipts')
           .insert({
-        'user_id': 'someUserId',
+        'user_id': profileId,
         'store_name': receiptData.storeName,
         'total_amount': receiptData.total,
         'uploaded_at': DateTime.now().toIso8601String(),
-      }).select().single();
+      })
+          .select()
+          .single();
 
       debugPrint('Inserted receipt: $insertedReceipt');
-
     } catch (e) {
       debugPrint('Error inserting receipt: $e');
       return;
@@ -386,7 +409,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
     final receiptId = insertedReceipt['id'];
     debugPrint('Newly created receipt_id = $receiptId');
 
-    // 2) Insert each item. We'll do each insert in a try/catch too:
+    // 4) Insert each item row, referencing the receipt_id
     for (final item in receiptData.items) {
       try {
         final insertedItem = await supabase
@@ -394,7 +417,6 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
             .insert({
           'receipt_id': receiptId,
           'name': item.name,
-          'category': 'Uncategorized',
           'quantity': 1,
           'price': item.price,
           'added_at': DateTime.now().toIso8601String(),
@@ -403,7 +425,6 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
             .single();
 
         debugPrint('Inserted item => $insertedItem');
-
       } catch (e) {
         debugPrint('Error inserting item "${item.name}": $e');
       }
