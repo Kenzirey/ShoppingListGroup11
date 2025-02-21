@@ -36,20 +36,22 @@ class ReceiptData {
   }
 }
 
-/// Data class to hold the parsed receipt item
+/// Data class to hold the parsed receipt item.
 class ReceiptItem {
-  final String name;
-  final double price;
-  final String? weight;
+  String name;
+  double price;
+  String? allergy;
 
   ReceiptItem({
     required this.name,
     required this.price,
-    this.weight,
+    this.allergy,
   });
 
   @override
-  String toString() => 'ReceiptItem(name: $name, price: $price)';
+  String toString() {
+    return 'ReceiptItem(name: $name, price: $price)';
+  }
 }
 
 /// Screen widget for scanning a receipt
@@ -72,20 +74,38 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
   bool _isProcessing = false;
   File? _image;
 
-  // Helper: search Kassal for a product name, returning a list of matches
+  String _cleanName(String raw) {
+    final cleaned = raw.replaceAll(RegExp(r'\b\d+%\b', caseSensitive: false), '');
+    return cleaned.trim();
+  }
+
+  /// Helper: search Kassal for a product name, returning a list of matches
   Future<List<dynamic>> _searchKassalProducts(String query) async {
+    debugPrint('== Searching Kassal for query="$query" ==');
     final url = Uri.parse('$_kKassalBaseUrl?search=$query&sort=price_desc');
+
     try {
       final response = await http.get(url, headers: {
         'Authorization': 'Bearer $_kBearerToken',
       });
+      debugPrint('Kassal response status: ${response.statusCode}');
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        if (data is List) {
-          return data;
+        debugPrint('Kassal raw data for "$query": $data');
+
+        // Kassal typically returns a JSON object with a "data" key that is a list
+        if (data is Map<String, dynamic> && data.containsKey('data')) {
+          final products = data['data'];
+          if (products is List) {
+            return products;
+          }
+        } else {
+          debugPrint('Unexpected response format: ${data.runtimeType}');
         }
       } else {
-        debugPrint('Kassal API error: ${response.statusCode} => ${response.body}');
+        debugPrint(
+            'Kassal API error: ${response.statusCode} => ${response.body}');
       }
     } catch (e) {
       debugPrint('Error in Kassal search: $e');
@@ -99,49 +119,70 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
       final picker = ImagePicker();
       final XFile? image = await picker.pickImage(source: source);
 
-      if (image != null) {
-        setState(() {
-          _image = File(image.path);
-          _isProcessing = true;
-        });
+      if (image == null) return;
 
-        // Preprocess the image
-        final processedImage = await _preprocessImage(_image!);
+      setState(() {
+        _image = File(image.path);
+        _isProcessing = true;
+      });
 
-        // Extract text with ML Kit
-        final inputImage = InputImage.fromFile(processedImage);
-        final recognizedText = await _textRecognizer.processImage(inputImage);
+      // Preprocess & OCR
+      final processedImage = await _preprocessImage(_image!);
+      final inputImage = InputImage.fromFile(processedImage);
+      final recognizedText = await _textRecognizer.processImage(inputImage);
 
-        // Debug: print lines
-        final debugLines = recognizedText.text.split('\n');
-        debugPrint("===== OCR Lines =====");
-        for (int i = 0; i < debugLines.length; i++) {
-          debugPrint('Line $i: "${debugLines[i]}"');
-        }
-        debugPrint("===== End of OCR Lines =====");
+      // Parse receipt
+      final receiptData = await _parseReceiptData(recognizedText);
 
-        // Parse receipt data from recognized text
-        final receiptData = await _parseReceiptData(recognizedText);
+      // 1) Gather unique item names from the receipt
+      final uniqueNames = receiptData.items.map((e) => e.name).toSet();
 
-        // Optionally, for each item, call Kassal to get extra info
-        for (final item in receiptData.items) {
-          final results = await _searchKassalProducts(item.name);
-          if (results.isNotEmpty) {
-            final bestMatch = results.first;
-            debugPrint('Kassal best match for "${item.name}": $bestMatch');
-            // You can store or use this data if you want, e.g. item.category = bestMatch['category']
+      // 2) Fetch Kassal search results in parallel for each unique name
+      final futureSearches = uniqueNames.map((name) async {
+        final result = await _searchKassalProducts(name);
+        return MapEntry(name, result);
+      }).toList();
+
+      // Wait for all parallel calls
+      final allResults = await Future.wait(futureSearches);
+      // Turn it into a map
+      final searchMap = Map<String, List<dynamic>>.fromEntries(allResults);
+
+      // 3) Now loop through the actual items and look up the Kassal results
+      for (final item in receiptData.items) {
+        final results = searchMap[item.name] ?? [];
+        if (results.isNotEmpty) {
+          final bestMatch = results.first;
+          debugPrint('Kassal best match for "${item.name}": $bestMatch');
+
+          if (bestMatch is Map<String, dynamic>) {
+            // If you want to parse allergens:
+            final allergenList = bestMatch['allergens'];
+            if (allergenList is List) {
+              final relevantAllergens = allergenList
+                  .where((a) =>
+              a is Map &&
+                  a['contains'] != null &&
+                  a['contains'].toString().toUpperCase() == 'YES')
+                  .map((a) => a['display_name'])
+                  .toList();
+
+              final allergenString = relevantAllergens.join(', ');
+              item.allergy = allergenString.isEmpty ? null : allergenString;
+              debugPrint(
+                  'Extracted allergens for "${item.name}": ${item.allergy}');
+            }
           }
         }
-
-        // Insert into Supabase (requires a logged-in user for user_id)
-        await _saveToSupabase(receiptData);
-
-        // Update UI
-        setState(() {
-          _receiptData = receiptData;
-          _isProcessing = false;
-        });
       }
+
+      // Insert into Supabase
+      await _saveToSupabase(receiptData);
+
+      setState(() {
+        _receiptData = receiptData;
+        _isProcessing = false;
+      });
     } catch (e) {
       debugPrint('Error scanning receipt: $e');
       setState(() {
@@ -202,7 +243,8 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
     final datePatterns = [
       RegExp(r'\b\d{2}[./-]\d{2}[./-]\d{2,4}\b'),
       RegExp(r'\b\d{4}[./-]\d{2}[./-]\d{2}\b'),
-      RegExp(r'\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*\d{1,2},?\s*\d{4}\b'),
+      RegExp(
+          r'\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*\d{1,2},?\s*\d{4}\b'),
     ];
 
     for (String line in lines) {
@@ -261,7 +303,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
     return total;
   }
 
-  /// 2 Column bounding-box approach to extract item names and corresponding prices
+  /// 2-column bounding-box approach to extract item names and corresponding prices
   List<ReceiptItem> _extractItemsByBoundingBox(RecognizedText recognizedText) {
     final List<OcrLine> allLines = [];
     for (TextBlock block in recognizedText.blocks) {
@@ -298,9 +340,11 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
 
     for (final row in rows) {
       if (stopParsing) break;
-      final combinedLower = row.map((l) => l.text.toLowerCase()).join(' ');
 
-      // Skip certain lines that might indicate totals
+      final combinedLower =
+      row.map((l) => l.text.toLowerCase()).join(' ');
+
+      // Skip certain lines that might indicate totals or non-item rows
       if (RegExp(r'sum\s+\d+\s+varer', caseSensitive: false)
           .hasMatch(combinedLower) ||
           combinedLower.contains('subtotal') ||
@@ -309,15 +353,23 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
         break;
       }
 
+      // Also skip lines that mention "pant"
+      if (combinedLower.contains('pant')) {
+        debugPrint('Skipping pant line: $combinedLower');
+        continue;
+      }
+
       // Sort row elements by left
       row.sort((a, b) => a.box.left.compareTo(b.box.left));
 
       if (row.length == 2) {
-        final nameText = row[0].text.trim();
+        final rawNameText = row[0].text.trim();
+        final cleanedName = _cleanName(rawNameText); // remove "15%", etc.
         final priceText = row[1].text.trim();
         final priceVal = _parsePrice(priceText);
-        if (priceVal != null && nameText.isNotEmpty) {
-          items.add(ReceiptItem(name: nameText, price: priceVal));
+
+        if (priceVal != null && cleanedName.isNotEmpty) {
+          items.add(ReceiptItem(name: cleanedName, price: priceVal));
         }
       } else if (row.length == 1) {
         final singleText = row[0].text.trim();
@@ -326,19 +378,21 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
           final match = RegExp(r'(\d+[.,]\d{2})').firstMatch(singleText);
           if (match != null) {
             final namePart = singleText.substring(0, match.start).trim();
-            if (namePart.isNotEmpty) {
-              items.add(ReceiptItem(name: namePart, price: priceVal));
+            final cleanedName = _cleanName(namePart);
+            if (cleanedName.isNotEmpty) {
+              items.add(ReceiptItem(name: cleanedName, price: priceVal));
             }
           }
         }
       } else {
         // If more than 2 lines in a row, combine all left ones as name, last one as price
-        final leftText =
-        row.sublist(0, row.length - 1).map((l) => l.text).join(' ');
+        final leftText = row.sublist(0, row.length - 1).map((l) => l.text).join(' ');
+        final cleanedName = _cleanName(leftText);
         final rightText = row.last.text.trim();
         final priceVal = _parsePrice(rightText);
-        if (priceVal != null && leftText.isNotEmpty) {
-          items.add(ReceiptItem(name: leftText, price: priceVal));
+
+        if (priceVal != null && cleanedName.isNotEmpty) {
+          items.add(ReceiptItem(name: cleanedName, price: priceVal));
         }
       }
     }
@@ -355,7 +409,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
     return null;
   }
 
-  /// Insert the receipt + items into Supabase,
+  /// Insert the receipt + items into Supabase
   Future<void> _saveToSupabase(ReceiptData receiptData) async {
     final supabase = Supabase.instance.client;
 
@@ -372,7 +426,6 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
           .select()
           .eq('auth_id', user.id)
           .single();
-
       profileRow = response;
     } catch (e) {
       debugPrint('Error fetching profile row: $e');
@@ -399,7 +452,6 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
       })
           .select()
           .single();
-
       debugPrint('Inserted receipt: $insertedReceipt');
     } catch (e) {
       debugPrint('Error inserting receipt: $e');
@@ -409,7 +461,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
     final receiptId = insertedReceipt['id'];
     debugPrint('Newly created receipt_id = $receiptId');
 
-    // 4) Insert each item row, referencing the receipt_id
+    // Insert each item row, referencing the receipt_id
     for (final item in receiptData.items) {
       try {
         final insertedItem = await supabase
@@ -419,18 +471,17 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
           'name': item.name,
           'quantity': 1,
           'price': item.price,
+          'allergy': item.allergy,
           'added_at': DateTime.now().toIso8601String(),
         })
             .select()
             .single();
-
         debugPrint('Inserted item => $insertedItem');
       } catch (e) {
         debugPrint('Error inserting item "${item.name}": $e');
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -482,6 +533,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
               ),
             ),
             const SizedBox(height: 16),
+            // List of items with allergy info if available
             ...receipt.items.map((item) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
@@ -490,7 +542,9 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        item.name,
+                        item.allergy == null
+                            ? item.name
+                            : '${item.name} (Allergy: ${item.allergy})',
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.tertiary,
                           fontSize: 16,
