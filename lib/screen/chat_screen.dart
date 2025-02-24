@@ -5,6 +5,10 @@ import 'package:shopping_list_g11/providers/chat_provider.dart';
 import 'package:shopping_list_g11/providers/recipe_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shopping_list_g11/widget/styles/chat_button_styles.dart';
+import '../controllers/recipe_controller.dart';
+import '../controllers/saved_recipe_controller.dart';
+import '../models/saved_recipe.dart';
+import '../providers/current_user_provider.dart';
 
 /// Screen for asking AI for a specific recipe.
 /// Allows user to save a recipe for later, ask for a new one, or view recipe in recipe screen.
@@ -143,8 +147,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 children: [
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
-                        // need to add recipe to supabase + save it to the user's saved recipe list here.
+                      onPressed: () async {
+                        // TODO: make sure user is actually logged in, user feedback / checks.
+                        final currentRecipe = ref.read(recipeProvider);
+                        final currentUser = ref.read(currentUserProvider);
+                        final router = GoRouter.of(context);
+                        if (currentRecipe != null) {
+                          await RecipeController(ref: ref)
+                              .addRecipe(currentRecipe);
+                        }
+                        if (currentRecipe != null && currentUser != null) {
+                          final savedRecipe = SavedRecipe(
+                              recipe: currentRecipe,
+                              userId: currentUser.authId);
+                          SavedRecipesController(ref: ref)
+                              .addRecipe(savedRecipe);
+                        }
+                        if (!mounted) return;
+                        router.goNamed('savedRecipes');
                       },
                       style: ButtonStyles.addForLater(
                           Theme.of(context).colorScheme.primaryContainer),
@@ -172,8 +192,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           16), // Space between the buttons above the textform
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
-                        context.goNamed('recipe');
+                      onPressed: () async {
+                        // to not use context in async gap with unrelated mount check :).
+                        final router = GoRouter.of(context);
+                        final currentRecipe = ref.read(recipeProvider);
+                        if (currentRecipe != null) {
+                          await RecipeController(ref: ref)
+                              .addRecipe(currentRecipe);
+                        }
+                        if (!mounted) return;
+                        router.goNamed('recipe');
                       },
                       style: ButtonStyles.viewRecipe(
                           Theme.of(context).colorScheme.primaryContainer),

@@ -12,7 +12,7 @@ class RecipeController {
 
   RecipeController({required this.ref});
 
-  /// Attempts to load one (any) recipe from Supabase. 
+  /// Attempts to load one (any) recipe from Supabase.
   /// Primarily for testing right now!
   /// If a recipe is already present (for example, redirected via the chat bot),
   /// no action is taken.
@@ -37,8 +37,37 @@ class RecipeController {
       // Update provider with the new recipe
       ref.read(recipeProvider.notifier).state = fetchedRecipe;
     } catch (e) {
-      debugPrint("Error fetching recipe from Supabase: $e"); // temporary debugging
+      debugPrint(
+          "Error fetching recipe from Supabase: $e"); // temporary debugging
       ref.read(recipeProvider.notifier).state = _defaultRecipe();
+    }
+  }
+
+  /// Adds a recipe to the database, if it doesn't currently exist.
+  Future<void> addRecipe(Recipe recipe) async {
+    // Query Supabase to check for an existing recipe with the same name (not case sensitive).
+    final existing = await supabase
+        .from('recipes')
+        .select('name')
+        .ilike('name', recipe.name);
+
+    try {
+      // If no recipe exists, insert the new one.
+      if ((existing as List).isEmpty) {
+        await supabase.from('recipes').insert({
+          'name': recipe.name,
+          'summary': recipe.summary,
+          'total_time': recipe.totalTime,
+          'yields': recipe.yields,
+          'ingredients': recipe.ingredients,
+          'instructions': recipe.instructions,
+        });
+        debugPrint("If you're seeing this, have a good day");
+      } else {
+        debugPrint("A recipe with the name '${recipe.name}' already exists.");
+      }
+    } catch (e) {
+      debugPrint("Error adding recipe: $e");
     }
   }
 

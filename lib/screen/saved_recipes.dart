@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../controllers/saved_recipe_controller.dart';
+import '../providers/saved_recipe_provider.dart';
 
 /// Screen that shows recipes that users have chosen to save for later.
 /// Allows user to see how many portions recipe is for, as well as dietary information (lactose, vegan).
@@ -7,21 +9,15 @@ class SavedRecipesScreen extends ConsumerStatefulWidget {
   const SavedRecipesScreen({super.key});
 
   @override
-  SavedRecipesState createState() => SavedRecipesState();
+  ConsumerState<SavedRecipesScreen> createState() => _SavedRecipesState();
 }
 
-class SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
-
-  // Just some dummy data.
-  final List<Map<String, dynamic>> savedRecipes = [
-    {'name': 'Vegan Pasta', 'isVegan': true, 'isLactoseFree': true, 'servings': 2},
-    {'name': 'Cheese Omelette', 'isVegan': false, 'isLactoseFree': false, 'servings': 1},
-    {'name': 'Lactose-Free Pancakes', 'isVegan': false, 'isLactoseFree': true, 'servings': 4},
-    {'name': 'Vegetable Stir-Fry', 'isVegan': true, 'isLactoseFree': true, 'servings': 2},
-  ];
-
+class _SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
   @override
   Widget build(BuildContext context) {
+    // Dynamically get saved recipes from the provider.
+    final savedRecipes = ref.watch(savedRecipesProvider);
+
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
@@ -43,11 +39,13 @@ class SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
                 padding: const EdgeInsets.only(bottom: 64.0),
                 itemCount: savedRecipes.length,
                 itemBuilder: (context, index) {
-                  final recipe = savedRecipes[index];
+                  final savedRecipe = savedRecipes[index];
+                  final recipe = savedRecipe.recipe;
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 10, horizontal: 14),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(8),
@@ -57,7 +55,8 @@ class SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
                         Row(
                           children: [
                             Text(
-                              '${recipe['servings']}',
+                              // to remove the 'servings' text from the response, as it is not necessary for this screen :)
+                              recipe.yields.replaceAll(RegExp(r'[^\d]'), ''),
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -65,51 +64,36 @@ class SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
                               ),
                             ),
                             const SizedBox(width: 4),
-                            Icon(Icons.people,
-                                size: 20,
-                                color: Theme.of(context).colorScheme.tertiary),
+                            Icon(
+                              Icons.people,
+                              size: 20,
+                              color: Theme.of(context).colorScheme.tertiary,
+                            ),
                           ],
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: RichText(
                             text: TextSpan(
-                              text: recipe['name'],
+                              text: recipe.name,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w500,
                                 color: Theme.of(context).colorScheme.tertiary,
                               ),
-                              children: [
-                                if (recipe['isVegan'])
-                                  WidgetSpan(
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(left: 8.0),
-                                      child: Icon(Icons.eco,
-                                          size: 20,
-                                          color: Theme.of(context).colorScheme.primary),
-                                    ),
-                                  ),
-                                if (recipe['isLactoseFree'])
-                                  WidgetSpan(
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(left: 8.0),
-                                      child: Icon(Icons.local_drink,
-                                          size: 20,
-                                          color: Theme.of(context).colorScheme.primary),
-                                    ),
-                                  ),
-                              ],
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         IconButton(
-                          icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.tertiary),
+                          icon: Icon(
+                            Icons.delete,
+                            color: Theme.of(context).colorScheme.tertiary,
+                          ),
                           onPressed: () {
-                            setState(() {
-                              savedRecipes.removeAt(index);
-                            });
+                            // Use the controller to remove the saved recipe.
+                            SavedRecipesController(ref: ref)
+                                .removeRecipe(savedRecipe);
                           },
                         ),
                       ],
@@ -117,6 +101,26 @@ class SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
                   );
                 },
               ),
+            ),
+            // Action button placed within the padding at the bottom right.
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    // should we have this button? search? list?
+                  },
+                  style: ElevatedButton.styleFrom(
+                    shape: const CircleBorder(),
+                    padding: const EdgeInsets.all(20),
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                  ),
+                  child: Icon(
+                    Icons.add,
+                    color: Theme.of(context).colorScheme.tertiary,
+                  ),
+                ),
+              ],
             ),
           ],
         ),

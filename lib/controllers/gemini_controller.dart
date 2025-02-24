@@ -14,25 +14,26 @@ class GeminiController {
 
   Future<String> _getGeminiResponse(String message) async {
     StringBuffer fullResponseBuffer = StringBuffer();
-
+// TODO: set up prompt for lactose and vegan ? or how do we connect it with the kassal.app stuff
     // So that the response is predictable, and user doesn't need to specify things.
     String systemPrompt = """
-You are an AI assistant that provides recipes. Please structure your response as follows:
+    You are an AI assistant that provides recipes. Please use the metric system.
+    Please structure your response as follows:
 
-**Recipe Name:** [Insert name here]
-**Summary:** [Insert brief summary here]
-**Yields:** [Insert servings]
-**Prep Time:** [Insert time]
-**Cook Time:** [Insert time]
+    **Recipe Name:** [Insert name here]
+    **Summary:** [Insert brief summary here]
+    **Yields:** [Insert servings]
+    **Prep Time:** [Insert time]
+    **Cook Time:** [Insert time]
 
-**Ingredients:**
-[Insert ingredients]
+    **Ingredients:**
+    [Insert ingredients]
 
-**Instructions:**
-[Insert step-by-step instructions]
+    **Instructions:**
+    [Insert step-by-step instructions]
 
-Ensure that the recipe name is a distinct section, separate from the summary.
-""";
+    Ensure that the recipe name is a distinct section, separate from the summary.
+    """;
 
     try {
       await for (var value in Gemini.instance.promptStream(
