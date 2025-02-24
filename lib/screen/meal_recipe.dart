@@ -53,22 +53,37 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
               ),
             ),
             const SizedBox(height: 12),
-
-            // Time for recipe and serving size (person)
+            // Time for recipe and serving size/yields (person)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Prep time with its icon.
                 Row(
                   children: [
-                    const Icon(Icons.access_time, size: 16),
+                    const Icon(Icons.timer_outlined, size: 16), // icon for prep time
                     const SizedBox(width: 4),
                     Text(
-                      recipe.totalTime,
+                      recipe.prepTime, // e.g. "15 minutes"
                       style: TextStyle(
-                          color: Theme.of(context).colorScheme.tertiary),
+                        color: Theme.of(context).colorScheme.tertiary,
+                      ),
                     ),
                   ],
                 ),
+                // Cook time with a different icon.
+                Row(
+                  children: [
+                    const Icon(Icons.local_fire_department, size: 16), // icon for cook time
+                    const SizedBox(width: 4),
+                    Text(
+                      recipe.cookTime, // e.g. "120 minutes"
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.tertiary,
+                      ),
+                    ),
+                  ],
+                ),
+                // Yields (serving size)
                 Row(
                   children: [
                     const Icon(Icons.people, size: 16),
@@ -76,14 +91,14 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                     Text(
                       recipe.yields,
                       style: TextStyle(
-                          color: Theme.of(context).colorScheme.tertiary),
+                        color: Theme.of(context).colorScheme.tertiary,
+                      ),
                     ),
                   ],
                 ),
               ],
             ),
             const SizedBox(height: 8),
-
             // Ingredients Section ⏬
             Column(
               children: [
@@ -128,7 +143,6 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
               ],
             ),
             const SizedBox(height: 8),
-
             // Instructions
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,7 +161,8 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                       child: Text(
                         step,
                         style: TextStyle(
-                            color: Theme.of(context).colorScheme.tertiary),
+                          color: Theme.of(context).colorScheme.tertiary,
+                        ),
                       ),
                     )),
               ],

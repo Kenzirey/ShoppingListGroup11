@@ -23,8 +23,9 @@ class GeminiController {
     **Recipe Name:** [Insert name here]
     **Summary:** [Insert brief summary here]
     **Yields:** [Insert servings]
-    **Prep Time:** [Insert time]
-    **Cook Time:** [Insert time]
+    **Prep Time:** [Insert the time used for all tasks before the cooking process begins (e.g., chopping, marinating, gathering ingredients)]
+    **Cook Time:** [Insert the time from when the dish starts cooking until it is fully done]
+    **Total Time:** [Automatically calculate as Prep Time + Cook Time]
 
     **Ingredients:**
     [Insert ingredients]

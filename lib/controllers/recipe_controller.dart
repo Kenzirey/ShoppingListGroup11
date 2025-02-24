@@ -28,6 +28,8 @@ class RecipeController {
       final fetchedRecipe = Recipe(
         name: data['name'] as String,
         summary: data['summary'] as String,
+        prepTime: data['prep_time'] as String,
+        cookTime: data['cook_time'] as String,
         totalTime: data['total_time'] as String,
         yields: data['yields'] as String,
         ingredients: List<String>.from(data['ingredients'] as List),
@@ -57,6 +59,8 @@ class RecipeController {
         await supabase.from('recipes').insert({
           'name': recipe.name,
           'summary': recipe.summary,
+          'prep_time': recipe.prepTime,
+          'cook_time': recipe.cookTime,
           'total_time': recipe.totalTime,
           'yields': recipe.yields,
           'ingredients': recipe.ingredients,
@@ -75,6 +79,9 @@ class RecipeController {
   Recipe _defaultRecipe() {
     return Recipe(
       name: "Pesto Pasta",
+      prepTime: '1 min',
+      cookTime: '59 min',
+
       totalTime: "Over 60 min",
       summary: 'test',
       yields: "4 Personer",
