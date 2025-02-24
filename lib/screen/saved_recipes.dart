@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../controllers/recipe_controller.dart';
 import '../controllers/saved_recipe_controller.dart';
+import '../providers/recipe_provider.dart';
 import '../providers/saved_recipe_provider.dart';
 
 /// Screen that shows recipes that users have chosen to save for later.
@@ -41,62 +44,73 @@ class _SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
                 itemBuilder: (context, index) {
                   final savedRecipe = savedRecipes[index];
                   final recipe = savedRecipe.recipe;
+                  /// Inkwell, so that entire "item" is clickable, and adds the recipe
+                  return InkWell(
+                    onTap: () async {
+                      final router = GoRouter.of(context);
+                      // This now sets the 'active' recipe to the one clicked on in saved recipe list.
+                      ref.read(recipeProvider.notifier).state =
+                          savedRecipe.recipe;
 
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 10, horizontal: 14),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              // to remove the 'servings' text from the response, as it is not necessary for this screen :)
-                              recipe.yields.replaceAll(RegExp(r'[^\d]'), ''),
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                      if (!mounted) return;
+                      router.goNamed('recipe');
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 14),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                // to remove the 'servings' text from the response, as it is not necessary for this screen :)
+                                recipe.yields.replaceAll(RegExp(r'[^\d]'), ''),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.tertiary,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.people,
+                                size: 20,
                                 color: Theme.of(context).colorScheme.tertiary,
                               ),
+                            ],
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: RichText(
+                              text: TextSpan(
+                                text: recipe.name,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Theme.of(context).colorScheme.tertiary,
+                                ),
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.people,
-                              size: 20,
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              Icons.delete,
                               color: Theme.of(context).colorScheme.tertiary,
                             ),
-                          ],
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: RichText(
-                            text: TextSpan(
-                              text: recipe.name,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: Theme.of(context).colorScheme.tertiary,
-                              ),
-                            ),
-                            overflow: TextOverflow.ellipsis,
+                            onPressed: () {
+                              // Use the controller to remove the saved recipe.
+                              SavedRecipesController(ref: ref)
+                                  .removeRecipe(savedRecipe);
+                            },
                           ),
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.delete,
-                            color: Theme.of(context).colorScheme.tertiary,
-                          ),
-                          onPressed: () {
-                            // Use the controller to remove the saved recipe.
-                            SavedRecipesController(ref: ref)
-                                .removeRecipe(savedRecipe);
-                          },
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 },
