@@ -54,7 +54,7 @@ class SupabaseService {
         await supabase.from('receipt_items').insert({
           'receipt_id': receiptId,
           'name': item.name,
-          'quantity': 1,
+          'quantity': item.quantity,
           'price': item.price,
           'allergy': item.allergy,
           'added_at': DateTime.now().toIso8601String(),
