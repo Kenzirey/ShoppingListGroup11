@@ -1,5 +1,5 @@
 import 'dart:ui';
-
+import 'package:flutter/cupertino.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 import 'dart:math' as math;
 import '../models/receipt_item.dart';
@@ -11,15 +11,24 @@ class OcrLine {
   OcrLine({required this.box, required this.text});
 }
 
-/// Parses receipt data from OCR results
+/// Parses recognized text from a receipt image
 class ReceiptParser {
 
-  /// Cleans item names by removing unwanted patterns (e.g. trailing percentages)
+  /// Extracts receipt data from the recognized text
   String cleanName(String raw) {
-    final cleaned = raw.replaceAll(RegExp(r'\b\d+%\b', caseSensitive: false), '');
-    return cleaned.trim();
+    // Remove percentage patterns like "15%"
+    raw = raw.replaceAll(RegExp(r'\s*\d+\s*%', caseSensitive: false), '');
+
+    // Remove quantity patterns like "6 stk" or "x 3"
+    raw = raw.replaceAll(RegExp(r'\b\d+\s*stk\b', caseSensitive: false), '');
+    raw = raw.replaceAll(RegExp(r'\b(\d+\s*x|x\s*\d+)\b', caseSensitive: false), '');
+
+    // Remove extra spaces
+    raw = raw.replaceAll(RegExp(r'\s+'), ' ').trim();
+    return raw;
   }
 
+  /// Extracts the store name from the recognized text
   String extractStoreName(List<String> lines) {
     for (int i = 0; i < math.min(5, lines.length); i++) {
       final line = lines[i].trim().toUpperCase();
@@ -34,6 +43,7 @@ class ReceiptParser {
     return 'Unknown Store';
   }
 
+  /// Extracts the date from the recognized text
   String extractDate(List<String> lines) {
     final datePatterns = [
       RegExp(r'\b\d{2}[./-]\d{2}[./-]\d{2,4}\b'),
@@ -52,6 +62,7 @@ class ReceiptParser {
     return '';
   }
 
+  /// Extracts the total amount from the recognized text
   double extractTotal(List<String> lines) {
     final RegExp pricePattern = RegExp(r'(\d+[.,]\d{2})');
     final RegExp intermediateTotalPattern = RegExp(r'sum\s+\d+\s+varer', caseSensitive: false);
@@ -67,6 +78,7 @@ class ReceiptParser {
           total = double.tryParse(match.group(1)!.replaceAll(',', '.')) ?? 0.0;
           return total;
         } else {
+          // Fallback: look at the next few lines
           final candidatePrices = <double>[];
           for (int j = i + 1; j < math.min(i + 4, lines.length); j++) {
             final nextMatch = pricePattern.firstMatch(lines[j]);
@@ -92,10 +104,10 @@ class ReceiptParser {
       }
     }
 
-    // Sort by vertical position
+    // Sort by boundingBox top
     allLines.sort((a, b) => a.box.top.compareTo(b.box.top));
 
-    // Group lines into rows based on vertical proximity
+    // Group lines that belong on the same "row"
     const double rowThreshold = 20.0;
     final List<List<OcrLine>> rows = [];
     for (final line in allLines) {
@@ -115,34 +127,40 @@ class ReceiptParser {
 
     final items = <ReceiptItem>[];
     bool stopParsing = false;
-
-    for (final row in rows) {
+    for (int i = 0; i < rows.length; i++) {
       if (stopParsing) break;
+      final row = rows[i];
 
       final combinedLower = row.map((l) => l.text.toLowerCase()).join(' ');
-      // End parsing when encountering non-item rows
+      // If we see lines that indicate a total, we assume the item section is done.
       if (RegExp(r'sum\s+\d+\s+varer', caseSensitive: false).hasMatch(combinedLower) ||
           combinedLower.contains('subtotal') ||
           combinedLower.contains('bank')) {
         stopParsing = true;
         break;
       }
+      // Also skip lines that mention 'pant'
       if (combinedLower.contains('pant')) {
+        debugPrint('Skipping pant line: $combinedLower');
         continue;
       }
 
-      // Sort row elements left-to-right
+      // Sort row elements by boundingBox left, so [name..., possible price]
       row.sort((a, b) => a.box.left.compareTo(b.box.left));
 
+      // If row has 2 elements => (name, price)
       if (row.length == 2) {
         final rawNameText = row[0].text.trim();
         final cleanedName = cleanName(rawNameText);
         final priceText = row[1].text.trim();
         final priceVal = _parsePrice(priceText);
+
         if (priceVal != null && cleanedName.isNotEmpty) {
           items.add(ReceiptItem(name: cleanedName, price: priceVal));
         }
-      } else if (row.length == 1) {
+      }
+      // If only 1 element => might be e.g. "Apples 19.90"
+      else if (row.length == 1) {
         final singleText = row[0].text.trim();
         final priceVal = _parsePrice(singleText);
         if (priceVal != null) {
@@ -155,11 +173,14 @@ class ReceiptParser {
             }
           }
         }
-      } else {
+      }
+      // If more than 2 => combine all but last as name, last as price
+      else {
         final leftText = row.sublist(0, row.length - 1).map((l) => l.text).join(' ');
         final cleanedName = cleanName(leftText);
         final rightText = row.last.text.trim();
         final priceVal = _parsePrice(rightText);
+
         if (priceVal != null && cleanedName.isNotEmpty) {
           items.add(ReceiptItem(name: cleanedName, price: priceVal));
         }
@@ -173,7 +194,7 @@ class ReceiptParser {
     final match = regex.firstMatch(text);
     if (match != null) {
       final raw = match.group(1)!;
-      return double.parse(raw.replaceAll(',', '.'));
+      return double.tryParse(raw.replaceAll(',', '.'));
     }
     return null;
   }
