@@ -66,6 +66,9 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
         final results = searchMap[item.name] ?? [];
         if (results.isNotEmpty && results.first is Map<String, dynamic>) {
           final bestMatch = results.first as Map<String, dynamic>;
+
+          debugPrint('Product: ${bestMatch['name']} Allergens: ${bestMatch['allergens']}');
+
           final allergenList = bestMatch['allergens'];
           if (allergenList is List) {
             final relevantAllergens = allergenList
@@ -162,7 +165,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
                       ),
                     ),
                     Text(
-                      '${item.price.toStringAsFixed(2)} kr',
+                      '${(item.quantity * item.price).toStringAsFixed(2)} kr',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.tertiary,
                         fontSize: 16,
