@@ -15,18 +15,31 @@ class EditAccountDetailsScreen extends ConsumerStatefulWidget {
       _EditAccountDetailsScreenState();
 }
 
-class _EditAccountDetailsScreenState extends ConsumerState<EditAccountDetailsScreen> {
+class _EditAccountDetailsScreenState
+    extends ConsumerState<EditAccountDetailsScreen> {
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _currentPasswordController =
+      TextEditingController();
+  final TextEditingController _newPasswordController = TextEditingController();
   final List<String> _dietaryOptions = ['Vegan', 'Vegetarian', 'Gluten-Free'];
-  final List<String> _selectedDiets = [];
-
+  List<String> _selectedDiets = [];
   OverlayEntry? _successOverlayEntry;
+
+  @override
+  void initState() {
+    super.initState();
+    final currentUser = ref.read(currentUserProvider);
+    if (currentUser != null) {
+      _nameController.text = currentUser.name;
+      _selectedDiets = List.from(currentUser.dietaryPreferences);
+    }
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _passwordController.dispose();
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
     super.dispose();
   }
 
@@ -71,10 +84,8 @@ class _EditAccountDetailsScreenState extends ConsumerState<EditAccountDetailsScr
   }
 
   void _removeSuccessOverlay() {
-    if (_successOverlayEntry != null) {
-      _successOverlayEntry!.remove();
-      _successOverlayEntry = null;
-    }
+    _successOverlayEntry?.remove();
+    _successOverlayEntry = null;
   }
 
   @override
@@ -87,7 +98,7 @@ class _EditAccountDetailsScreenState extends ConsumerState<EditAccountDetailsScr
       );
     }
 
-    _nameController.text = currentUser.name;
+    final bool isGoogleUser = currentUser.isGoogleUser;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Edit Account Details')),
@@ -104,13 +115,41 @@ class _EditAccountDetailsScreenState extends ConsumerState<EditAccountDetailsScr
                 style: const TextStyle(color: Colors.white),
               ),
               const SizedBox(height: 16),
-              TextField(
-                controller: _passwordController,
+
+              if (!isGoogleUser) ...[
+                TextField(
+                  controller: _currentPasswordController,
+                  obscureText: true,
+                  enabled: !isGoogleUser && isGoogleUser != null,
+                  decoration: InputDecoration(
+                    labelText: 'Current Password',
+                    filled: isGoogleUser,
+                    fillColor: isGoogleUser ? Colors.grey.shade800 : Colors.transparent,
+                  ),
+                  style: TextStyle(color: isGoogleUser ? Colors.grey : Colors.white),
+                ),
+                const SizedBox(height: 16),
+               TextField(
+                controller: _newPasswordController,
                 obscureText: true,
-                decoration: const InputDecoration(labelText: 'New Password'),
-                style: const TextStyle(color: Colors.white),
+                enabled: !isGoogleUser,
+                decoration: InputDecoration(
+                  labelText: 'New Password',
+                  filled: isGoogleUser,
+                  fillColor: isGoogleUser ? Colors.grey.shade800 : Colors.transparent,
+                ),
+                style: TextStyle(color: isGoogleUser ? Colors.grey : Colors.white),
               ),
-              const SizedBox(height: 16),
+
+                const SizedBox(height: 16),
+              ] else ...[
+                const Text(
+                  'Password changes are not allowed for Google accounts.',
+                  style: TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 16),
+              ],
+
               const Text(
                 'Dietary Preferences:',
                 style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
@@ -140,20 +179,54 @@ class _EditAccountDetailsScreenState extends ConsumerState<EditAccountDetailsScr
                 child: ElevatedButton(
                   onPressed: () async {
                     try {
-                      final newPassword = _passwordController.text.trim();
-                      if (newPassword.isNotEmpty) {
-                        await ref.read(authControllerProvider).changePassword(ref, newPassword);
-                      }
-
                       final newName = _nameController.text.trim();
                       final authController = ref.read(authControllerProvider);
-                      await authController.updateProfile(
-                        ref: ref,
-                        avatarUrl: currentUser.avatarUrl,
-                        dietaryPreferences: _selectedDiets.isEmpty
-                            ? currentUser.dietaryPreferences
-                            : _selectedDiets,
-                      );
+
+                      if (!isGoogleUser && _currentPasswordController.text.isNotEmpty && _newPasswordController.text.isNotEmpty) {
+                        final currentPassword =
+                            _currentPasswordController.text.trim();
+                        final newPassword = _newPasswordController.text.trim();
+
+                        if ((currentPassword.isNotEmpty && newPassword.isEmpty) ||
+                            (currentPassword.isEmpty && newPassword.isNotEmpty)) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text(
+                                    'Both password fields must be filled.')),
+                          );
+                          return;
+                        }
+
+                        if (currentPassword.isNotEmpty && newPassword.isNotEmpty) {
+                          try {
+                            final user = await authController.login(
+                                ref, currentUser.email, currentPassword);
+                            if (user != null) {
+                              await authController.changePassword(ref, newPassword);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Password changed successfully!')),
+                              );
+                            }
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Incorrect current password.')),
+                            );
+                            return;
+                          }
+                        }
+                      }
+
+                      bool shouldUpdateProfile =
+                          _selectedDiets != currentUser.dietaryPreferences;
+
+                      if (shouldUpdateProfile) {
+                        await authController.updateProfile(
+                          ref: ref,
+                          avatarUrl: currentUser.avatarUrl,
+                          dietaryPreferences: _selectedDiets,
+                        );
+                      }
 
                       if (newName.isNotEmpty && newName != currentUser.name) {
                         final updatedData = await Supabase.instance.client
@@ -163,8 +236,10 @@ class _EditAccountDetailsScreenState extends ConsumerState<EditAccountDetailsScr
                             .select()
                             .maybeSingle();
                         if (updatedData != null) {
-                          final updatedUser = AppUser.fromMap(updatedData, currentUser.email);
-                          ref.read(currentUserProvider.notifier).state = updatedUser;
+                          final updatedUser =
+                              AppUser.fromMap(updatedData, currentUser.email);
+                          ref.read(currentUserProvider.notifier).state =
+                              updatedUser;
                         }
                       }
 

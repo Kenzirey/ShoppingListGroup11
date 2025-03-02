@@ -27,6 +27,8 @@ class AuthService {
             'auth_id': supabaseUser.id,
             'name': userName ?? '',
             'dietary_preferences': [],
+            'provider': 'email',
+            
           })
           .select()
           .single(); 
@@ -180,6 +182,7 @@ class AuthService {
     'name': googleUser.displayName ?? '',
     'avatar_url': googleUser.photoUrl ?? '',
     'dietary_preferences': [],
+    'provider': 'google',
   }).select().single();
 
   final loggedInUser = AppUser.fromMap(profileData, supabaseUser.email ?? '');
@@ -187,16 +190,37 @@ class AuthService {
   return loggedInUser;
 }
 
-Future<void> changePassword(String newPassword) async {
-  try {
-    await _client.auth.updateUser(
-      UserAttributes(password: newPassword),
-    );
-    print('Password updated successfully.');
-  } catch (e) {
-    throw Exception('Error updating password: $e');
+
+  Future<void> changePassword(String newPassword) async {
+    try {
+      final supabaseUser = _client.auth.currentUser;
+      if (supabaseUser == null) {
+        throw Exception('No user logged in.');
+      }
+
+      final profileData = await _client
+          .from('profiles')
+          .select()
+          .eq('auth_id', supabaseUser.id)
+          .maybeSingle();
+
+      if (profileData == null) {
+        throw Exception('No profile found for this user.');
+      }
+
+      if (profileData['provider'] == 'google') {
+        throw Exception('Cannot change password for Google accounts.');
+      }
+
+      await _client.auth.updateUser(
+        UserAttributes(password: newPassword),
+      );
+
+      print('Password updated successfully.');
+    } catch (e) {
+      throw Exception('Error updating password: $e');
+    }
   }
-}
 
 }
 

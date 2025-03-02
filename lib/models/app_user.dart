@@ -6,17 +6,24 @@ class AppUser {
   final List<String> dietaryPreferences;
   final String? avatarUrl;
   final String authId;
-  //final String image; //path to the image (since we plan on letting them choose from pre-set images)
+  final String provider;
+
   String get name => userName;
+
+  bool get isGoogleUser => provider.toLowerCase() == 'google';
+
   AppUser(
       {required this.userName,
       required this.email,
       required this.dietaryPreferences,
       this.avatarUrl,
       required this.authId,
+      required this.provider,
 });
 
 factory AppUser.fromMap(Map<String, dynamic> map, String email) {
+    final provider = map['provider']?.toString().toLowerCase() ?? 'email';
+
     return AppUser(
       authId: map['auth_id'] ?? '',
       userName: map['name'] ?? '',
@@ -25,6 +32,8 @@ factory AppUser.fromMap(Map<String, dynamic> map, String email) {
           ? []
           : List<String>.from(map['dietary_preferences']),
       avatarUrl: map['avatar_url'] ?? '',
+      provider: provider,
     );
-  }
+}
+
 }
