@@ -86,14 +86,25 @@ class AuthService {
   }
 
   // Logout
-  Future<void> logout() async {
-    try {
-      await _client.auth.signOut();
-      print('Logout successful');
-    } catch (e) {
-      throw Exception('Logout failed: $e');
+ Future<void> logout({bool isGoogleUser = false}) async {
+  try {
+    if (isGoogleUser) {
+      final googleSignIn = GoogleSignIn(
+        clientId: '235387261747-j5fhreodgr19sfb6hb18n4hv9o4u1mui.apps.googleusercontent.com',
+        scopes: <String>['email', 'profile'],
+      );
+      if (await googleSignIn.isSignedIn()) {
+        await googleSignIn.disconnect();
+      }
     }
+    await _client.auth.signOut();
+    print('Logout successful');
+  } catch (e) {
+    throw Exception('Logout failed: $e');
   }
+}
+
+
 
   //modify profile
   Future<AppUser> updateProfile({

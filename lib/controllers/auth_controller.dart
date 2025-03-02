@@ -45,18 +45,21 @@ class AuthController {
     }
   }
 
-  Future<void> logout(WidgetRef ref) async {
-    try {
-      await _authService.logout();
-
-      ref.read(currentUserProvider.notifier).state = null;
-
-      print('Logout successful');
-    } catch (e) {
-      print('Logout failed: $e');
-      rethrow;
-    }
+ Future<void> logout(WidgetRef ref) async {
+  
+  final currentUser = ref.read(currentUserProvider);
+  final bool isGoogle = currentUser?.isGoogleUser ?? false;
+  
+  try {
+    await _authService.logout(isGoogleUser: isGoogle);
+    ref.read(currentUserProvider.notifier).state = null;
+    print('Logout successful');
+  } catch (e) {
+    print('Logout failed: $e');
+    rethrow;
   }
+}
+
 
 
  
