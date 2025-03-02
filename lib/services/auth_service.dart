@@ -145,7 +145,7 @@ class AuthService {
   }
 }
 
-  Future<AppUser> signInWithGoogleNative() async {
+Future<AppUser> signInWithGoogleNative() async {
   final GoogleSignIn googleSignIn = GoogleSignIn(
     clientId: '235387261747-j5fhreodgr19sfb6hb18n4hv9o4u1mui.apps.googleusercontent.com',  // iOS Client ID
     serverClientId: '235387261747-4j0m8os04p7pdkcg9romdamosko3av1o.apps.googleusercontent.com', // Web Client ID
@@ -183,7 +183,6 @@ class AuthService {
         .select()
         .eq('auth_id', supabaseUser.id)
         .maybeSingle();
-
     if (profileData != null) break;
     await Future.delayed(const Duration(seconds: 2));
   }
@@ -192,9 +191,25 @@ class AuthService {
     'auth_id': supabaseUser.id,
     'name': googleUser.displayName ?? '',
     'avatar_url': googleUser.photoUrl ?? '',
+    'google_avatar_url': googleUser.photoUrl ?? '',
     'dietary_preferences': [],
     'provider': 'google',
   }).select().single();
+
+  if (profileData != null && profileData['provider'] == 'google') {
+    if ((profileData['google_avatar_url'] == null ||
+         profileData['google_avatar_url'].toString().isEmpty) &&
+        googleUser.photoUrl != null &&
+        googleUser.photoUrl!.isNotEmpty) {
+      final updatedData = await _client
+          .from('profiles')
+          .update({'google_avatar_url': googleUser.photoUrl})
+          .eq('auth_id', supabaseUser.id)
+          .select()
+          .single();
+      profileData = updatedData;
+    }
+  }
 
   final loggedInUser = AppUser.fromMap(profileData, supabaseUser.email ?? '');
   print('Google Sign-In successful: ${loggedInUser.email}');
