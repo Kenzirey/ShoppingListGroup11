@@ -2,47 +2,61 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shopping_list_g11/routes/routes.dart';
 
-/// Bottom navigation bar for the entire app. Always visisble,
-/// allows user to navigate to their to-buy list, home and to shopping list (receipts).
+/// Bottom navigation bar for the entire app. Always visible,
+/// allows user to navigate to the most used screens.
+/// Index 0 is reserved to open the drawer.
 class BottomNavBar extends StatelessWidget {
   final int selectedIndex;
+  final GlobalKey<ScaffoldState> scaffoldKey;
 
-  const BottomNavBar({super.key, required this.selectedIndex});
+  const BottomNavBar({
+    super.key,
+    required this.selectedIndex,
+    required this.scaffoldKey,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Use highlight mode to not highlight if we navigate using drawer.
+    // Use highlight mode to not highlight if we navigate using the drawer.
     final bool noHighlight = (selectedIndex == -1);
-
-    // Need to pass an actual valid index (else app breaky)
+    // Provide a valid index even when nothing is highlighted.
     final int effectiveIndex = noHighlight ? 0 : selectedIndex;
 
     return BottomNavigationBar(
       currentIndex: effectiveIndex,
-
-      // if it's not highlighted then don't highlight it (fix to not show tab highlight)
+      // If noHighlight is true, force the selected color to match unselected.
       selectedItemColor: noHighlight
           ? Theme.of(context).colorScheme.tertiary
           : Theme.of(context).colorScheme.primary,
-
       unselectedItemColor: Theme.of(context).colorScheme.tertiary,
-      type: BottomNavigationBarType.fixed, // so all items are displayed, don't want it to disappear :(
-
+      type: BottomNavigationBarType.fixed,
       onTap: (index) {
         AppRouter.isDrawerNavigation = false;
-        switch (index) {
-          case 0:
-            context.goNamed('shoppingList');
-            break;
-          case 1:
-            context.goNamed('home');
-            break;
-          case 2:
-            context.goNamed('purchaseHistory');
-            break;
+        if (index == 0) {
+          // Use the passed scaffoldKey to open the drawer.
+          scaffoldKey.currentState?.openDrawer();
+        } else {
+          switch (index) {
+            case 1:
+              context.goNamed('shoppingList');
+              break;
+            case 2:
+              context.goNamed('home');
+              break;
+            case 3:
+              context.goNamed('scanReceipt');
+              break;
+            case 4:
+              context.goNamed('purchaseHistory');
+              break;
+          }
         }
       },
       items: const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.menu),
+          label: 'Drawer',
+        ),
         BottomNavigationBarItem(
           icon: Icon(Icons.shopping_cart),
           label: 'Shopping List',
@@ -50,6 +64,10 @@ class BottomNavBar extends StatelessWidget {
         BottomNavigationBarItem(
           icon: Icon(Icons.home),
           label: 'Home',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.document_scanner),
+          label: 'Scan Sten',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.history),

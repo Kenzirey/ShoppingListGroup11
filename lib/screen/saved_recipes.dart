@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../controllers/recipe_controller.dart';
 import '../controllers/saved_recipe_controller.dart';
 import '../providers/recipe_provider.dart';
 import '../providers/saved_recipe_provider.dart';

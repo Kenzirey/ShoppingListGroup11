@@ -8,7 +8,7 @@ import 'dart:ui';
 
 class ProfileMenuItem extends StatelessWidget {
   const ProfileMenuItem({
-    Key? key,
+    super.key,
     required this.title,
     required this.icon,
     required this.onTap,
@@ -16,7 +16,7 @@ class ProfileMenuItem extends StatelessWidget {
     this.showTrailingIcon = true,
     this.iconColor,
     this.backgroundColor,
-  }) : super(key: key);
+  });
 
   final String title;
   final IconData icon;
@@ -107,12 +107,12 @@ class ProfileActionButton extends StatelessWidget {
   final Color color;
 
   const ProfileActionButton({
-    Key? key,
+    super.key,
     required this.label,
     required this.icon,
     required this.onPressed,
     required this.color,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -143,7 +143,7 @@ class ProfileActionButton extends StatelessWidget {
 }
 
 class AccountPageScreen extends ConsumerStatefulWidget {
-  const AccountPageScreen({Key? key}) : super(key: key);
+  const AccountPageScreen({super.key});
 
   @override
   ConsumerState<AccountPageScreen> createState() => _AccountPageScreenState();
@@ -234,12 +234,12 @@ class _AccountPageScreenState extends ConsumerState<AccountPageScreen> with Sing
         ],
       ),
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              const Color(0xFF1E1E1E),
-              const Color(0xFF2D2D2D),
-              const Color(0xFF3A3A3A),
+              Color(0xFF1E1E1E),
+              Color(0xFF2D2D2D),
+              Color(0xFF3A3A3A),
             ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,

@@ -9,7 +9,7 @@ import 'package:lottie/lottie.dart';
 import 'dart:ui';
 
 class EditAccountDetailsScreen extends ConsumerStatefulWidget {
-  const EditAccountDetailsScreen({Key? key}) : super(key: key);
+  const EditAccountDetailsScreen({super.key});
 
   @override
   ConsumerState<EditAccountDetailsScreen> createState() =>
@@ -187,12 +187,12 @@ class _EditAccountDetailsScreenState
         ),
       ),
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              const Color(0xFF1E1E1E),
-              const Color(0xFF2D2D2D),
-              const Color(0xFF3A3A3A),
+              Color(0xFF1E1E1E),
+              Color(0xFF2D2D2D),
+              Color(0xFF3A3A3A),
             ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,

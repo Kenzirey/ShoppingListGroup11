@@ -10,19 +10,21 @@ import 'package:shopping_list_g11/screen/shopping_list.dart';
 import 'package:shopping_list_g11/screen/purchase_history.dart';
 import 'package:shopping_list_g11/screen/signup_screen.dart';
 import 'package:shopping_list_g11/screen/trending_meal.dart';
-import 'package:shopping_list_g11/widget/bottom_nav_bar.dart';
-import 'package:shopping_list_g11/widget/my_drawer.dart';
-import 'package:shopping_list_g11/widget/top_bar.dart';
-import '../screen/scan_receipt_screen.dart';
+import 'package:shopping_list_g11/screen/scan_receipt_screen.dart';
 import 'package:shopping_list_g11/screen/account_page_screen.dart';
 import 'package:shopping_list_g11/screen/update_avatar_screen.dart';
 import 'package:shopping_list_g11/screen/information_screen.dart';
 import 'package:shopping_list_g11/screen/edit_account_details_screen.dart';
+import 'package:shopping_list_g11/widget/bottom_nav_bar.dart';
+import 'package:shopping_list_g11/widget/my_drawer.dart';
 
+/// Class for definiting the routes and navigation logic for the entire app,
+/// by using GoRouter package for named paths.
 class AppRouter {
-  static final GlobalKey<ScaffoldState> _scaffoldKey =
-      GlobalKey<ScaffoldState>();
+  static final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  /// This flag tells whether navigation was initiated via the drawer.
+  /// So we can keep track of if navigation is via drawer or the bottom nav bar.
   static bool isDrawerNavigation = false;
 
   static final GoRouter router = GoRouter(
@@ -30,30 +32,20 @@ class AppRouter {
     routes: [
       ShellRoute(
         builder: (context, state, child) {
-          final matchedLocation = state.matchedLocation;
+          final String matchedLocation = state.matchedLocation;
+          // Check if the current route is one of the main tabs.
+          final bool isMainTab = isValidTab(matchedLocation);
+          // If navigation comes from the drawer or the route isn't a main tab,
+          // set selectedIndex to -1 so that no bottom nav item is highlighted.
+          final int selectedIndex = (isDrawerNavigation || !isMainTab)
+              ? -1
+              : _getSelectedIndexForRoute(matchedLocation);
 
-          // Set selectedIndex to -1 if the location is not a valid tab (drawer navigation or invalid route)
-          final selectedIndex =
-              (isDrawerNavigation || !isValidTab(matchedLocation))
-                  ? -1
-                  : _getSelectedIndexForRoute(matchedLocation);
-
-          //TODO: figure out a better solution for this.
           return Scaffold(
             key: _scaffoldKey,
-            appBar: TopBar(
-              title: 'Waste Not',
-              leadingIcon: Icons.menu,
-              onLeadingIconPressed: () {
-                isDrawerNavigation = true;
-                _scaffoldKey.currentState?.openDrawer();
-              },
-            ),
-            body: child,
-            bottomNavigationBar: BottomNavBar(
-              selectedIndex: selectedIndex,
-            ),
             drawer: const MyDrawer(),
+            body: child,
+            bottomNavigationBar: BottomNavBar(selectedIndex: selectedIndex, scaffoldKey: _scaffoldKey,),
           );
         },
         routes: [
@@ -88,12 +80,12 @@ class AppRouter {
             builder: (context, state) => const ScanReceiptScreen(),
           ),
           GoRoute(
-            path: '/chat', // chat screen (for asking for recipes)
+            path: '/chat',
             name: 'chat',
             builder: (context, state) => const ChatScreen(),
           ),
           GoRoute(
-            path: '/recipe', // Recipe screen (showing ONE recipe)
+            path: '/recipe',
             name: 'recipe',
             builder: (context, state) => const MealRecipeScreen(),
           ),
@@ -127,7 +119,6 @@ class AppRouter {
             name: 'informationPage',
             builder: (context, state) => const InformationScreen(),
           ),
-
           GoRoute(
             path: '/update_avatar_screen',
             name: 'updateAvatarScreen',
@@ -138,24 +129,31 @@ class AppRouter {
     ],
   );
 
-  // Helper method to check if the location is a valid tab
+  /// Determines if the provided [location] is one of the main tab routes.
+  /// So that we can highlight it if it is the current route.
   static bool isValidTab(String location) {
     return location == '/' ||
         location == '/shopping-list' ||
-        location == '/purchase-history';
+        location == '/purchase-history' ||
+        location == '/scan-receipt';
   }
 
-  // Determine index based on route
+  /// Maps a route to its BottomNavBar index.
+  ///
+  /// 0 is the drawer trigger, not an actual route. So not using that.
+  /// Keeps the same index as the icons / routes are placed.
   static int _getSelectedIndexForRoute(String location) {
     switch (location) {
       case '/shopping-list':
-        return 0; // shopping list
+        return 1;
       case '/':
-        return 1; // "Home" tab
+        return 2;
+      case '/scan-receipt':
+        return 3;
       case '/purchase-history':
-        return 2; // purchase history
+        return 4;
       default:
-        return 1; // Invalid route, no index selected
+        return 2; // defaults to the home screen
     }
   }
 }

@@ -38,7 +38,6 @@ class AuthService {
       }
 
       final newUser = AppUser.fromMap(insertedData, supabaseUser.email ?? '');
-      print('Signup successful: ${newUser.email}');
       return newUser;
     } 
     on PostgrestException catch (e) {
@@ -74,7 +73,6 @@ class AuthService {
       }
 
       final loggedInUser = AppUser.fromMap(profileData, supabaseUser.email ?? '');
-      print('Login successful: ${loggedInUser.email}');
       return loggedInUser;
     } 
     on PostgrestException catch (e) {
@@ -98,7 +96,6 @@ class AuthService {
       }
     }
     await _client.auth.signOut();
-    print('Logout successful');
   } catch (e) {
     throw Exception('Logout failed: $e');
   }
@@ -212,7 +209,6 @@ Future<AppUser> signInWithGoogleNative() async {
   }
 
   final loggedInUser = AppUser.fromMap(profileData, supabaseUser.email ?? '');
-  print('Google Sign-In successful: ${loggedInUser.email}');
   return loggedInUser;
 }
 
@@ -241,8 +237,6 @@ Future<AppUser> signInWithGoogleNative() async {
       await _client.auth.updateUser(
         UserAttributes(password: newPassword),
       );
-
-      print('Password updated successfully.');
     } catch (e) {
       throw Exception('Error updating password: $e');
     }

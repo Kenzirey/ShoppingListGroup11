@@ -21,10 +21,8 @@ class AuthController {
 
       ref.read(currentUserProvider.notifier).state = user;
 
-      print('Signup successful: ${user.email}');
       return user;
     } catch (e) {
-      print('Signup failed: $e');
       rethrow;
     }
   }
@@ -37,10 +35,8 @@ class AuthController {
 
       ref.read(currentUserProvider.notifier).state = user;
 
-      print('Login successful: ${user.email}');
       return user;
     } catch (e) {
-      print('Login failed: $e');
       rethrow;
     }
   }
@@ -53,9 +49,7 @@ class AuthController {
   try {
     await _authService.logout(isGoogleUser: isGoogle);
     ref.read(currentUserProvider.notifier).state = null;
-    print('Logout successful');
   } catch (e) {
-    print('Logout failed: $e');
     rethrow;
   }
 }
@@ -81,11 +75,8 @@ class AuthController {
       );
 
       ref.read(currentUserProvider.notifier).state = updatedUser;
-
-      print('Profile updated: ${updatedUser.email}');
       return updatedUser;
     } catch (e) {
-      print('Profile update failed: $e');
       rethrow;
     }
   }
@@ -95,10 +86,8 @@ class AuthController {
     try {
       final user = await _authService.signInWithGoogleNative();
       ref.read(currentUserProvider.notifier).state = user;
-      print('Google Sign-In: stored ${user.email} in provider');
       return user;
     } catch (e) {
-      print('Google Sign-In failed: $e');
       rethrow;
     }
   }
@@ -107,7 +96,6 @@ class AuthController {
     try {
       await _authService.changePassword(newPassword);
     } catch (e) {
-      print('Password change failed: $e');
       rethrow;
     }
   }

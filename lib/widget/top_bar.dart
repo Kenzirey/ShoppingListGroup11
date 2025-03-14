@@ -1,43 +1,40 @@
 import 'package:flutter/material.dart';
 
-/// Topbar of the app, which has the app name and navigation drawer (menu).
-class TopBar extends StatelessWidget implements PreferredSizeWidget {
-  final String title;
-  final IconData leadingIcon;
-  final VoidCallback onLeadingIconPressed;
+/// A customizable TopBar that can either show a back button or a drawer menu icon,
+/// and allows a custom title widget (which could be a search bar).
+class CustomTopBar extends StatelessWidget implements PreferredSizeWidget {
+  final Widget titleWidget;
+  final bool showBackButton;
+  final VoidCallback? onLeadingIconPressed;
 
-  const TopBar({
+  const CustomTopBar({
     super.key,
-    required this.title,
-    required this.leadingIcon,
-    required this.onLeadingIconPressed,
+    required this.titleWidget,
+    this.showBackButton = false,
+    this.onLeadingIconPressed,
   });
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      // Add vertical space to not make it kiss the top part of phone.
       toolbarHeight: 80,
-
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+      title: titleWidget,
       centerTitle: true,
       elevation: 0,
       backgroundColor: Colors.transparent,
-
-      leadingWidth: 82, // LEFT MARGIN
-
+      leadingWidth: 82,
       leading: IconButton(
-        // Control the splash radius to keep it roouuund.
         splashRadius: 24,
         iconSize: 30,
-        icon: Icon(leadingIcon),
-        onPressed: onLeadingIconPressed,
+        icon: Icon(
+          showBackButton ? Icons.arrow_back : Icons.menu,
+        ),
+        onPressed: showBackButton
+            ? () {
+                // This pops the current route.
+                Navigator.of(context).pop();
+              }
+            : onLeadingIconPressed,
       ),
     );
   }

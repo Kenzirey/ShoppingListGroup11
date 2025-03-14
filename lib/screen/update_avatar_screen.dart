@@ -7,7 +7,7 @@ import 'package:shopping_list_g11/controllers/auth_controller.dart';
 import 'package:shopping_list_g11/providers/current_user_provider.dart';
 
 class UpdateAvatarScreen extends ConsumerStatefulWidget {
-  const UpdateAvatarScreen({Key? key}) : super(key: key);
+  const UpdateAvatarScreen({super.key});
 
   @override
   ConsumerState<UpdateAvatarScreen> createState() => _UpdateAvatarScreenState();
@@ -193,7 +193,7 @@ class _UpdateAvatarScreenState extends ConsumerState<UpdateAvatarScreen>
             end: Alignment.bottomCenter,
             colors: [
               theme.colorScheme.primary.withOpacity(0.1),
-              theme.colorScheme.background,
+              theme.colorScheme.surface,
             ],
           ),
         ),

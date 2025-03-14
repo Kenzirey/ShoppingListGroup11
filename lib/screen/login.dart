@@ -229,7 +229,7 @@ void _showSuccessOverlay(BuildContext context) {
             end: Alignment.bottomCenter,
             colors: [
               theme.colorScheme.primary.withOpacity(0.1),
-              theme.colorScheme.background,
+              theme.colorScheme.surface,
             ],
           ),
         ),

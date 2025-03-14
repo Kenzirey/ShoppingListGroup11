@@ -16,6 +16,8 @@ class GeminiController {
     StringBuffer fullResponseBuffer = StringBuffer();
 // TODO: set up prompt for lactose and vegan ? or how do we connect it with the kassal.app stuff
     // So that the response is predictable, and user doesn't need to specify things.
+    //TODO : placeholder in prompt, where IF user has a dietary preference it is put in?
+    //String dietary = "";
     String systemPrompt = """
     You are an AI assistant that provides recipes. Please use the metric system.
     Please structure your response as follows:

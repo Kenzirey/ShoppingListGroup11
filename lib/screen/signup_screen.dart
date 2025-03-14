@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 
 /// A visually enhanced sign up screen with animations, validation, and improved UI
 class SignUpScreen extends ConsumerStatefulWidget {
-  const SignUpScreen({Key? key}) : super(key: key);
+  const SignUpScreen({super.key});
 
   @override
   ConsumerState<SignUpScreen> createState() => _SignUpScreenState();

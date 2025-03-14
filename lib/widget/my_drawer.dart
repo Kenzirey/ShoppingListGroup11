@@ -99,7 +99,10 @@ class MyDrawer extends ConsumerWidget {
                 leading: Icon(Icons.filter_list,
                     color: Theme.of(context).colorScheme.tertiary),
                 title: Text(
-                  'Filter',
+                  'Saved Events',
+                  //TODO: one chat screen but the screen asks user to toggle what they want, event planner or specific recipe
+                  //TODO: in the prompt, allow user to name the list after 
+                  //TODO: in the saved event list, have recipes on top similar to saved recipes, and below a shopping list of items to buy.
                   style:
                       TextStyle(color: Theme.of(context).colorScheme.tertiary),
                 ),
@@ -139,30 +142,12 @@ class MyDrawer extends ConsumerWidget {
                   AppRouter.isDrawerNavigation = false;
                 },
               ),
-
-              // Recipe screen. Temporary placement for testing.
-              ListTile(
-                leading: Icon(Icons.restaurant,
-                    color: Theme.of(context).colorScheme.tertiary),
-                title: Text(
-                  'RECIPE TEMPORARY',
-                  style:
-                      TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                ),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  AppRouter.isDrawerNavigation = true;
-                  context.goNamed('recipe');
-                  AppRouter.isDrawerNavigation = false;
-                },
-              ),
-
               // Meal planner for the week (Mon-Sun).
               ListTile(
                 leading: Icon(Icons.calendar_today,
                     color: Theme.of(context).colorScheme.tertiary),
                 title: Text(
-                  'Meal Recipe',
+                  'Meal Planner',
                   style:
                       TextStyle(color: Theme.of(context).colorScheme.tertiary),
                 ),
