@@ -55,6 +55,9 @@
       </array>
     </dict>
   </array>
+
+  <key>NSCameraUsageDescription</key>
+  <string>We need camera access to let you scan receipts.</string>
   
 </dict>
 </plist>
