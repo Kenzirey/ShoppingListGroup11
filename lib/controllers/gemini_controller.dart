@@ -12,9 +12,9 @@ class GeminiController {
 
   GeminiController({required this.ref, required this.controller});
 
+  /// Makes a single, non-streaming prompt call to Gemini, returning the entire response at once.
   Future<String> _getGeminiResponse(String message) async {
-    StringBuffer fullResponseBuffer = StringBuffer();
-// TODO: set up prompt for lactose and vegan ? or how do we connect it with the kassal.app stuff
+    // TODO: set up prompt for lactose and vegan ? or how do we connect it with the kassal.app stuff
     // So that the response is predictable, and user doesn't need to specify things.
     //TODO : placeholder in prompt, where IF user has a dietary preference it is put in?
     //String dietary = "";
@@ -39,52 +39,51 @@ class GeminiController {
     """;
 
     try {
-      await for (var value in Gemini.instance.promptStream(
-        parts: [Part.text("$systemPrompt\n\nUser request: $message")],
-      )) {
-        final textOutput = value?.output ?? "";
-        fullResponseBuffer.write(textOutput);
+      final result = await Gemini.instance.prompt(
+        parts: [
+          Part.text("$systemPrompt\n\nUser request: $message"),
+        ],
+      );
+
+      final fullResponse = result?.output ?? "";
+      if (fullResponse.trim().isEmpty) {
+        return "Error: No output from Gemini.";
       }
-
-      final fullResponseText = fullResponseBuffer.toString().trim();
-
-      return fullResponseText.isNotEmpty
-          ? fullResponseText
-          : "Error: No output from Gemini.";
+      return fullResponse.trim();
     } catch (exception) {
-      debugPrint("Gemini Error: $exception"); //temporary debug
-
+      debugPrint("Gemini Error: $exception");
       if (exception.toString().contains("Status Code: 429")) {
-        // Should set up user feedback instead of exceptions later on. 429 is the rate exceeded code.
         return "Error: Rate limit exceeded. Please wait and try again.";
       }
-
       return "Error: Could not get response.";
     }
   }
 
-  /// Handles sending a message to the AI and processing it,
-  /// with a temporary message while the request is processing.
+  /// Sends a message to Gemini, gets the entire result at once, then parses.
   void sendMessage() async {
+    // If user typed nothing, do nothing.
     if (controller.text.trim().isEmpty) return;
 
     final userMessage = controller.text;
-    ref
-        .read(chatProvider.notifier)
-        .sendMessage(text: userMessage, isUser: true);
-
+    ref.read(chatProvider.notifier).sendMessage(
+          text: userMessage,
+          isUser: true,
+        );
     controller.clear();
-    // the temporary message while waiting for the full response :)
+
+    // Temporary message while waiting
     ref.read(chatProvider.notifier).sendMessage(
           text: 'Thinking of recipe...',
           isUser: false,
         );
 
+    // get the full response from gemini here
     final geminiResponse = await _getGeminiResponse(userMessage);
 
-    // Parse response into a "Recipe" object.
-    final parsedRecipe = Recipe.fromChunks(geminiResponse.split("\n\n"));
+    // then parse it via the factory method
+    final parsedRecipe = Recipe.fromString(geminiResponse);
 
+    // only store it if it is valid
     if (parsedRecipe.name.isNotEmpty &&
         parsedRecipe.ingredients.isNotEmpty &&
         parsedRecipe.instructions.isNotEmpty) {

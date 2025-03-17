@@ -26,9 +26,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
   /// Updates the last bot message, attempt to parse a recipe.
   void updateLastBotMessage(String newText) {
-    List<String> chunks = newText.split("\n\n");
-
-    final parsedRecipe = Recipe.fromChunks(chunks);
+    final parsedRecipe = Recipe.fromString(newText);
 
     if (parsedRecipe.name.isEmpty ||
         parsedRecipe.ingredients.isEmpty ||
@@ -37,11 +35,9 @@ class ChatNotifier extends StateNotifier<ChatState> {
       return;
     }
 
-    final summaryText = parsedRecipe
-        .summary; // As we only want the summary shown in the chat screen.
+    final summaryText = parsedRecipe.summary;
 
     final newMessages = [...state.messages];
-
     if (newMessages.isNotEmpty && !newMessages.last.isUser) {
       newMessages.removeLast();
     }

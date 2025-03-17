@@ -96,7 +96,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(10),
                             margin: const EdgeInsets.symmetric(
-                                vertical: 5, horizontal: 10),
+                              // doesn't need extra horizontal cuz it is already handled in main wrapper
+                                vertical: 5, horizontal: 0),
                             decoration: BoxDecoration(
                               color: message.isUser
                                   ? Colors.blue
