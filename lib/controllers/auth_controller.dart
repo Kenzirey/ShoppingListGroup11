@@ -1,64 +1,74 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../services/auth_service.dart';
 import '../models/app_user.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/current_user_provider.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
-// Manages logic between views and services
-
-
+/// A provider that exposes a single AuthController instance.
 final authControllerProvider = Provider<AuthController>((ref) {
-  return AuthController();
+  return AuthController(ref);
 });
 
+/// A controller that handles authentication logic and user state updates.
 class AuthController {
+  final Ref ref;
+
   final AuthService _authService = AuthService();
 
-  Future<AppUser> signUp(WidgetRef ref, String email, String password, {String? userName}) async {
+  AuthController(this.ref);
+
+  /// Creates a new user account, stores it in 'profiles', and updates the currentUserProvider.
+  Future<AppUser> signUp(
+    String email,
+    String password, {
+    String? userName,
+  }) async {
     try {
       final user = await _authService.signUp(email, password, userName: userName);
-
       ref.read(currentUserProvider.notifier).state = user;
-
       return user;
     } catch (e) {
       rethrow;
     }
   }
 
-  
-  Future<AppUser> login(WidgetRef ref, String email, String password) async {
+  /// Logs in a user via Supabase and updates the currentUserProvider.
+  Future<AppUser> login(String email, String password) async {
     try {
       final user = await _authService.login(email, password);
-
-
       ref.read(currentUserProvider.notifier).state = user;
-
       return user;
     } catch (e) {
       rethrow;
     }
   }
 
- Future<void> logout(WidgetRef ref) async {
-  
-  final currentUser = ref.read(currentUserProvider);
-  final bool isGoogle = currentUser?.isGoogleUser ?? false;
-  
-  try {
-    await _authService.logout(isGoogleUser: isGoogle);
-    ref.read(currentUserProvider.notifier).state = null;
-  } catch (e) {
-    rethrow;
+  /// Logs the user in with Google via Supabase, updating the currentUserProvider.
+  Future<AppUser> signInWithGoogle() async {
+    try {
+      final user = await _authService.signInWithGoogleNative();
+      ref.read(currentUserProvider.notifier).state = user;
+      return user;
+    } catch (e) {
+      rethrow;
+    }
   }
-}
 
+  /// Logs out the current user clearing their session and setting currentUserProvider to null.
+  Future<void> logout() async {
+    final currentUser = ref.read(currentUserProvider);
+    final bool isGoogle = currentUser?.isGoogleUser ?? false;
+    try {
+      await _authService.logout(isGoogleUser: isGoogle);
+      ref.read(currentUserProvider.notifier).state = null;
+    } catch (e) {
+      rethrow;
+    }
+  }
 
-
- 
+  /// Updates the users profile in Supabase.
   Future<AppUser> updateProfile({
-    required WidgetRef ref,
     String? avatarUrl,
     List<String>? dietaryPreferences,
   }) async {
@@ -81,23 +91,12 @@ class AuthController {
     }
   }
 
-
-  Future<AppUser> signInWithGoogle(WidgetRef ref) async {
-    try {
-      final user = await _authService.signInWithGoogleNative();
-      ref.read(currentUserProvider.notifier).state = user;
-      return user;
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  Future<void> changePassword(WidgetRef ref, String newPassword) async {
+  /// Changes the users password (for non Google accounts), if they are logged in.
+  Future<void> changePassword(String newPassword) async {
     try {
       await _authService.changePassword(newPassword);
     } catch (e) {
       rethrow;
     }
   }
-
 }
