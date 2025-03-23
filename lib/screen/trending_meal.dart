@@ -19,6 +19,7 @@ class TrendingRecipesState extends ConsumerState<TrendingRecipeScreen> {
     {'name': 'Vegetable Stir-Fry', 'isVegan': true, 'isLactoseFree': true, 'servings': 2},
   ];
 
+ //TODO:  set up section for vegan, lactose free etc?
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,7 +29,7 @@ class TrendingRecipesState extends ConsumerState<TrendingRecipeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Trending of Week x',
+              'Trending meals this week',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.normal,

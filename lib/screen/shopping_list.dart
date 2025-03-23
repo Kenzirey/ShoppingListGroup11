@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shopping_list_g11/widget/search_bar.dart';
 
-/// A screen for showing what products the user wishes to buy 
+/// A screen for showing what products the user wishes to buy
 /// on their next shopping trip.
 class ShoppingListScreen extends ConsumerStatefulWidget {
   const ShoppingListScreen({super.key});
@@ -23,6 +24,7 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
     'Monster Ultra Violet': 50,
     "Billy's Pizza": 5,
   };
+  final SearchController _searchController = SearchController();
 
   // Store deleted item details for undo
   String? lastDeletedItem;
@@ -32,14 +34,23 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
   @override
   Widget build(BuildContext context) {
     final shoppingItems = itemQuantities.keys.toList();
-
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title and Sort icon
+            // new search widget on top instead
+            CustomSearchBarWidget(
+              suggestions: shoppingItems,
+              onSuggestionSelected: (suggestion) {
+                debugPrint("Selected: $suggestion");
+              },
+              hintText: 'Search products...',
+            ),
+
+            const SizedBox(height: 16.0),
+            // Title + filter button below search
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -62,23 +73,20 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
                 ),
               ],
             ),
-
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(bottom: 64.0),
+                padding: const EdgeInsets.only(bottom: 0),
                 child: ListView.builder(
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.only(
-                      bottom:
-                          120.0), // space between bottom item list + the FAB (floating action button).
+                      bottom: 120.0), // temporary padding, need to test
                   itemCount: shoppingItems.length,
                   itemBuilder: (context, index) {
                     final item = shoppingItems[index];
 
                     return Dismissible(
                       key: Key(item),
-                      direction: DismissDirection
-                          .endToStart,
+                      direction: DismissDirection.endToStart,
                       background: Container(
                         alignment: Alignment.centerRight,
                         padding: const EdgeInsets.only(right: 16),
@@ -162,7 +170,6 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
                                 ],
                               ),
                             ),
-
                             // The item quantity selector (where we have + and -)
                             Row(
                               mainAxisSize: MainAxisSize.min,
@@ -229,29 +236,6 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
           ],
         ),
       ),
-
-      floatingActionButton: Align(
-        alignment: Alignment.bottomRight,
-        child: Transform.translate(
-          offset: const Offset(-20, 0),
-          child: FloatingActionButton(
-            onPressed: () {
-              // TODO: Implement add item logic
-            },
-            backgroundColor: Theme.of(context)
-                .colorScheme
-                .secondary, // Match item background, or change it?
-            shape: const CircleBorder(),
-            child: Icon(
-              Icons.add,
-              size: 24,
-              color: Theme.of(context).colorScheme.tertiary,
-            ),
-          ),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation
-          .endFloat, // keep button anchored to the bottom
     );
   }
 }

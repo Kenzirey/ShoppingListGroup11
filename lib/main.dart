@@ -41,6 +41,7 @@ class MyApp extends ConsumerWidget {
           tertiary: Color(0xffefefef),
           surface: Color(0xFF212121), // Night from Solwr design guide.
           primaryContainer: Color(0xff424242),
+          onSurfaceVariant: Color(0xFFBDBDBD), // hint text, used by search bar inherently.
         ),
       ),
       routerConfig: AppRouter.router, // Routes similar to vue, logic is in the routes folder.

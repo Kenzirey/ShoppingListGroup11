@@ -175,23 +175,6 @@ class MyDrawer extends ConsumerWidget {
                   AppRouter.isDrawerNavigation = false;
                 },
               ),
-
-              // Scan Receipt
-              ListTile(
-                leading: Icon(Icons.receipt,
-                    color: Theme.of(context).colorScheme.tertiary),
-                title: Text(
-                  'Scan Receipt',
-                  style:
-                      TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                ),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  AppRouter.isDrawerNavigation = true;
-                  context.goNamed('scanReceipt');
-                  AppRouter.isDrawerNavigation = false;
-                },
-              ),
             ],
           ),
         ),

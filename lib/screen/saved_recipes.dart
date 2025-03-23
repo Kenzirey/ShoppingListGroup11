@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../controllers/saved_recipe_controller.dart';
 import '../providers/recipe_provider.dart';
 import '../providers/saved_recipe_provider.dart';
+import 'package:shopping_list_g11/widget/search_bar.dart';
+import 'package:shopping_list_g11/widget/meal_item_helper.dart';
 
 /// Screen that shows recipes that users have chosen to save for later.
 /// Allows user to see how many portions recipe is for, as well as dietary information (lactose, vegan).
@@ -17,8 +19,11 @@ class SavedRecipesScreen extends ConsumerStatefulWidget {
 class _SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
   @override
   Widget build(BuildContext context) {
-    // Dynamically get saved recipes from the provider.
+
     final savedRecipes = ref.watch(savedRecipesProvider);
+
+    // For the search bar suggestions, need to update to get it from supabase.
+    final recipeNames = savedRecipes.map((sr) => sr.recipe.name).toList();
 
     return Scaffold(
       body: Padding(
@@ -26,6 +31,16 @@ class _SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Reusable search bar
+            CustomSearchBarWidget(
+              suggestions: recipeNames,
+              hintText: 'Search for recipes to add...',
+              onSuggestionSelected: (selected) {
+                debugPrint('Selected: $selected');
+              },
+            ),
+            const SizedBox(height: 16),
+
             Text(
               'Saved Recipes',
               style: TextStyle(
@@ -35,77 +50,77 @@ class _SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
               ),
             ),
             const SizedBox(height: 8),
+
             Expanded(
               child: ListView.builder(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.only(bottom: 64.0),
+                padding: const EdgeInsets.only(bottom: 32.0),
                 itemCount: savedRecipes.length,
                 itemBuilder: (context, index) {
                   final savedRecipe = savedRecipes[index];
                   final recipe = savedRecipe.recipe;
-                  /// Inkwell, so that entire "item" is clickable, and adds the recipe
+
+                  // Convert yields to an integer. so "4 servings" to only 4.
+                  final yieldsDigits = recipe.yields.replaceAll(RegExp(r'[^\d]'), '');
+                  final servings = int.tryParse(yieldsDigits) ?? 1;
+
                   return InkWell(
-                    onTap: () async {
+                    onTap: () {
                       final router = GoRouter.of(context);
-                      // This now sets the 'active' recipe to the one clicked on in saved recipe list.
-                      ref.read(recipeProvider.notifier).state =
-                          savedRecipe.recipe;
+                      ref.read(recipeProvider.notifier).state = recipe;
 
                       if (!mounted) return;
                       router.goNamed('recipe');
                     },
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 10, horizontal: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 14),
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.primaryContainer,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         children: [
-                          Row(
-                            children: [
-                              Text(
-                                // to remove the 'servings' text from the response, as it is not necessary for this screen :)
-                                recipe.yields.replaceAll(RegExp(r'[^\d]'), ''),
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.tertiary,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Icon(
-                                Icons.people,
-                                size: 20,
-                                color: Theme.of(context).colorScheme.tertiary,
-                              ),
-                            ],
+                          // servings section here
+                          Icon(
+                            servings > 1 ? Icons.people : Icons.person,
+                            size: 20,
+                            color: Theme.of(context).colorScheme.tertiary,
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$servings',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Theme.of(context).colorScheme.tertiary,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+
                           Expanded(
-                            child: RichText(
-                              text: TextSpan(
-                                text: recipe.name,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: Theme.of(context).colorScheme.tertiary,
-                                ),
+                            child: Text(
+                              recipe.name,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(context).colorScheme.tertiary,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+
+
                           IconButton(
+                            iconSize: 20,
+                            constraints: const BoxConstraints(),
+                            padding: EdgeInsets.zero,
                             icon: Icon(
                               Icons.delete,
                               color: Theme.of(context).colorScheme.tertiary,
                             ),
                             onPressed: () {
-                              // Use the controller to remove the saved recipe.
-                              SavedRecipesController(ref: ref)
-                                  .removeRecipe(savedRecipe);
+                              SavedRecipesController(ref: ref).removeRecipe(savedRecipe);
                             },
                           ),
                         ],
@@ -114,26 +129,6 @@ class _SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
                   );
                 },
               ),
-            ),
-            // Action button placed within the padding at the bottom right.
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    // should we have this button? search? list?
-                  },
-                  style: ElevatedButton.styleFrom(
-                    shape: const CircleBorder(),
-                    padding: const EdgeInsets.all(20),
-                    backgroundColor: Theme.of(context).colorScheme.secondary,
-                  ),
-                  child: Icon(
-                    Icons.add,
-                    color: Theme.of(context).colorScheme.tertiary,
-                  ),
-                ),
-              ],
             ),
           ],
         ),
