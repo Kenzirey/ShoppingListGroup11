@@ -1,13 +1,14 @@
+import 'dart:ui';
+
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shopping_list_g11/controllers/auth_controller.dart';
-import 'package:flutter/gestures.dart';
 import 'package:lottie/lottie.dart';
-import 'dart:ui';
+import 'package:shopping_list_g11/controllers/auth_controller.dart';
 
 /// Login entry point for the application.
-/// Allows user to register & login via email, google or apple.
+/// Allows user to register & login via email or Google
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -19,10 +20,11 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderStateMixin {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  
   bool _passwordVisible = false;
   bool _isLoading = false;
   bool _rememberMe = false;
-  
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -33,26 +35,29 @@ class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    
+
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
-    
+
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _animationController,
         curve: Curves.easeOut,
       ),
     );
-    
-    _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(
       CurvedAnimation(
         parent: _animationController,
         curve: Curves.easeOutCubic,
       ),
     );
-    
+
     _animationController.forward();
   }
 
@@ -64,163 +69,177 @@ class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderSt
     super.dispose();
   }
 
-void _showSuccessOverlay(BuildContext context) {
-  _successOverlayEntry = OverlayEntry(
-    builder: (context) {
-      final size = MediaQuery.of(context).size;
-      return Stack(
-        children: [
-          Positioned.fill(
-            child: Container(
-              color: Colors.transparent,
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                child: Container(color: Colors.transparent),
-              ),
-            ),
-          ),
-          Center(
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              margin: const EdgeInsets.all(32),
-              decoration: BoxDecoration(
+
+  OverlayEntry _buildOverlayEntry({
+    required String lottieAsset,
+    required Widget content,
+  }) {
+    return OverlayEntry(
+      builder: (context) {
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: Container(
                 color: Colors.transparent,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: size.width * 0.4,
-                    child: Lottie.asset(
-                      'assets/animations/success.json',
-                      repeat: false,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Welcome!',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'You have successfully logged in',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                  child: Container(color: Colors.transparent),
+                ),
               ),
             ),
-          ),
-        ],
-      );
-    },
-  );
-
-  Overlay.of(context).insert(_successOverlayEntry!);
-}
-
-
-  void _removeSuccessOverlay() {
-    if (_successOverlayEntry != null) {
-      _successOverlayEntry!.remove();
-      _successOverlayEntry = null;
-    }
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                margin: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Lottie.asset(
+                      lottieAsset,
+                      repeat: false,
+                      width: 100,
+                      height: 100,
+                    ),
+                    const SizedBox(height: 16),
+                    content,
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
- void _showErrorOverlay(BuildContext context, String errorMessage) {
-  _errorOverlayEntry = OverlayEntry(
-    builder: (context) {
-      return Stack(
-        children: [
-          Positioned.fill(
-            child: Container(
-              color: Colors.transparent,
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                child: Container(color: Colors.transparent),
+  void _showSuccessOverlay(BuildContext context) {
+    _removeSuccessOverlay();
+    final size = MediaQuery.of(context).size;
+
+    _successOverlayEntry = OverlayEntry(
+      builder: (context) {
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: Container(
+                color: Colors.transparent,
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                  child: Container(color: Colors.transparent),
+                ),
               ),
+            ),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                margin: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: size.width * 0.4,
+                      child: Lottie.asset(
+                        'assets/animations/success.json',
+                        repeat: false,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Welcome!',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'You have successfully logged in',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    Overlay.of(context).insert(_successOverlayEntry!);
+  }
+
+  void _removeSuccessOverlay() {
+    _successOverlayEntry?.remove();
+    _successOverlayEntry = null;
+  }
+
+  void _showErrorOverlay(BuildContext context, String errorMessage) {
+    _removeErrorOverlay();
+
+    _errorOverlayEntry = _buildOverlayEntry(
+      lottieAsset: 'assets/animations/error.json',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Login Failed',
+            style: TextStyle(
+              color: Colors.red[700],
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          Center(
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              margin: const EdgeInsets.all(32),
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Lottie.asset(
-                    'assets/animations/error.json',
-                    repeat: false,
-                    width: 100,
-                    height: 100,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Login Failed',
-                    style: TextStyle(
-                      color: Colors.red[700],
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    errorMessage,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.black87,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _removeErrorOverlay,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red[700],
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    ),
-                    child: const Text('Try Again'),
-                  ),
-                ],
-              ),
+          const SizedBox(height: 12),
+          Text(
+            errorMessage,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.black87,
+              fontSize: 16,
             ),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: _removeErrorOverlay,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red[700],
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: const Text('Try Again'),
           ),
         ],
-      );
-    },
-  );
-  Overlay.of(context).insert(_errorOverlayEntry!);
-}
+      ),
+    );
 
+    Overlay.of(context).insert(_errorOverlayEntry!);
+  }
 
   void _removeErrorOverlay() {
-    if (_errorOverlayEntry != null) {
-      _errorOverlayEntry!.remove();
-      _errorOverlayEntry = null;
-    }
+    _errorOverlayEntry?.remove();
+    _errorOverlayEntry = null;
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final size = MediaQuery.of(context).size;
-    
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -260,7 +279,7 @@ void _showSuccessOverlay(BuildContext context) {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      
+
                       Text(
                         "Welcome!",
                         style: TextStyle(
@@ -280,7 +299,7 @@ void _showSuccessOverlay(BuildContext context) {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 36),
-                      
+
                       _buildTextField(
                         controller: _emailController,
                         label: "Email",
@@ -289,7 +308,7 @@ void _showSuccessOverlay(BuildContext context) {
                         keyboardType: TextInputType.emailAddress,
                       ),
                       const SizedBox(height: 20),
-                      
+
                       _buildTextField(
                         controller: _passwordController,
                         label: "Password",
@@ -309,7 +328,7 @@ void _showSuccessOverlay(BuildContext context) {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
+
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -361,12 +380,10 @@ void _showSuccessOverlay(BuildContext context) {
                         ],
                       ),
                       const SizedBox(height: 32),
-                      
-                      // Login Button
                       _buildGradientButton(
                         onPressed: () async {
                           if (_isLoading) return;
-                          
+
                           final email = _emailController.text.trim();
                           final password = _passwordController.text.trim();
 
@@ -424,7 +441,7 @@ void _showSuccessOverlay(BuildContext context) {
                               ),
                       ),
                       const SizedBox(height: 24),
-                      
+
                       Row(
                         children: [
                           Expanded(
@@ -452,16 +469,15 @@ void _showSuccessOverlay(BuildContext context) {
                         ],
                       ),
                       const SizedBox(height: 24),
-                      
-                      // Google Login Button
+
                       _buildSocialButton(
                         onPressed: () async {
                           if (_isLoading) return;
-                          
+
                           setState(() {
                             _isLoading = true;
                           });
-                          
+
                           try {
                             final authController = ref.read(authControllerProvider);
                             await authController.signInWithGoogle();
@@ -485,8 +501,7 @@ void _showSuccessOverlay(BuildContext context) {
                         foregroundColor: Colors.black87,
                       ),
                       const SizedBox(height: 32),
-                      
-                      // Sign Up Link
+
                       Center(
                         child: RichText(
                           text: TextSpan(
@@ -522,7 +537,8 @@ void _showSuccessOverlay(BuildContext context) {
       ),
     );
   }
-  
+
+
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -533,7 +549,7 @@ void _showSuccessOverlay(BuildContext context) {
     Widget? suffixIcon,
   }) {
     final theme = Theme.of(context);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -602,13 +618,13 @@ void _showSuccessOverlay(BuildContext context) {
       ],
     );
   }
-  
+
   Widget _buildGradientButton({
     required VoidCallback onPressed,
     required Widget child,
   }) {
     final theme = Theme.of(context);
-    
+
     return Container(
       height: 56,
       decoration: BoxDecoration(
@@ -644,7 +660,7 @@ void _showSuccessOverlay(BuildContext context) {
       ),
     );
   }
-  
+
   Widget _buildSocialButton({
     required VoidCallback onPressed,
     required IconData icon,
@@ -680,11 +696,7 @@ void _showSuccessOverlay(BuildContext context) {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              color: foregroundColor,
-              size: 24,
-            ),
+            Icon(icon, color: foregroundColor, size: 24),
             const SizedBox(width: 12),
             Text(
               text,
