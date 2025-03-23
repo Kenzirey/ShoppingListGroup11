@@ -82,8 +82,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
     final password = _passwordController.text.trim();
 
     try {
-      final authController = AuthController();
-      await authController.signUp(ref, email, password, userName: userName);
+      final authController = ref.read(authControllerProvider);
+      await authController.signUp(email, password, userName: userName);
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

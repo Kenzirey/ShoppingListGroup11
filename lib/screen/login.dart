@@ -390,8 +390,8 @@ void _showSuccessOverlay(BuildContext context) {
                           });
 
                           try {
-                            final authController = AuthController();
-                            await authController.login(ref, email, password);
+                            final authController = ref.read(authControllerProvider);
+                            await authController.login(email, password);
                             _showSuccessOverlay(context);
                             await Future.delayed(const Duration(seconds: 2));
                             _removeSuccessOverlay();
@@ -463,8 +463,8 @@ void _showSuccessOverlay(BuildContext context) {
                           });
                           
                           try {
-                            final authController = AuthController();
-                            await authController.signInWithGoogle(ref);
+                            final authController = ref.read(authControllerProvider);
+                            await authController.signInWithGoogle();
                             _showSuccessOverlay(context);
                             await Future.delayed(const Duration(seconds: 2));
                             _removeSuccessOverlay();

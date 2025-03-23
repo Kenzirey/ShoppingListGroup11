@@ -263,7 +263,6 @@ class _UpdateAvatarScreenState extends ConsumerState<UpdateAvatarScreen>
                           }
                           try {
                             await ref.read(authControllerProvider).updateProfile(
-                                  ref: ref,
                                   avatarUrl: selectedAvatar,
                                   dietaryPreferences:
                                       currentUser.dietaryPreferences,
