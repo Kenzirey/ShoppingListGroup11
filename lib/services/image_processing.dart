@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shopping_list_g11/services/receipt_parser.dart';
 import 'package:shopping_list_g11/services/supabase_ocr_service.dart';
 import '../models/receipt_data.dart';
+import 'brand_classifier.dart';
 import 'kassal_service.dart';
 import 'package:image/image.dart' as img;
 
@@ -56,21 +57,35 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
         _isProcessing = true;
       });
 
-      // Preprocess image and run OCR
       final processedImage = await _imageService.preprocessImage(_image!);
       final inputImage = InputImage.fromFile(processedImage);
       final recognizedText = await _textRecognizer.processImage(inputImage);
 
-      // Parse receipt data
       final rawLines = recognizedText.text.split('\n');
       final storeName = _receiptParser.extractStoreName(rawLines);
       final date = _receiptParser.extractDate(rawLines);
       final total = _receiptParser.extractTotal(rawLines);
       final items = _receiptParser.extractItemsByBoundingBox(recognizedText);
-      final receiptData =
-      ReceiptData(storeName: storeName, date: date, items: items, total: total);
+      final receiptData = ReceiptData(
+        storeName: storeName,
+        date: date,
+        items: items,
+        total: total,
+      );
 
-      // Update items with Kassal allergen info
+      final brandService = BrandClassifierService();
+      final synonyms = await brandService.fetchSynonyms();
+      for (final item in receiptData.items) {
+        final classifiedName =
+        await brandService.autoClassify(item.name, synonyms);
+
+        if (classifiedName != null) {
+          item.name = classifiedName;
+        } else {
+
+        }
+      }
+
       final uniqueNames = receiptData.items.map((e) => e.name).toSet();
       final searchResultsFutures = uniqueNames.map((name) async {
         final result = await _kassalService.searchProducts(name);
@@ -98,7 +113,6 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
         }
       }
 
-      // Save receipt and items to Supabase
       await _supabaseService.saveReceipt(receiptData);
 
       setState(() {
@@ -112,6 +126,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
       });
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
