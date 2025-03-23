@@ -1,31 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shopping_list_g11/providers/meal_suggestions.dart';
 
 /// Home screen for the app.
 /// Displays "Expiring Soon" items and "Meal Suggestions" upon the above items.
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   // THese are only temporary for testing and showing the ui look.
   final Map<String, String> expiringItems = {
     'Milk': '2 days',
     'Cheese': '3 days',
     'Yogurt': '5 days',
+    'Carrots': '2 days',
   };
 
-  final List<String> mealSuggestions = [
-    'Pasta with tomato sauce',
-    'Grilled cheese sandwich',
-    'Vegetable stir-fry',
-  ];
+  /// Returns an icon for expiring items, temporary setup
+  IconData _getExpiringIcon(String itemName) {
+    final lower = itemName.toLowerCase();
+    if (lower.contains('milk') ||
+        lower.contains('cheese') ||
+        lower.contains('yogurt')) {
+      return Icons.icecream;
+    }
+    return Icons.shopping_basket;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final mealSuggestions = ref.watch(mealSuggestionsProvider);
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Padding(
@@ -33,7 +42,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// **Expiring Soon Section**
             Text(
               'Expiring Soon',
               style: TextStyle(
@@ -43,7 +51,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 12),
-
             Expanded(
               child: ListView.builder(
                 physics: const BouncingScrollPhysics(),
@@ -55,32 +62,30 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 10, horizontal: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
                     decoration: BoxDecoration(
-                      color:
-                          Colors.red.withOpacity(0.2), // Red-tinted background, need to tweak this.
+                      color: Colors.red.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       children: [
-                        // Icon & Item Name (Left)
+                        // left side, icon and name
                         Expanded(
                           child: Row(
                             children: [
-                              Icon(Icons.warning,
-                                  size: 20,
-                                  color:
-                                      Theme.of(context).colorScheme.tertiary),
+                              Icon(
+                                _getExpiringIcon(item),
+                                size: 20,
+                                color: Theme.of(context).colorScheme.tertiary,
+                              ),
                               const SizedBox(width: 10),
                               Flexible(
                                 child: Text(
-                                  item, // (the item name here due to index)
+                                  item,
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
-                                    color:
-                                        Theme.of(context).colorScheme.tertiary,
+                                    color: Theme.of(context).colorScheme.tertiary,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -88,17 +93,13 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         ),
-
-                        // Expiration Time (Right)
+                        // when it expires
                         Text(
                           expiryTime ?? '',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .tertiary
-                                .withOpacity(0.7),
+                            color: Theme.of(context).colorScheme.tertiary.withOpacity(0.7),
                           ),
                         ),
                       ],
@@ -108,7 +109,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            /// Meal Suggestions section, to suggest meals based on the stuff expiring above.
             const SizedBox(height: 16),
             Text(
               'Meal Suggestions',
@@ -119,7 +119,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 12),
-
             Expanded(
               child: ListView.builder(
                 physics: const BouncingScrollPhysics(),
@@ -127,30 +126,69 @@ class _HomeScreenState extends State<HomeScreen> {
                 itemCount: mealSuggestions.length,
                 itemBuilder: (context, index) {
                   final meal = mealSuggestions[index];
+                  final mealName = meal['name'] as String;
+                  final servings = meal['servings'] as int? ?? 1;
+                  final lactoseFree = meal['lactoseFree'] as bool? ?? false;
+                  final vegan = meal['vegan'] as bool? ?? false;
+                  final vegetarian = meal['vegetarian'] as bool? ?? false;
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 10, horizontal: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.restaurant,
-                            size: 20,
-                            color: Theme.of(context).colorScheme.tertiary),
+                        // servings size with its icon, single icon or more depending on size 😎
+                        Icon(
+                          servings > 1 ? Icons.people : Icons.person,
+                          size: 20,
+                          color: Theme.of(context).colorScheme.tertiary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$servings',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.tertiary,
+                          ),
+                        ),
                         const SizedBox(width: 10),
-                        Flexible(
-                          child: Text(
-                            meal,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: Theme.of(context).colorScheme.tertiary,
-                            ),
-                            overflow: TextOverflow.ellipsis,
+
+                        // name of the recipe
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  mealName,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: Theme.of(context).colorScheme.tertiary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+
+                              if (lactoseFree || vegan || vegetarian)
+                                const SizedBox(width: 8),
+                              if (lactoseFree) ...[
+                                Icon(Icons.icecream, size: 20, color: Theme.of(context).colorScheme.tertiary),
+                                const SizedBox(width: 4),
+                              ],
+                              if (vegan) ...[
+                                Icon(Icons.eco, size: 20, color: Theme.of(context).colorScheme.tertiary),
+                                const SizedBox(width: 4),
+                              ],
+                              if (vegetarian) ...[
+                                Icon(Icons.spa, size: 20, color: Theme.of(context).colorScheme.tertiary),
+                                const SizedBox(width: 4),
+                              ],
+                            ],
                           ),
                         ),
                       ],

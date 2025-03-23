@@ -100,7 +100,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                 vertical: 5, horizontal: 0),
                             decoration: BoxDecoration(
                               color: message.isUser
-                                  ? Colors.blue
+                                  ? Theme.of(context)
+                                      .colorScheme
+                                      .secondary
                                   : Theme.of(context)
                                       .colorScheme
                                       .primaryContainer,
