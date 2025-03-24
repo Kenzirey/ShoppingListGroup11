@@ -24,37 +24,76 @@ class AuthController {
     String password, {
     String? userName,
   }) async {
-    try {
-      final user = await _authService.signUp(email, password, userName: userName);
-      ref.read(currentUserProvider.notifier).state = user;
-      return user;
-    } catch (e) {
-      rethrow;
+  try {
+    final user = await _authService.signUp(email, password, userName: userName);
+    
+    final profileResponse = await Supabase.instance.client
+        .from('profiles')
+        .select('id')
+        .eq('auth_id', user.authId)
+        .maybeSingle();
+    String? profileId;
+    if (profileResponse != null) {
+      profileId = profileResponse['id'] as String;
     }
+    
+    final updatedUser = user.copyWith(profileId: profileId);
+    
+    ref.read(currentUserProvider.notifier).state = updatedUser;
+    return updatedUser;
+  } catch (e) {
+    rethrow;
   }
+}
 
   /// Logs in a user via Supabase and updates the currentUserProvider.
-  Future<AppUser> login(String email, String password) async {
-    try {
-      final user = await _authService.login(email, password);
-      ref.read(currentUserProvider.notifier).state = user;
-      return user;
-    } catch (e) {
-      rethrow;
+Future<AppUser> login(String email, String password) async {
+  try {
+    final user = await _authService.login(email, password);
+
+    final profileResponse = await Supabase.instance.client
+        .from('profiles')
+        .select('id')
+        .eq('auth_id', user.authId)
+        .maybeSingle();
+    String? profileId;
+    if (profileResponse != null) {
+      profileId = profileResponse['id'] as String;
     }
+
+    final updatedUser = user.copyWith(profileId: profileId);
+
+    ref.read(currentUserProvider.notifier).state = updatedUser;
+    return updatedUser;
+  } catch (e) {
+    rethrow;
   }
+}
+
+
+
 
   /// Logs the user in with Google via Supabase, updating the currentUserProvider.
   Future<AppUser> signInWithGoogle() async {
     try {
       final user = await _authService.signInWithGoogleNative();
-      ref.read(currentUserProvider.notifier).state = user;
-      return user;
-    } catch (e) {
-      rethrow;
+    final profileResponse = await Supabase.instance.client
+        .from('profiles')
+        .select('id')
+        .eq('auth_id', user.authId)
+        .maybeSingle();
+    String? profileId;
+    if (profileResponse != null) {
+      profileId = profileResponse['id'] as String;
     }
+    
+    final updatedUser = user.copyWith(profileId: profileId);
+    ref.read(currentUserProvider.notifier).state = updatedUser;
+    return updatedUser;
+  } catch (e) {
+    rethrow;
   }
-
+}
   /// Logs out the current user clearing their session and setting currentUserProvider to null.
   Future<void> logout() async {
     final currentUser = ref.read(currentUserProvider);
