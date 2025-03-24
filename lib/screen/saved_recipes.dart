@@ -19,6 +19,19 @@ class SavedRecipesScreen extends ConsumerStatefulWidget {
 
 class _SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
   @override
+    void initState() {
+      super.initState();
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final currentUser = ref.read(currentUserProvider);
+        if (currentUser != null && currentUser.profileId != null) {
+          await ref
+              .read(savedRecipesControllerProvider)
+              .fetchSavedRecipes(currentUser.profileId!);
+        }
+      });
+    }
+
+  @override
   Widget build(BuildContext context) {
 
     final savedRecipes = ref.watch(savedRecipesProvider);
@@ -130,7 +143,7 @@ class _SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
                               }
 
                               final savedRecipesController = ref.read(savedRecipesControllerProvider);
-                              savedRecipesController.removeRecipe(user.authId, savedRecipe);
+                              savedRecipesController.removeRecipe(user.profileId!, savedRecipe);
                             },
                           ),
                         ],
