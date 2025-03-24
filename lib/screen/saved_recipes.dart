@@ -6,6 +6,7 @@ import '../providers/recipe_provider.dart';
 import '../providers/saved_recipe_provider.dart';
 import 'package:shopping_list_g11/widget/search_bar.dart';
 import 'package:shopping_list_g11/widget/meal_item_helper.dart';
+import 'package:shopping_list_g11/providers/current_user_provider.dart';
 
 /// Screen that shows recipes that users have chosen to save for later.
 /// Allows user to see how many portions recipe is for, as well as dietary information (lactose, vegan).
@@ -119,8 +120,17 @@ class _SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
                               Icons.delete,
                               color: Theme.of(context).colorScheme.tertiary,
                             ),
-                            onPressed: () {
-                              SavedRecipesController(ref: ref).removeRecipe(savedRecipe);
+                             onPressed: () {
+                              final user = ref.read(currentUserProvider);
+                              if (user == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('You must be logged in to remove a recipe!')),
+                                );
+                                return;
+                              }
+
+                              final savedRecipesController = ref.read(savedRecipesControllerProvider);
+                              savedRecipesController.removeRecipe(user.authId, savedRecipe);
                             },
                           ),
                         ],

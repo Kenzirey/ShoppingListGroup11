@@ -155,20 +155,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         final currentRecipe = ref.read(recipeProvider);
                         final currentUser = ref.read(currentUserProvider);
                         final router = GoRouter.of(context);
-                        if (currentRecipe != null) {
-                          await RecipeController(ref: ref)
-                              .addRecipe(currentRecipe);
-                        }
-                        if (currentRecipe != null && currentUser != null) {
-                          final savedRecipe = SavedRecipe(
-                              recipe: currentRecipe,
-                              userId: currentUser.authId);
-                          SavedRecipesController(ref: ref)
-                              .addRecipe(savedRecipe);
-                        }
-                        if (!mounted) return;
-                        router.goNamed('savedRecipes');
-                      },
+
+                        if (currentRecipe == null) return;
+
+                        if (currentUser == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('You must be logged in to save a recipe.'),
+                          ),
+                        );
+                        return; 
+                      }
+
+
+                      final savedRecipesController = ref.read(savedRecipesControllerProvider);
+                      await savedRecipesController.addRecipeByAuthId(currentUser.authId, currentRecipe);
+
+                      if (!mounted) return;
+                      router.goNamed('savedRecipes');
+                    },
                       style: ButtonStyles.addForLater(
                           Theme.of(context).colorScheme.primaryContainer),
                       child: Row(
