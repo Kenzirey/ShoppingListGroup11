@@ -7,6 +7,7 @@ class AppUser {
   final String authId;
   final String provider;
   final String? googleAvatarUrl;
+  final String? profileId;
 
   String get name => userName;
 
@@ -20,10 +21,35 @@ class AppUser {
       required this.authId,
       required this.provider,
       this.googleAvatarUrl,
+      this.profileId,
 });
 
+
+AppUser copyWith({
+    String? userName,
+    String? email,
+    List<String>? dietaryPreferences,
+    String? avatarUrl,
+    String? authId,
+    String? provider,
+    String? googleAvatarUrl,
+    String? profileId,
+  }) {
+    return AppUser(
+      userName: userName ?? this.userName,
+      email: email ?? this.email,
+      dietaryPreferences: dietaryPreferences ?? this.dietaryPreferences,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      authId: authId ?? this.authId,
+      provider: provider ?? this.provider,
+      googleAvatarUrl: googleAvatarUrl ?? this.googleAvatarUrl,
+      profileId: profileId ?? this.profileId,
+    );
+  }
+  
 factory AppUser.fromMap(Map<String, dynamic> map, String email) {
     final provider = map['provider']?.toString().toLowerCase() ?? 'email';
+
 
     return AppUser(
       authId: map['auth_id'] ?? '',
@@ -35,6 +61,7 @@ factory AppUser.fromMap(Map<String, dynamic> map, String email) {
       avatarUrl: map['avatar_url'] ?? '',
       googleAvatarUrl: map['google_avatar_url'] ?? '',
       provider: provider,
+      profileId: map['profile_id'],
     );
 }
 
