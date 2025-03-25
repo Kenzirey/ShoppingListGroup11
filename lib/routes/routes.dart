@@ -17,6 +17,9 @@ import 'package:shopping_list_g11/screen/information_screen.dart';
 import 'package:shopping_list_g11/screen/edit_account_details_screen.dart';
 import 'package:shopping_list_g11/widget/bottom_nav_bar.dart';
 import 'package:shopping_list_g11/widget/my_drawer.dart';
+import 'package:shopping_list_g11/screen/reset_password_screen.dart';
+import 'package:shopping_list_g11/screen/set_new_password_screen.dart';
+
 
 /// Class for definiting the routes and navigation logic for the entire app,
 /// by using GoRouter package for named paths.
@@ -124,6 +127,19 @@ class AppRouter {
             name: 'updateAvatarScreen',
             builder: (context, state) => const UpdateAvatarScreen(),
           ),
+         GoRoute(
+           path: '/forgot-password',
+           builder: (context, state) => const ResetPasswordScreen(),
+         ),
+        GoRoute(
+          path: '/reset-password',
+          builder: (context, state) {
+          final token = state.uri.queryParameters['token'] ?? '';
+          final email = state.uri.queryParameters['user_email'] ?? '';
+          return SetNewPasswordScreen(token: token, email: email);
+          },
+        ),
+
         ],
       ),
     ],
