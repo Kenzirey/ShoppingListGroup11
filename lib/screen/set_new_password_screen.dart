@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:go_router/go_router.dart';
+
 
 class SetNewPasswordScreen extends StatefulWidget {
   final String? token;
@@ -68,7 +70,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Password updated successfully!')),
       );
-      Navigator.of(context).pushReplacementNamed('/login');
+      context.go('/login');
     } else {
       throw Exception('Failed to update password.');
     }
