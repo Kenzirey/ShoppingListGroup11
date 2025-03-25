@@ -360,23 +360,23 @@ class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderSt
                               ),
                             ],
                           ),
-                          TextButton(
-                            onPressed: () {
-                              // Need to handle the forgot password
-                            },
-                            style: TextButton.styleFrom(
-                              foregroundColor: theme.colorScheme.primary,
-                              padding: EdgeInsets.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: const Text(
-                              "Forgot Password?",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
+                         TextButton(
+                          onPressed: () {
+                            context.go('/forgot-password');
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: theme.colorScheme.primary,
+                            padding: EdgeInsets.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text(
+                            "Forgot Password?",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
                             ),
                           ),
+                        ),
                         ],
                       ),
                       const SizedBox(height: 32),
