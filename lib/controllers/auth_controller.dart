@@ -138,4 +138,28 @@ Future<AppUser> login(String email, String password) async {
       rethrow;
     }
   }
+
+/// Sends a password reset email to the specified email.
+Future<void> resetPassword(String email) async {
+  try {
+    await Supabase.instance.client.auth.resetPasswordForEmail(email);
+  } catch (e) {
+    rethrow;
+  }
+}
+
+Future<void> verifyPasswordReset(String token, String newPassword) async {
+  try {
+    final updateResponse = await Supabase.instance.client.auth.updateUser(
+      UserAttributes(password: newPassword),
+    );
+
+    if (updateResponse.user == null) {
+      throw Exception('Failed to update password.');
+    }
+  } catch (e) {
+    rethrow;
+  }
+}
+
 }
