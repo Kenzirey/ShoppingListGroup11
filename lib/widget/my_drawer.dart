@@ -28,9 +28,9 @@ class MyDrawer extends ConsumerWidget {
                   child: InkWell(
                     onTap: () {
                       Navigator.of(context).pop();
-                      AppRouter.isDrawerNavigation = true;
-                      context.goNamed('loginPage');
-                      AppRouter.isDrawerNavigation = false;
+                      
+                      context.pushNamed('loginPage');
+                      
                     },
                     child: Row(
                       children: [
@@ -58,9 +58,9 @@ class MyDrawer extends ConsumerWidget {
                   child: InkWell(
                     onTap: () {
                       Navigator.of(context).pop();
-                      AppRouter.isDrawerNavigation = true;
-                      context.goNamed('accountPage');
-                      AppRouter.isDrawerNavigation = false;
+                      
+                      context.pushNamed('accountPage');
+
                     },
                     child: Row(
                       children: [
@@ -120,10 +120,8 @@ class MyDrawer extends ConsumerWidget {
                 ),
                 onTap: () {
                   Navigator.of(context).pop();
-                  AppRouter.isDrawerNavigation =
                       true; // Mark navigation as from the drawer
-                  context.goNamed('chat');
-                  AppRouter.isDrawerNavigation = false;
+                  context.pushNamed('chat');
                 },
               ),
               // Trending recipe (weekly? Biweekly?)
@@ -137,9 +135,9 @@ class MyDrawer extends ConsumerWidget {
                 ),
                 onTap: () {
                   Navigator.of(context).pop();
-                  AppRouter.isDrawerNavigation = true;
-                  context.goNamed('trending');
-                  AppRouter.isDrawerNavigation = false;
+              
+                  context.pushNamed('trending');
+                  
                 },
               ),
               // Meal planner for the week (Mon-Sun).
@@ -153,9 +151,9 @@ class MyDrawer extends ConsumerWidget {
                 ),
                 onTap: () {
                   Navigator.of(context).pop();
-                  AppRouter.isDrawerNavigation = true;
-                  context.goNamed('mealPlanner');
-                  AppRouter.isDrawerNavigation = false;
+                  
+                  context.pushNamed('mealPlanner');
+                  
                 },
               ),
 
@@ -170,9 +168,9 @@ class MyDrawer extends ConsumerWidget {
                 ),
                 onTap: () {
                   Navigator.of(context).pop();
-                  AppRouter.isDrawerNavigation = true;
-                  context.goNamed('savedRecipes');
-                  AppRouter.isDrawerNavigation = false;
+                  
+                  context.pushNamed('savedRecipes');
+                  
                 },
               ),
             ],

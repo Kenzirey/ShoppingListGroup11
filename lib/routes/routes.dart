@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shopping_list_g11/routes/app_shell.dart';
 import 'package:shopping_list_g11/screen/chat_screen.dart';
 import 'package:shopping_list_g11/screen/home_screen.dart';
 import 'package:shopping_list_g11/screen/login.dart';
@@ -15,42 +16,27 @@ import 'package:shopping_list_g11/screen/account_page_screen.dart';
 import 'package:shopping_list_g11/screen/update_avatar_screen.dart';
 import 'package:shopping_list_g11/screen/information_screen.dart';
 import 'package:shopping_list_g11/screen/edit_account_details_screen.dart';
-import 'package:shopping_list_g11/widget/bottom_nav_bar.dart';
-import 'package:shopping_list_g11/widget/my_drawer.dart';
 import 'package:shopping_list_g11/screen/reset_password_screen.dart';
 import 'package:shopping_list_g11/screen/set_new_password_screen.dart';
 
-
-/// Class for definiting the routes and navigation logic for the entire app,
-/// by using GoRouter package for named paths.
+/// Defines the app's routing and navigation logic using the GoRouter package.
+///
+/// Handles [ShellRoute] to separate bottom navigation bar and drawer-based screens.
 class AppRouter {
-  static final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
-  /// This flag tells whether navigation was initiated via the drawer.
-  /// So we can keep track of if navigation is via drawer or the bottom nav bar.
-  static bool isDrawerNavigation = false;
+  static final GlobalKey<ScaffoldState> scaffoldKey =
+      GlobalKey<ScaffoldState>();
+  static final _rootNavigatorKey = GlobalKey<NavigatorState>();
+  static final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
   static final GoRouter router = GoRouter(
+    navigatorKey: _rootNavigatorKey,
     initialLocation: '/',
     routes: [
       ShellRoute(
-        builder: (context, state, child) {
-          final String matchedLocation = state.matchedLocation;
-          // Check if the current route is one of the main tabs.
-          final bool isMainTab = isValidTab(matchedLocation);
-          // If navigation comes from the drawer or the route isn't a main tab,
-          // set selectedIndex to -1 so that no bottom nav item is highlighted.
-          final int selectedIndex = (isDrawerNavigation || !isMainTab)
-              ? -1
-              : _getSelectedIndexForRoute(matchedLocation);
-
-          return Scaffold(
-            key: _scaffoldKey,
-            drawer: const MyDrawer(),
-            body: child,
-            bottomNavigationBar: BottomNavBar(selectedIndex: selectedIndex, scaffoldKey: _scaffoldKey,),
-          );
-        },
+        navigatorKey: _shellNavigatorKey,
+        pageBuilder: (context, state, child) => MaterialPage(
+          child: AppShell(child: child),
+        ),
         routes: [
           GoRoute(
             path: '/',
@@ -68,20 +54,12 @@ class AppRouter {
             builder: (context, state) => const PurchaseHistoryScreen(),
           ),
           GoRoute(
-            path: '/login',
-            name: 'loginPage',
-            builder: (context, state) => const LoginScreen(),
-          ),
-          GoRoute(
-            path: '/sign-up',
-            name: 'signUp',
-            builder: (context, state) => const SignUpScreen(),
-          ),
-          GoRoute(
             path: '/scan-receipt',
             name: 'scanReceipt',
             builder: (context, state) => const ScanReceiptScreen(),
           ),
+
+          // Drawer pages inside ShellRoute ⏬
           GoRoute(
             path: '/chat',
             name: 'chat',
@@ -127,38 +105,58 @@ class AppRouter {
             name: 'updateAvatarScreen',
             builder: (context, state) => const UpdateAvatarScreen(),
           ),
-         GoRoute(
-           path: '/forgot-password',
-           builder: (context, state) => const ResetPasswordScreen(),
-         ),
-        GoRoute(
-          path: '/reset-password',
-          builder: (context, state) {
+        ],
+      ),
+
+      // Auth-related routes outside shell
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/login',
+        name: 'loginPage',
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/sign-up',
+        name: 'signUp',
+        builder: (context, state) => const SignUpScreen(),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/forgot-password',
+        builder: (context, state) => const ResetPasswordScreen(),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/reset-password',
+        builder: (context, state) {
           final token = state.uri.queryParameters['token'] ?? '';
           final email = state.uri.queryParameters['user_email'] ?? '';
           return SetNewPasswordScreen(token: token, email: email);
-          },
-        ),
-
-        ],
+        },
       ),
     ],
   );
 
-  /// Determines if the provided [location] is one of the main tab routes.
-  /// So that we can highlight it if it is the current route.
-  static bool isValidTab(String location) {
-    return location == '/' ||
-        location == '/shopping-list' ||
-        location == '/purchase-history' ||
-        location == '/scan-receipt';
+  /// Checks if a current route is from the drawer navigation.
+  ///
+  /// Returns true if [location] is one of the drawer routes.
+  static bool isDrawerRoute(String location) {
+    return location.startsWith('/chat') ||
+        location.startsWith('/recipe') ||
+        location.startsWith('/meal-planner') ||
+        location.startsWith('/trending') ||
+        location.startsWith('/account') ||
+        location.startsWith('/savedRecipes') ||
+        location.startsWith('/edit-account-details') ||
+        location.startsWith('/information') ||
+        location.startsWith('/update_avatar_screen');
   }
 
-  /// Maps a route to its BottomNavBar index.
+  /// Maps a [location] to its corresponding bottom navigation index.
   ///
-  /// 0 is the drawer trigger, not an actual route. So not using that.
-  /// Keeps the same index as the icons / routes are placed.
-  static int _getSelectedIndexForRoute(String location) {
+  /// Returns 0 for any drawer routes, -1 if not recognized.
+  static int getSelectedIndexForRoute(String location) {
     switch (location) {
       case '/shopping-list':
         return 1;
@@ -169,7 +167,7 @@ class AppRouter {
       case '/purchase-history':
         return 4;
       default:
-        return 2; // defaults to the home screen
+        return isDrawerRoute(location) ? 0 : -1;
     }
   }
 }

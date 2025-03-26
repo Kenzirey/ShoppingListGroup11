@@ -25,23 +25,22 @@ class BottomNavBar extends StatelessWidget {
       // Only show the label for the selected item. (hover effect)
       labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
       onDestinationSelected: (index) {
-        AppRouter.isDrawerNavigation = false;
         if (index == 0) {
           // Open the drawer.
           scaffoldKey.currentState?.openDrawer();
         } else {
           switch (index) {
             case 1:
-              context.goNamed('shoppingList');
+              context.pushNamed('shoppingList');
               break;
             case 2:
-              context.goNamed('home');
+              context.pushNamed('home');
               break;
             case 3:
-              context.goNamed('scanReceipt');
+              context.pushNamed('scanReceipt');
               break;
             case 4:
-              context.goNamed('purchaseHistory');
+              context.pushNamed('purchaseHistory');
               break;
           }
         }
