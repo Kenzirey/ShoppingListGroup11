@@ -17,10 +17,11 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 /// Manages the state of the login screen.
-class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderStateMixin {
+class _LoginState extends ConsumerState<LoginScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  
+
   bool _passwordVisible = false;
   bool _isLoading = false;
   bool _rememberMe = false;
@@ -68,7 +69,6 @@ class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderSt
     _animationController.dispose();
     super.dispose();
   }
-
 
   OverlayEntry _buildOverlayEntry({
     required String lottieAsset,
@@ -259,7 +259,8 @@ class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderSt
               position: _slideAnimation,
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 32.0, vertical: 24),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -271,17 +272,11 @@ class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderSt
                             color: theme.colorScheme.primary.withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(
-                            Icons.shopping_basket_rounded,
-                            size: 56,
-                            color: theme.colorScheme.primary,
-                          ),
                         ),
                       ),
                       const SizedBox(height: 24),
-
                       Text(
-                        "Welcome!",
+                        "WasteNot", // noot noot
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
@@ -290,16 +285,41 @@ class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderSt
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        "Sign in to continue to your account",
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: theme.colorScheme.tertiary.withOpacity(0.7),
-                        ),
-                        textAlign: TextAlign.center,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "New here?",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color:
+                                  theme.colorScheme.tertiary.withOpacity(0.7),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              // TextButton inherently adds padding, and it was too much so I wanted to control it.
+                              padding:
+                                  EdgeInsets.zero,
+                              minimumSize:
+                                  const Size(0, 0),
+                              tapTargetSize: MaterialTapTargetSize
+                                  .shrinkWrap,
+                            ),
+                            onPressed: () => context.push('/sign-up'),
+                            child: Text(
+                              "Sign up",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 36),
-
                       _buildTextField(
                         controller: _emailController,
                         label: "Email",
@@ -308,7 +328,6 @@ class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderSt
                         keyboardType: TextInputType.emailAddress,
                       ),
                       const SizedBox(height: 20),
-
                       _buildTextField(
                         controller: _passwordController,
                         label: "Password",
@@ -317,7 +336,9 @@ class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderSt
                         obscureText: !_passwordVisible,
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _passwordVisible ? Icons.visibility_off : Icons.visibility,
+                            _passwordVisible
+                                ? Icons.visibility_off
+                                : Icons.visibility,
                             color: theme.colorScheme.tertiary.withOpacity(0.6),
                           ),
                           onPressed: () {
@@ -328,7 +349,6 @@ class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderSt
                         ),
                       ),
                       const SizedBox(height: 16),
-
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -360,23 +380,23 @@ class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderSt
                               ),
                             ],
                           ),
-                         TextButton(
-                          onPressed: () {
-                            context.go('/forgot-password');
-                          },
-                          style: TextButton.styleFrom(
-                            foregroundColor: theme.colorScheme.primary,
-                            padding: EdgeInsets.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: const Text(
-                            "Forgot Password?",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
+                          TextButton(
+                            onPressed: () {
+                              context.go('/forgot-password');
+                            },
+                            style: TextButton.styleFrom(
+                              foregroundColor: theme.colorScheme.primary,
+                              padding: EdgeInsets.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: const Text(
+                              "Forgot Password?",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
-                        ),
                         ],
                       ),
                       const SizedBox(height: 32),
@@ -390,7 +410,8 @@ class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderSt
                           if (email.isEmpty || password.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: const Text('Please fill in all fields'),
+                                content:
+                                    const Text('Please fill in all fields'),
                                 backgroundColor: Colors.red[700],
                                 behavior: SnackBarBehavior.floating,
                                 shape: RoundedRectangleBorder(
@@ -407,7 +428,8 @@ class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderSt
                           });
 
                           try {
-                            final authController = ref.read(authControllerProvider);
+                            final authController =
+                                ref.read(authControllerProvider);
                             await authController.login(email, password);
                             _showSuccessOverlay(context);
                             await Future.delayed(const Duration(seconds: 2));
@@ -416,7 +438,8 @@ class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderSt
                               context.go('/');
                             }
                           } catch (e) {
-                            _showErrorOverlay(context, 'Wrong username or password');
+                            _showErrorOverlay(
+                                context, 'Wrong username or password');
                           } finally {
                             setState(() {
                               _isLoading = false;
@@ -441,12 +464,12 @@ class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderSt
                               ),
                       ),
                       const SizedBox(height: 24),
-
                       Row(
                         children: [
                           Expanded(
                             child: Divider(
-                              color: theme.colorScheme.tertiary.withOpacity(0.3),
+                              color:
+                                  theme.colorScheme.tertiary.withOpacity(0.3),
                               thickness: 1,
                             ),
                           ),
@@ -455,21 +478,22 @@ class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderSt
                             child: Text(
                               "OR",
                               style: TextStyle(
-                                color: theme.colorScheme.tertiary.withOpacity(0.7),
+                                color:
+                                    theme.colorScheme.tertiary.withOpacity(0.7),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
                           Expanded(
                             child: Divider(
-                              color: theme.colorScheme.tertiary.withOpacity(0.3),
+                              color:
+                                  theme.colorScheme.tertiary.withOpacity(0.3),
                               thickness: 1,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 24),
-
                       _buildSocialButton(
                         onPressed: () async {
                           if (_isLoading) return;
@@ -479,7 +503,8 @@ class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderSt
                           });
 
                           try {
-                            final authController = ref.read(authControllerProvider);
+                            final authController =
+                                ref.read(authControllerProvider);
                             await authController.signInWithGoogle();
                             _showSuccessOverlay(context);
                             await Future.delayed(const Duration(seconds: 2));
@@ -488,7 +513,8 @@ class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderSt
                               context.go('/');
                             }
                           } catch (e) {
-                            _showErrorOverlay(context, 'Google login failed. Please try again.');
+                            _showErrorOverlay(context,
+                                'Google login failed. Please try again.');
                           } finally {
                             setState(() {
                               _isLoading = false;
@@ -500,33 +526,6 @@ class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderSt
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.black87,
                       ),
-                      const SizedBox(height: 32),
-
-                      Center(
-                        child: RichText(
-                          text: TextSpan(
-                            text: 'Don\'t have an account? ',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: theme.colorScheme.tertiary.withOpacity(0.7),
-                            ),
-                            children: [
-                              TextSpan(
-                                text: 'Sign Up',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: theme.colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () {
-                                    context.go('/sign-up');
-                                  },
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -537,7 +536,6 @@ class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderSt
       ),
     );
   }
-
 
   Widget _buildTextField({
     required TextEditingController controller,
@@ -611,7 +609,8 @@ class _LoginState extends ConsumerState<LoginScreen> with SingleTickerProviderSt
               ),
               filled: true,
               fillColor: theme.colorScheme.surface,
-              contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+              contentPadding:
+                  const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
             ),
           ),
         ),
