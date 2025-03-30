@@ -17,17 +17,21 @@ class ReceiptParser {
   String cleanName(String raw) {
     // Remove percentage patterns like "15%"
     raw = raw.replaceAll(RegExp(r'\s*\d+\s*%', caseSensitive: false), '');
-
-    // Remove quantity patterns like "6 stk" or "x 3"
-    raw = raw.replaceAll(RegExp(r'\b\d+\s*stk\b', caseSensitive: false), '');
-    raw = raw.replaceAll(RegExp(r'\b(\d+\s*x|x\s*\d+)\b', caseSensitive: false), '');
-
     // Remove extra spaces
     raw = raw.replaceAll(RegExp(r'\s+'), ' ').trim();
     return raw;
   }
 
   /// Extracts the store name from the recognized text
+  int extractQuantity(String text) {
+    final match = RegExp(r'\b(\d+)\s*(?:stk|x)\b', caseSensitive: false).firstMatch(text);
+    if (match != null) {
+      return int.tryParse(match.group(1)!) ?? 1;
+    }
+    return 1;
+  }
+
+  /// Extracts the store name from the recognized text.
   String extractStoreName(List<String> lines) {
     for (int i = 0; i < math.min(5, lines.length); i++) {
       final line = lines[i].trim().toUpperCase();
@@ -124,6 +128,7 @@ class ReceiptParser {
       }
     }
 
+    final RegExp quantityPricePattern = RegExp(r'^\d+\s*x\s*(?:kr\s*)?\d+[.,]\d{2}$', caseSensitive: false);
     final items = <ReceiptItem>[];
     bool stopParsing = false;
     for (int i = 0; i < rows.length; i++) {
@@ -143,46 +148,41 @@ class ReceiptParser {
         debugPrint('Skipping pant line: $combinedLower');
         continue;
       }
+      if (quantityPricePattern.hasMatch(combinedLower)) {
+        debugPrint('Skipping quantity/price-only line: $combinedLower');
+        continue;
+      }
 
       // Sort row elements by boundingBox left, so [name..., possible price]
       row.sort((a, b) => a.box.left.compareTo(b.box.left));
 
-      // If row has 2 elements => (name, price)
+      String rawNameText = '';
+      String priceText = '';
+      int quantity = 1;
+
       if (row.length == 2) {
-        final rawNameText = row[0].text.trim();
-        final cleanedName = cleanName(rawNameText);
-        final priceText = row[1].text.trim();
-        final priceVal = _parsePrice(priceText);
-
-        if (priceVal != null && cleanedName.isNotEmpty) {
-          items.add(ReceiptItem(name: cleanedName, price: priceVal));
+        rawNameText = row[0].text.trim();
+        priceText = row[1].text.trim();
+        quantity = extractQuantity(row[0].text);
+      } else if (row.length == 1) {
+        rawNameText = row[0].text.trim();
+        final match = RegExp(r'(\d+[.,]\d{2})').firstMatch(rawNameText);
+        if (match != null) {
+          priceText = rawNameText.substring(match.start).trim();
+          rawNameText = rawNameText.substring(0, match.start).trim();
+          quantity = extractQuantity(rawNameText);
         }
+      } else {
+        rawNameText = row.sublist(0, row.length - 1).map((l) => l.text).join(' ');
+        priceText = row.last.text.trim();
+        quantity = extractQuantity(rawNameText);
       }
-      // If only 1 element => might be e.g. "Apples 19.90"
-      else if (row.length == 1) {
-        final singleText = row[0].text.trim();
-        final priceVal = _parsePrice(singleText);
-        if (priceVal != null) {
-          final match = RegExp(r'(\d+[.,]\d{2})').firstMatch(singleText);
-          if (match != null) {
-            final namePart = singleText.substring(0, match.start).trim();
-            final cleanedName = cleanName(namePart);
-            if (cleanedName.isNotEmpty) {
-              items.add(ReceiptItem(name: cleanedName, price: priceVal));
-            }
-          }
-        }
-      }
-      // If more than 2 => combine all but last as name, last as price
-      else {
-        final leftText = row.sublist(0, row.length - 1).map((l) => l.text).join(' ');
-        final cleanedName = cleanName(leftText);
-        final rightText = row.last.text.trim();
-        final priceVal = _parsePrice(rightText);
 
-        if (priceVal != null && cleanedName.isNotEmpty) {
-          items.add(ReceiptItem(name: cleanedName, price: priceVal));
-        }
+      final cleanedName = cleanName(rawNameText);
+      final priceVal = _parsePrice(priceText);
+
+      if (priceVal != null && cleanedName.isNotEmpty) {
+        items.add(ReceiptItem(name: cleanedName, price: priceVal, quantity: quantity));
       }
     }
     return items;
