@@ -6,6 +6,7 @@ import 'package:lottie/lottie.dart';
 import 'package:shopping_list_g11/controllers/auth_controller.dart';
 import 'package:shopping_list_g11/providers/current_user_provider.dart';
 
+/// Screen for updating the user's profile picture avatar.
 class UpdateAvatarScreen extends ConsumerStatefulWidget {
   const UpdateAvatarScreen({super.key});
 
@@ -172,7 +173,6 @@ class _UpdateAvatarScreenState extends ConsumerState<UpdateAvatarScreen>
       _originalGoogleAvatarUrl = currentUser.googleAvatarUrl;
     }
 
-
     final List<String> availableAvatars = List.from(avatarPaths);
     if (_originalGoogleAvatarUrl != null &&
         !availableAvatars.contains(_originalGoogleAvatarUrl)) {
@@ -255,31 +255,36 @@ class _UpdateAvatarScreenState extends ConsumerState<UpdateAvatarScreen>
                       child: ElevatedButton(
                         onPressed: () async {
                           if (selectedAvatar == null) {
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                   content: Text('Please select an avatar')),
                             );
                             return;
                           }
+
                           try {
-                            await ref.read(authControllerProvider).updateProfile(
+                            await ref
+                                .read(authControllerProvider)
+                                .updateProfile(
                                   avatarUrl: selectedAvatar,
                                   dietaryPreferences:
                                       currentUser.dietaryPreferences,
                                 );
 
+                            if (!context.mounted) return;
                             _showSuccessOverlay(context);
 
                             await Future.delayed(const Duration(seconds: 2));
+
+                            if (!context.mounted) return;
                             _removeSuccessOverlay();
-                            if (context.mounted) {
-                              GoRouter.of(context).pop();
-                            }
+                            GoRouter.of(context).pop();
                           } catch (e) {
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                  content:
-                                      Text('Profile update failed: $e')),
+                                  content: Text('Profile update failed: $e')),
                             );
                           }
                         },

@@ -31,11 +31,7 @@ class AuthService {
             
           })
           .select()
-          .single(); 
-
-      if (insertedData == null) {
-        throw Exception('Signup failed: No profile data returned.');
-      }
+          .single();
 
       final newUser = AppUser.fromMap(insertedData, supabaseUser.email ?? '');
       return newUser;
@@ -193,7 +189,7 @@ Future<AppUser> signInWithGoogleNative() async {
     'provider': 'google',
   }).select().single();
 
-  if (profileData != null && profileData['provider'] == 'google') {
+  if (profileData['provider'] == 'google') {
     if ((profileData['google_avatar_url'] == null ||
          profileData['google_avatar_url'].toString().isEmpty) &&
         googleUser.photoUrl != null &&

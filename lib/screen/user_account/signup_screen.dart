@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shopping_list_g11/controllers/auth_controller.dart';
-import 'package:flutter/services.dart';
 
 /// A visually enhanced sign up screen with animations, validation, and improved UI
 class SignUpScreen extends ConsumerStatefulWidget {

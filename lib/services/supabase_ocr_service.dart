@@ -26,10 +26,6 @@ class SupabaseService {
       debugPrint('Error fetching profile: $e');
       return;
     }
-    if (profileRow == null) {
-      debugPrint('No profile row found.');
-      return;
-    }
     final profileId = profileRow['id'];
 
     Map<String, dynamic> insertedReceipt;

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shopping_list_g11/routes/routes.dart';
 import 'package:shopping_list_g11/providers/current_user_provider.dart';
 
-/// Drawer widget for the app.
+/// Left-side drawer widget for the app.
 class MyDrawer extends ConsumerWidget {
   const MyDrawer({super.key});
 
@@ -28,9 +27,7 @@ class MyDrawer extends ConsumerWidget {
                   child: InkWell(
                     onTap: () {
                       Navigator.of(context).pop();
-                      
                       context.pushNamed('loginPage');
-                      
                     },
                     child: Row(
                       children: [
@@ -58,26 +55,25 @@ class MyDrawer extends ConsumerWidget {
                   child: InkWell(
                     onTap: () {
                       Navigator.of(context).pop();
-                      
                       context.pushNamed('accountPage');
-
                     },
                     child: Row(
                       children: [
-                       if (currentUser.avatarUrl?.isNotEmpty == true)
-                        CircleAvatar(
-                          backgroundImage: currentUser.avatarUrl!.startsWith('assets/')
-                            ? AssetImage(currentUser.avatarUrl!) as ImageProvider
-                            : NetworkImage(currentUser.avatarUrl!),
-                          radius: 18,
-                        )
-                      else
-                        Icon(
-                          Icons.account_circle,
-                          color: Theme.of(context).colorScheme.tertiary,
-                          size: 36,
-                        ),
-
+                        if (currentUser.avatarUrl?.isNotEmpty == true)
+                          CircleAvatar(
+                            backgroundImage:
+                                currentUser.avatarUrl!.startsWith('assets/')
+                                    ? AssetImage(currentUser.avatarUrl!)
+                                        as ImageProvider
+                                    : NetworkImage(currentUser.avatarUrl!),
+                            radius: 18,
+                          )
+                        else
+                          Icon(
+                            Icons.account_circle,
+                            color: Theme.of(context).colorScheme.tertiary,
+                            size: 36,
+                          ),
                         const SizedBox(width: 12),
                         Text(
                           currentUser.name.isEmpty
@@ -94,21 +90,6 @@ class MyDrawer extends ConsumerWidget {
                 ),
               const SizedBox(height: 20),
 
-              // Filter
-              ListTile(
-                leading: Icon(Icons.filter_list,
-                    color: Theme.of(context).colorScheme.tertiary),
-                title: Text(
-                  'Saved Events',
-                  //TODO: one chat screen but the screen asks user to toggle what they want, event planner or specific recipe
-                  //TODO: in the prompt, allow user to name the list after 
-                  //TODO: in the saved event list, have recipes on top similar to saved recipes, and below a shopping list of items to buy.
-                  style:
-                      TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                ),
-                onTap: () {},
-              ),
-
               // Chat
               ListTile(
                 leading: Icon(Icons.chat,
@@ -120,7 +101,7 @@ class MyDrawer extends ConsumerWidget {
                 ),
                 onTap: () {
                   Navigator.of(context).pop();
-                      true; // Mark navigation as from the drawer
+                  true; // Mark navigation as from the drawer
                   context.pushNamed('chat');
                 },
               ),
@@ -135,12 +116,9 @@ class MyDrawer extends ConsumerWidget {
                 ),
                 onTap: () {
                   Navigator.of(context).pop();
-              
                   context.pushNamed('trending');
-                  
                 },
               ),
-              // Meal planner for the week (Mon-Sun).
               ListTile(
                 leading: Icon(Icons.calendar_today,
                     color: Theme.of(context).colorScheme.tertiary),
@@ -151,9 +129,35 @@ class MyDrawer extends ConsumerWidget {
                 ),
                 onTap: () {
                   Navigator.of(context).pop();
-                  
                   context.pushNamed('mealPlanner');
-                  
+                },
+              ),
+              // Meal planner for the week (Mon-Sun).
+              ListTile(
+                leading: Icon(Icons.calendar_today,
+                    color: Theme.of(context).colorScheme.tertiary),
+                title: Text(
+                  'Shopping Suggestions',
+                  style:
+                      TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                ),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  context.pushNamed('shoppingSuggestions');
+                },
+              ),
+              // Current stock of pantry items
+              ListTile(
+                leading: Icon(Icons.calendar_today,
+                    color: Theme.of(context).colorScheme.tertiary),
+                title: Text(
+                  'Pantry',
+                  style:
+                      TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                ),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  context.pushNamed('pantry');
                 },
               ),
 
@@ -168,9 +172,7 @@ class MyDrawer extends ConsumerWidget {
                 ),
                 onTap: () {
                   Navigator.of(context).pop();
-                  
                   context.pushNamed('savedRecipes');
-                  
                 },
               ),
             ],

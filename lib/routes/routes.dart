@@ -3,21 +3,23 @@ import 'package:go_router/go_router.dart';
 import 'package:shopping_list_g11/routes/app_shell.dart';
 import 'package:shopping_list_g11/screen/chat_screen.dart';
 import 'package:shopping_list_g11/screen/home_screen.dart';
-import 'package:shopping_list_g11/screen/login.dart';
+import 'package:shopping_list_g11/screen/pantry_screen.dart';
+import 'package:shopping_list_g11/screen/shopping_suggestion.dart';
+import 'package:shopping_list_g11/screen/user_account/login.dart';
 import 'package:shopping_list_g11/screen/meal_planner.dart';
 import 'package:shopping_list_g11/screen/meal_recipe.dart';
 import 'package:shopping_list_g11/screen/saved_recipes.dart';
 import 'package:shopping_list_g11/screen/shopping_list.dart';
 import 'package:shopping_list_g11/screen/purchase_history.dart';
-import 'package:shopping_list_g11/screen/signup_screen.dart';
+import 'package:shopping_list_g11/screen/user_account/signup_screen.dart';
 import 'package:shopping_list_g11/screen/trending_meal.dart';
 import 'package:shopping_list_g11/screen/scan_receipt_screen.dart';
-import 'package:shopping_list_g11/screen/account_page_screen.dart';
-import 'package:shopping_list_g11/screen/update_avatar_screen.dart';
+import 'package:shopping_list_g11/screen/user_account/account_page_screen.dart';
+import 'package:shopping_list_g11/screen/user_account/update_avatar_screen.dart';
 import 'package:shopping_list_g11/screen/information_screen.dart';
-import 'package:shopping_list_g11/screen/edit_account_details_screen.dart';
-import 'package:shopping_list_g11/screen/reset_password_screen.dart';
-import 'package:shopping_list_g11/screen/set_new_password_screen.dart';
+import 'package:shopping_list_g11/screen/user_account/edit_account_details_screen.dart';
+import 'package:shopping_list_g11/screen/user_account/reset_password_screen.dart';
+import 'package:shopping_list_g11/screen/user_account/set_new_password_screen.dart';
 
 /// Defines the app's routing and navigation logic using the GoRouter package.
 ///
@@ -71,9 +73,19 @@ class AppRouter {
             builder: (context, state) => const MealRecipeScreen(),
           ),
           GoRoute(
+            path: '/shopping-suggestion',
+            name: 'shoppingSuggestions',
+            builder: (context, state) => const ShoppingSuggestionsScreen(),
+          ),
+          GoRoute(
             path: '/meal-planner',
             name: 'mealPlanner',
             builder: (context, state) => const MealPlannerScreen(),
+          ),
+            GoRoute(
+            path: '/pantry',
+            name: 'pantry',
+            builder: (context, state) => const PantryListScreen(),
           ),
           GoRoute(
             path: '/trending',

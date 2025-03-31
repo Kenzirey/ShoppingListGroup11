@@ -14,7 +14,7 @@ class BrandClassifierService {
 
       final List<dynamic> dataList = data as List<dynamic>;
       return dataList.map((e) => e as Map<String, dynamic>).toList();
-    } catch (error, stack) {
+    } catch (error) {
       debugPrint('Error fetching synonyms: $error');
       return [];
     }

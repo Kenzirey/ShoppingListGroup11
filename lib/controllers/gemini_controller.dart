@@ -14,10 +14,8 @@ class GeminiController {
 
   /// Makes a single, non-streaming prompt call to Gemini, returning the entire response at once.
   Future<String> _getGeminiResponse(String message) async {
-    // TODO: set up prompt for lactose and vegan ? or how do we connect it with the kassal.app stuff
+    //TODO: set up more guards for users
     // So that the response is predictable, and user doesn't need to specify things.
-    //TODO : placeholder in prompt, where IF user has a dietary preference it is put in?
-    //String dietary = "";
     String systemPrompt = """
     You are an AI assistant that provides recipes. Please use the metric system.
     Please structure your response as follows:
@@ -30,7 +28,7 @@ class GeminiController {
     **Total Time:** [Automatically calculate as Prep Time + Cook Time]
 
     **Ingredients:**
-    [Insert ingredients]
+    [Insert ingredients],
 
     **Instructions:**
     [Insert step-by-step instructions]

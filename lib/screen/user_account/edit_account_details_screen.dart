@@ -3,11 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
-import 'package:shopping_list_g11/controllers/auth_controller.dart';
 import 'package:shopping_list_g11/models/app_user.dart';
 import 'package:shopping_list_g11/providers/current_user_provider.dart';
 import 'package:shopping_list_g11/providers/edit_account_details_provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class EditAccountDetailsScreen extends ConsumerStatefulWidget {
   const EditAccountDetailsScreen({super.key});
@@ -73,6 +71,7 @@ class _EditAccountDetailsScreenState
     super.dispose();
   }
 
+  //TODO: extract and reuse overlay
   void _showSuccessOverlay(BuildContext context) {
     _successOverlayEntry = OverlayEntry(
       builder: (context) {
@@ -242,7 +241,6 @@ class _EditAccountDetailsScreenState
     required String label,
     required String hintText,
     required IconData prefixIcon,
-    bool enabled = true,
   }) {
     final theme = Theme.of(context);
     return Column(

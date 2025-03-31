@@ -1,13 +1,12 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shopping_list_g11/controllers/auth_controller.dart';
 
+/// Dialog that confirms the user's intent to logout.
 class LogoutConfirmationDialog extends StatelessWidget {
-  const LogoutConfirmationDialog({Key? key}) : super(key: key);
+  const LogoutConfirmationDialog({super.key});
 
   @override
   Widget build(BuildContext context) {

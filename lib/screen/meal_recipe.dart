@@ -60,7 +60,8 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                 // Prep time with its icon.
                 Row(
                   children: [
-                    const Icon(Icons.timer_outlined, size: 16), // icon for prep time
+                    const Icon(Icons.timer_outlined,
+                        size: 16), // icon for prep time
                     const SizedBox(width: 4),
                     Text(
                       recipe.prepTime, // e.g. "15 minutes"
@@ -73,7 +74,8 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                 // Cook time with a different icon.
                 Row(
                   children: [
-                    const Icon(Icons.local_fire_department, size: 16), // icon for cook time
+                    const Icon(Icons.local_fire_department,
+                        size: 16), // icon for cook time
                     const SizedBox(width: 4),
                     Text(
                       recipe.cookTime, // e.g. "120 minutes"
@@ -121,11 +123,14 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                       });
                     },
                     children: [
-                      // Wrap the ingredient list + that extra 16px space
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Add extra vertical space here:
+                          const SizedBox(height: 8),
+
                           IngredientList(ingredients: recipe.ingredients),
+
                           const SizedBox(height: 16),
                         ],
                       ),

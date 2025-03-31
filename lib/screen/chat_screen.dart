@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import 'package:shopping_list_g11/widget/styles/chat_button_styles.dart';
 import '../controllers/recipe_controller.dart';
 import '../controllers/saved_recipe_controller.dart';
-import '../models/saved_recipe.dart';
 import '../providers/current_user_provider.dart';
 
 /// Screen for asking AI for a specific recipe.
