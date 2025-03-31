@@ -26,14 +26,12 @@
             </intent-filter>
 
             <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-
-                <data 
-                    android:scheme="com.shoppinglistg11"
-                    android:host="app"
-                    android:pathPrefix="/reset-password" />
+            <action android:name="android.intent.action.VIEW"/>
+            <category android:name="android.intent.category.DEFAULT"/>
+            <category android:name="android.intent.category.BROWSABLE"/>
+            <data
+                android:scheme="com.shoppinglistg11"
+                android:host="app" />
             </intent-filter>
 
 
