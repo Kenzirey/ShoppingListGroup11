@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shopping_list_g11/widget/actions/profile_action_button.dart';
+import 'package:shopping_list_g11/widget/profile_menu_item.dart';
 
 /// Extracted widget for the account action buttons.
 class AccountActions extends StatelessWidget {
   const AccountActions({super.key});
 
-  @override
+   @override
   Widget build(BuildContext context) {
-    return ProfileActionButton(
-      label: 'Account Details',
-      icon: Icons.person,
-      color: Theme.of(context).colorScheme.primary,
-      onPressed: () => context.pushNamed('editAccountDetails'),
+    return ProfileMenuItem(
+      title: 'Account Details',
+      icon: Icons.person_outline,
+      textColor: Colors.white,
+      iconColor: Colors.greenAccent,
+      backgroundColor: Colors.greenAccent.withOpacity(0.1),
+      onTap: () => context.pushNamed('editAccountDetails'),
     );
   }
 }
