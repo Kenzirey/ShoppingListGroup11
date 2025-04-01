@@ -28,6 +28,7 @@ class AuthService {
             'name': userName ?? '',
             'dietary_preferences': [],
             'provider': 'email',
+            'email': supabaseUser.email,
             
           })
           .select()
@@ -187,6 +188,7 @@ Future<AppUser> signInWithGoogleNative() async {
     'google_avatar_url': googleUser.photoUrl ?? '',
     'dietary_preferences': [],
     'provider': 'google',
+    'email': googleUser.email,
   }).select().single();
 
   if (profileData['provider'] == 'google') {
@@ -237,6 +239,21 @@ Future<AppUser> signInWithGoogleNative() async {
       throw Exception('Error updating password: $e');
     }
   }
+
+
+// Cheks if the given email belongs to an account that uses google for auth.
+// Method queries the profiles table by the provided email and returns true if the provider field is google
+// Useful where only the email is available (password reset)
+Future<bool> isGoogleUserByEmail(String email) async {
+  final response = await _client
+      .from('profiles')
+      .select('provider')
+      .eq('email', email)
+      .maybeSingle();
+
+  return response != null &&
+         response['provider'].toString().toLowerCase() == 'google';
+}
 
 }
 
