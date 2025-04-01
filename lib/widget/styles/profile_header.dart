@@ -114,12 +114,22 @@ class ProfileHeader extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.email, size: 16, color: Colors.white70),
-                const SizedBox(width: 6),
-                Text(
-                  currentUser.email,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.white70,
+               currentUser.isGoogleUser
+                  ? Image.asset(
+                      'assets/images/google_logo.png',
+                      width: 18,
+                      height: 18,
+                    )
+                  : const Icon(
+                      Icons.email,
+                      size: 18,
+                      color: Colors.white70,
+                    ),
+              const SizedBox(width: 6),
+              Text(
+                currentUser.email,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Colors.white70,
                   ),
                 ),
               ],

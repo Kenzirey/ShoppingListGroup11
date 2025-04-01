@@ -4,14 +4,16 @@ class SocialButton extends StatelessWidget {
   const SocialButton({
     super.key,
     required this.onPressed,
-    required this.icon,
+    this.icon,
+    this.iconWidget,
     required this.text,
     required this.backgroundColor,
     required this.foregroundColor,
   });
 
   final VoidCallback onPressed;
-  final IconData icon;
+  final IconData? icon;
+  final Widget? iconWidget;
   final String text;
   final Color backgroundColor;
   final Color foregroundColor;
@@ -46,7 +48,10 @@ class SocialButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: foregroundColor, size: 24),
+            iconWidget ??
+                (icon != null
+                    ? Icon(icon, color: foregroundColor, size: 24)
+                    : const SizedBox.shrink()),
             const SizedBox(width: 12),
             Text(
               text,

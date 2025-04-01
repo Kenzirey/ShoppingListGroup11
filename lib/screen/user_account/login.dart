@@ -360,7 +360,11 @@ class _LoginState extends ConsumerState<LoginScreen>
                               });
                             }
                           },
-                          icon: Icons.g_translate,
+                          iconWidget: Image.asset(
+                            'assets/images/google_logo.png',
+                            width: 24,
+                            height: 24,
+                          ),
                           text: "Continue with Google",
                           backgroundColor: Colors.white,
                           foregroundColor: Colors.black87),

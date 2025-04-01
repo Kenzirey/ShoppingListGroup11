@@ -224,11 +224,17 @@ class _EditAccountDetailsScreenState
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                currentUser.isGoogleUser ? Icons.g_mobiledata : Icons.email,
-                size: 18,
-                color: currentUser.isGoogleUser ? Colors.red[300] : Colors.white70,
-              ),
+              currentUser.isGoogleUser
+                  ? Image.asset(
+                      'assets/images/google_logo.png',
+                      width: 18,
+                      height: 18,
+                    )
+                  : const Icon(
+                      Icons.email,
+                      size: 18,
+                      color: Colors.white70,
+                    ),
               const SizedBox(width: 8),
               Text(
                 currentUser.email,
