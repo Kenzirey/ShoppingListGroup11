@@ -107,16 +107,6 @@ class _AccountPageScreenState extends ConsumerState<AccountPageScreen>
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings, color: Colors.white),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Settings page coming soon')),
-              );
-            },
-          ),
-        ],
       ),
       body: Container(
         decoration: const BoxDecoration(
