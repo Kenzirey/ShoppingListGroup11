@@ -6,6 +6,7 @@ import 'package:shopping_list_g11/widget/styles/custom_text_field.dart';
 import 'package:shopping_list_g11/widget/styles/gradient_button.dart';
 import 'package:shopping_list_g11/widget/styles/social_button.dart';
 import 'package:shopping_list_g11/widget/styles/status_overlay_feedback.dart';
+import 'package:shopping_list_g11/utils/error_utils.dart';
 
 /// Login entry point for the application.
 /// Allows user to register & login via email or Google
@@ -270,7 +271,7 @@ class _LoginState extends ConsumerState<LoginScreen>
                               StatusOverlayFeedback.showErrorOverlay(
                                 context,
                                 title: 'Login Failed',
-                                message: 'Wrong username or password',
+                                message: getUserFriendlyErrorMessage(e),
                               );
                             } finally {
                               setState(() {

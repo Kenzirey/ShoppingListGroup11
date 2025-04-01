@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shopping_list_g11/controllers/auth_controller.dart';
+import 'package:shopping_list_g11/utils/error_utils.dart';
 
 /// A visually enhanced sign up screen with animations, validation, and improved UI
 class SignUpScreen extends ConsumerStatefulWidget {
@@ -97,7 +98,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Sign up failed: ${e.toString().split(']').last}'),
+            content: Text('Sign up failed: ${getUserFriendlyErrorMessage(e)}'),
             backgroundColor: Colors.red,
           ),
         );

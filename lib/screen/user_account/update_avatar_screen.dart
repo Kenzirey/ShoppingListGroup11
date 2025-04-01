@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shopping_list_g11/controllers/auth_controller.dart';
 import 'package:shopping_list_g11/providers/current_user_provider.dart';
+import 'package:shopping_list_g11/utils/error_utils.dart';
 
 /// Screen for updating the user's profile picture avatar.
 class UpdateAvatarScreen extends ConsumerStatefulWidget {
@@ -284,7 +285,7 @@ class _UpdateAvatarScreenState extends ConsumerState<UpdateAvatarScreen>
                             if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                  content: Text('Profile update failed: $e')),
+                                  content: Text(getUserFriendlyErrorMessage(e))),
                             );
                           }
                         },

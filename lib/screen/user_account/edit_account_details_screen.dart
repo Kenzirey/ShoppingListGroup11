@@ -6,6 +6,7 @@ import 'package:lottie/lottie.dart';
 import 'package:shopping_list_g11/models/app_user.dart';
 import 'package:shopping_list_g11/providers/current_user_provider.dart';
 import 'package:shopping_list_g11/providers/edit_account_details_provider.dart';
+import 'package:shopping_list_g11/utils/error_utils.dart';
 
 class EditAccountDetailsScreen extends ConsumerStatefulWidget {
   const EditAccountDetailsScreen({super.key});
@@ -163,7 +164,7 @@ class _EditAccountDetailsScreenState
         context.pop();
       }
     } catch (e) {
-      _showErrorSnackBar('Update failed: $e');
+      _showErrorSnackBar(getUserFriendlyErrorMessage(e));
     } finally {
       setState(() {
         _isLoading = false;

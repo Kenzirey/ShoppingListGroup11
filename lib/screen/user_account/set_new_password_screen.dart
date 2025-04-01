@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shopping_list_g11/utils/error_utils.dart';
 
 
 class SetNewPasswordScreen extends StatefulWidget {
@@ -76,7 +77,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
     }
   } catch (e) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: ${e.toString()}')),
+      SnackBar(content: Text(getUserFriendlyErrorMessage(e))),
     );
   } finally {
     setState(() => _loading = false);
