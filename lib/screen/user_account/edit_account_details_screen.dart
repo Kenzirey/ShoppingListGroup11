@@ -7,6 +7,8 @@ import 'package:shopping_list_g11/models/app_user.dart';
 import 'package:shopping_list_g11/providers/current_user_provider.dart';
 import 'package:shopping_list_g11/providers/edit_account_details_provider.dart';
 import 'package:shopping_list_g11/utils/error_utils.dart';
+import 'package:shopping_list_g11/utils/validators.dart';
+import 'package:shopping_list_g11/widget/password_requirements.dart';
 
 class EditAccountDetailsScreen extends ConsumerStatefulWidget {
   const EditAccountDetailsScreen({super.key});
@@ -36,6 +38,8 @@ class _EditAccountDetailsScreenState
   bool _showCurrentPassword = false;
   bool _showNewPassword = false;
   bool _isLoading = false;
+  String _newPassword = '';
+
 
   late final AnimationController _animationController;
   late final Animation<double> _fadeAnimation;
@@ -311,6 +315,8 @@ class _EditAccountDetailsScreenState
   required bool showPassword,
   required VoidCallback onToggleVisibility,
   String? hintText,
+  String? Function(String?)? validator,
+  ValueChanged<String>? onChanged,
 }) {
   final theme = Theme.of(context);
   return Container(
@@ -322,6 +328,8 @@ class _EditAccountDetailsScreenState
     child: TextFormField(
       controller: controller,
       obscureText: !showPassword,
+      validator: validator,
+      onChanged: onChanged,
       style: TextStyle(color: theme.colorScheme.tertiary),
       decoration: InputDecoration(
         labelText: label,
@@ -538,19 +546,17 @@ class _EditAccountDetailsScreenState
                                       _showNewPassword = !_showNewPassword;
                                     });
                                   },
+                                  validator: (value) => validatePassword(value),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _newPassword = value;
+                                    });
+                                  },
                                 ),
                                 const SizedBox(height: 8),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 12),
-                                  child: Text(
-                                    '• Password must be at least 8 characters long',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.6),
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
+                                PasswordRequirements(password: _newPassword),
                                 const SizedBox(height: 24),
+
                               ] else ...[
                                 Container(
                                   padding: const EdgeInsets.all(16),

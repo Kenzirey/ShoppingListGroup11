@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shopping_list_g11/utils/error_utils.dart';
+import 'package:shopping_list_g11/utils/validators.dart';
+import 'package:shopping_list_g11/widget/password_requirements.dart';
 
 
 class SetNewPasswordScreen extends StatefulWidget {
@@ -23,6 +25,8 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
   bool _loading = false;
   bool _obscurePassword = true;
   String? _token;
+  String _password = '';
+
 
   @override
   void initState() {
@@ -54,9 +58,10 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
   }
 
   final newPassword = _passwordController.text.trim();
-  if (newPassword.length < 6) {
+  final validationError = validatePassword(newPassword);
+  if (validationError != null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Password must be at least 6 characters')),
+      SnackBar(content: Text(validationError)),
     );
     return;
   }
@@ -114,7 +119,14 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                         },
                       ),
                     ),
-                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _password = value;
+                    });
+                  },
+                ),
+                  const SizedBox(height: 8),
+                  PasswordRequirements(password: _password),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _loading ? null : _resetPassword,
@@ -122,6 +134,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                         ? const CircularProgressIndicator()
                         : const Text('Update Password'),
                   ),
+
                 ],
               ),
       ),

@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shopping_list_g11/controllers/auth_controller.dart';
 import 'package:shopping_list_g11/utils/error_utils.dart';
+import 'package:shopping_list_g11/utils/validators.dart';
+import 'package:shopping_list_g11/widget/password_requirements.dart';
+
 
 /// A visually enhanced sign up screen with animations, validation, and improved UI
 class SignUpScreen extends ConsumerStatefulWidget {
@@ -23,6 +26,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
   bool _obscurePassword = true;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  String _password = '';
 
   @override
   void initState() {
@@ -63,13 +67,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
 
   // Password validation
   String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Password is required';
-    }
-    if (value.length < 6) {
-      return 'Password must be at least 6 characters';
-    }
-    return null;
+    return validatePassword(value);
   }
 
   Future<void> _signUp() async {
@@ -271,9 +269,20 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
                                 ),
                                 validator: _validatePassword,
                                 textInputAction: TextInputAction.done,
+                                onChanged: (value) {
+                                setState(() {
+                                  _password = value;
+                                });
+                              },
                                 onFieldSubmitted: (_) => _signUp(),
                               ),
                               const SizedBox(height: 32),
+
+
+                              const SizedBox(height: 8),
+                              PasswordRequirements(password: _password),
+                              const SizedBox(height: 24),
+
                               
                               // Sign Up Button
                               ElevatedButton(
