@@ -141,6 +141,13 @@ Future<AppUser> login(String email, String password) async {
 
 /// Sends a password reset email to the specified email.
 Future<void> resetPassword(String email) async {
+  final isGoogle = await _authService.isGoogleUserByEmail(email);
+  if (isGoogle) {
+    throw Exception(
+      'Password reset is not available for Google accounts.'
+    );
+  }
+
   try {
     await Supabase.instance.client.auth.resetPasswordForEmail(email);
   } catch (e) {
