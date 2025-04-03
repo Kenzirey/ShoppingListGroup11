@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shopping_list_g11/widget/add_product_dialog.dart';
 import 'package:shopping_list_g11/widget/search_bar.dart';
+import 'package:shopping_list_g11/widget/shopping_list_item.dart';
+import '../data/measurement_type.dart';
 
 /// A screen for showing what products the user wishes to buy
 /// on their next shopping trip.
@@ -12,229 +15,199 @@ class ShoppingListScreen extends ConsumerStatefulWidget {
 }
 
 class ShoppingListState extends ConsumerState<ShoppingListScreen> {
-  // Track item quantities
+  // For regular items, we just store their quantity.
   Map<String, int> itemQuantities = {
-    'Apples': 1,
+    'Apples': 12,
     'Bananas': 1,
     'Carrots': 1,
     'Eggs': 1,
-    'Milk': 1,
+    'Milk': 3,
     'Bread': 1,
     'Cheese': 1,
-    'Monster Ultra Violet': 50,
-    "Billy's Pizza": 5,
+    'Energy Drink': 50,
+    'Frozen Pizza': 5,
   };
+
+  // For custom items (added via the FAB) we store their unit in a separate map.
+  Map<String, String> customItemUnits = {};
+
   final SearchController _searchController = SearchController();
 
-  // Store deleted item details for undo
+  // For undo.
   String? lastDeletedItem;
   int? lastDeletedQuantity;
   int? lastDeletedIndex;
+  String? lastDeletedUnit; // for custom items
 
   @override
   Widget build(BuildContext context) {
     final shoppingItems = itemQuantities.keys.toList();
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // new search widget on top instead
-            CustomSearchBarWidget(
-              suggestions: shoppingItems,
-              onSuggestionSelected: (suggestion) {
-                debugPrint("Selected: $suggestion");
-              },
-              hintText: 'Search products...',
-            ),
+    const horizontalPadding = 32.0;
 
-            const SizedBox(height: 16.0),
-            // Title + filter button below search
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Scaffold(
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: 16.0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Shopping List',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.normal,
-                    color: Theme.of(context).colorScheme.tertiary,
-                  ),
-                ),
-                IconButton(
-                  onPressed: () {
-                    // TODO: Implement filter toggle logic
+                CustomSearchBarWidget(
+                  suggestions: shoppingItems,
+                  onSuggestionSelected: (suggestion) {
+                    debugPrint("Selected: $suggestion");
                   },
-                  icon: Icon(
-                    Icons.swap_vert,
-                    color: Theme.of(context).colorScheme.tertiary,
+                  hintText: 'Search products...',
+                ),
+                const SizedBox(height: 16.0),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Shopping List',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.normal,
+                        color: Theme.of(context).colorScheme.tertiary,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        // TODO: Implement filter toggle logic.
+                      },
+                      icon: Icon(
+                        Icons.swap_vert,
+                        color: Theme.of(context).colorScheme.tertiary,
+                      ),
+                    ),
+                  ],
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.only(bottom: 120.0),
+                    itemCount: shoppingItems.length,
+                    itemBuilder: (context, index) {
+                      final item = shoppingItems[index];
+                      final quantity = itemQuantities[item]!;
+                      // Determine the unit:
+                      // • If the item exists in your grocery mapping (via a case‑insensitive lookup),
+                      //   use the mapped unit.
+                      // • Otherwise, if there’s a custom unit saved for this item, use that.
+                      // • Otherwise, use empty string.
+                      String unit;
+                      final mappedType = groceryMapping[item.toLowerCase()];
+                      if (mappedType != null) {
+                        unit = getUnitLabel(mappedType);
+                      } else if (customItemUnits.containsKey(item)) {
+                        unit = customItemUnits[item]!;
+                      } else {
+                        unit = '';
+                      }
+                      return Dismissible(
+                        key: Key(item),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 16),
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.delete, color: Colors.white),
+                        ),
+                        onDismissed: (direction) {
+                          setState(() {
+                            lastDeletedItem = item;
+                            lastDeletedQuantity = itemQuantities[item];
+                            lastDeletedIndex = index;
+                            lastDeletedUnit = customItemUnits.containsKey(item)
+                                ? customItemUnits[item]
+                                : '';
+                            itemQuantities.remove(item);
+                            customItemUnits.remove(item);
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('$item removed'),
+                              duration: const Duration(seconds: 4),
+                              action: SnackBarAction(
+                                label: 'Undo',
+                                textColor:
+                                    Theme.of(context).colorScheme.secondary,
+                                onPressed: () {
+                                  if (lastDeletedItem != null &&
+                                      lastDeletedQuantity != null &&
+                                      lastDeletedIndex != null) {
+                                    setState(() {
+                                      final entries =
+                                          itemQuantities.entries.toList();
+                                      entries.insert(
+                                        lastDeletedIndex!,
+                                        MapEntry(lastDeletedItem!,
+                                            lastDeletedQuantity!),
+                                      );
+                                      itemQuantities = Map.fromEntries(entries);
+                                      // Also restore custom unit if applicable.
+                                      if (lastDeletedUnit != null &&
+                                          lastDeletedUnit!.isNotEmpty) {
+                                        customItemUnits[lastDeletedItem!] =
+                                            lastDeletedUnit!;
+                                      }
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                        child: ShoppingListItem(
+                          item: item,
+                          quantity: quantity,
+                          unitLabel: unit,
+                          onQuantityChanged: (newQuantity) {
+                            setState(() {
+                              itemQuantities[item] = newQuantity;
+                            });
+                          },
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
             ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 0),
-                child: ListView.builder(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.only(
-                      bottom: 120.0), // temporary padding, need to test
-                  itemCount: shoppingItems.length,
-                  itemBuilder: (context, index) {
-                    final item = shoppingItems[index];
-
-                    return Dismissible(
-                      key: Key(item),
-                      direction: DismissDirection.endToStart,
-                      background: Container(
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 16),
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.delete, color: Colors.white),
-                      ),
-                      onDismissed: (direction) {
-                        setState(() {
-                          lastDeletedItem = item;
-                          lastDeletedQuantity = itemQuantities[item];
-                          lastDeletedIndex = index;
-                          itemQuantities.remove(item);
-                        });
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('$item removed'),
-                            duration: const Duration(seconds: 4),
-                            action: SnackBarAction(
-                              label: 'Undo',
-                              textColor:
-                                  Theme.of(context).colorScheme.secondary,
-                              onPressed: () {
-                                if (lastDeletedItem != null &&
-                                    lastDeletedQuantity != null &&
-                                    lastDeletedIndex != null) {
-                                  setState(() {
-                                    final List<MapEntry<String, int>> entries =
-                                        itemQuantities.entries.toList();
-
-                                    entries.insert(
-                                        lastDeletedIndex!,
-                                        MapEntry(lastDeletedItem!,
-                                            lastDeletedQuantity!));
-
-                                    itemQuantities = Map.fromEntries(entries);
-                                  });
-                                }
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 10, horizontal: 14),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            // Grocery Icon & Item Name
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Icon(Icons.local_grocery_store,
-                                      size: 20,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .tertiary),
-                                  const SizedBox(width: 10),
-                                  Flexible(
-                                    child: Text(
-                                      item,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .tertiary,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // The item quantity selector (where we have + and -)
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SizedBox(
-                                  width: 32,
-                                  child: IconButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        if (itemQuantities[item]! > 1) {
-                                          itemQuantities[item] =
-                                              itemQuantities[item]! - 1;
-                                        }
-                                      });
-                                    },
-                                    icon: Icon(Icons.remove,
-                                        size: 18,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .tertiary),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: 24,
-                                  child: Center(
-                                    child: Text(
-                                      '${itemQuantities[item]}',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .tertiary,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: 32,
-                                  child: IconButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        itemQuantities[item] =
-                                            itemQuantities[item]! + 1;
-                                      });
-                                    },
-                                    icon: Icon(Icons.add,
-                                        size: 18,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .tertiary),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
+          ),
+          Positioned(
+            bottom: 16.0,
+            right: horizontalPadding,
+            child: ElevatedButton(
+              onPressed: () async {
+                final result = await showDialog<Map<String, dynamic>>(
+                  context: context,
+                  builder: (context) => const AddProductDialog(),
+                );
+                if (result != null) {
+                  // add logic :)
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.secondary,
+                shape: const CircleBorder(),
+                padding: const EdgeInsets.all(16.0),
+              ),
+              child: Icon(
+                Icons.add,
+                size: 32.0,
+                color: Theme.of(context).colorScheme.tertiary,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
