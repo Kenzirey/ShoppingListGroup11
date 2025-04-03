@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shopping_list_g11/widget/pantry_tile.dart';
 
+/// Screen for showing which food items the user has in stock,
+/// from fridge to dry goods, canned food etc.
 class PantryListScreen extends ConsumerStatefulWidget {
   const PantryListScreen({super.key});
 
@@ -14,8 +16,7 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
   final List<String> dryGoodsItems = ['Bread', 'Cereal', 'Pasta'];
   final List<String> cannedFoodItems = ['Canned Beans', 'Tomato Sauce', 'Corn'];
 
-  final String stockMessage = 'Current Stock';
-  final String expiration = '2 days'; // You can later make this dynamic
+  final String expiration = '2 days'; // dummy text until we set it dynamic
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +27,21 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
         child: ListView(
           physics: const BouncingScrollPhysics(),
           children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Current Stock',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.tertiary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Divider(),
+            const SizedBox(height: 8),
+
             // Fridge Section
             _buildSectionHeader('Fridge'),
             const SizedBox(height: 12),
@@ -65,27 +81,15 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
     );
   }
 
+  // Simplified section header without the stock message
   Widget _buildSectionHeader(String title) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.normal,
-            color: Theme.of(context).colorScheme.tertiary,
-          ),
-        ),
-        Text(
-          stockMessage,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.normal,
-            color: Theme.of(context).colorScheme.tertiary,
-          ),
-        ),
-      ],
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.normal,
+        color: Theme.of(context).colorScheme.tertiary,
+      ),
     );
   }
 }

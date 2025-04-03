@@ -5,14 +5,14 @@ class Product {
   final String name;
   final MeasurementType measurementType;
   final DateTime purchaseDate;
-  final String price;
+  final String? price;
   final String amount;
 
   Product({
     required this.name,
     required this.measurementType,
     required this.purchaseDate,
-    required this.price,
+    this.price,
     required this.amount,
   });
 
@@ -20,7 +20,7 @@ class Product {
   factory Product.fromName({
     required String name,
     required DateTime purchaseDate,
-    required String price,
+    price,
     required String amount,
   }) {
     final normalized = name.toLowerCase().trim();

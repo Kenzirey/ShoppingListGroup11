@@ -99,11 +99,7 @@ class _LoginState extends ConsumerState<LoginScreen>
                     children: [
                       const SizedBox(height: 24),
                       Text(
-                        //Shopping Buddy
-                        //StillGood
-                        //Listly
-                        //Pantry Pal
-                        "Savr", // noot noot
+                        "ShelfAware",
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,

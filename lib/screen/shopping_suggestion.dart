@@ -39,6 +39,19 @@ class _ShoppingSuggestionsScreenState
         child: ListView(
           physics: const BouncingScrollPhysics(),
           children: [
+            Align(
+              alignment: Alignment.centerLeft,
+            child: Text('Shopping Suggestions',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Divider(),
+            const SizedBox(height: 8),
             // Weekly Section
             Text(
               'Weekly',

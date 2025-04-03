@@ -72,12 +72,15 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
   }
 
   /// Returns all the unique months in the purchase history.
-  List<String> getAvailableMonths() {
-    final months = products
-        .map((p) => DateFormat('MMMM yyyy').format(p.purchaseDate))
-        .toSet()
-        .toList();
-    months.sort((a, b) => a.compareTo(b)); // ascending
+  Set<String> getAvailableMonths() {
+    final Set<String> months = products
+        .map((product) => DateFormat('MMMM yyyy')
+            .format(product.purchaseDate)) // use your actual field here
+        .toSet();
+
+    final currentMonth = DateFormat('MMMM yyyy').format(DateTime.now());
+    months.add(currentMonth);
+
     return months;
   }
 
@@ -102,6 +105,7 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
   }
 
   /// Let user pick date, then prompt for price & amount, then create new product.
+  /// TODO: refactor to have this in controller etc
   Future<void> handleAddItem(String itemName) async {
     final chosenDate = await showDatePicker(
       context: context,
@@ -308,76 +312,97 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
             const Divider(),
 
             Expanded(
-              child: ListView.builder(
-                itemCount: sortedDayKeys.length,
-                itemBuilder: (context, index) {
-                  final dayKey = sortedDayKeys[index];
-                  final dayProducts = groupedByDay[dayKey] ?? [];
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Day header
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Text(
-                          dayKey,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.tertiary,
-                          ),
+              child: monthProducts.isEmpty
+                  ? Center(
+                      child: Text(
+                        "No items added yet for this month",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).colorScheme.tertiary,
                         ),
                       ),
+                    )
+                  : ListView.builder(
+                      itemCount: sortedDayKeys.length,
+                      itemBuilder: (context, index) {
+                        final dayKey = sortedDayKeys[index];
+                        final dayProducts = groupedByDay[dayKey] ?? [];
 
-                      ...dayProducts.map((product) {
-                        final unitLabel = getUnitLabel(product.measurementType);
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                Theme.of(context).colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.local_grocery_store,
-                                    size: 20,
-                                    color:
-                                        Theme.of(context).colorScheme.tertiary,
-                                  ),
-                                ],
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 8.0),
+                              child: Text(
+                                dayKey,
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.tertiary,
+                                ),
                               ),
-                              const SizedBox(width: 16),
-                              // Product amount + price.
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                            ),
+                            ...dayProducts.map((product) {
+                              final unitLabel =
+                                  getUnitLabel(product.measurementType);
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                  horizontal: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .primaryContainer,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
                                   children: [
-                                    Text(
-                                      product.name,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .tertiary,
+                                    Icon(
+                                      Icons.local_grocery_store,
+                                      size: 20,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .tertiary,
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            product.name,
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .tertiary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Amount: ${product.amount} $unitLabel',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w400,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .tertiary,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    const SizedBox(height: 4),
                                     Text(
-                                      'Amount: ${product.amount} $unitLabel',
+                                      '${product.price} kr',
                                       style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w400,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
                                         color: Theme.of(context)
                                             .colorScheme
                                             .tertiary,
@@ -385,24 +410,12 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
                                     ),
                                   ],
                                 ),
-                              ),
-                              // Price
-                              Text(
-                                '${product.price} kr',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: Theme.of(context).colorScheme.tertiary,
-                                ),
-                              ),
-                            ],
-                          ),
+                              );
+                            }),
+                          ],
                         );
-                      }),
-                    ],
-                  );
-                },
-              ),
+                      },
+                    ),
             ),
           ],
         ),

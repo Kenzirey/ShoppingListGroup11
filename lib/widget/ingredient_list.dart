@@ -63,63 +63,91 @@ class _IngredientListState extends State<IngredientList> {
     return selectedIngredients;
   }
 
+// Inside _IngredientListState class
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Global "Select all" row with an "Add" button on the right.
+        // "Select All" + Add button row
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Left: "Add" button
             ElevatedButton.icon(
               onPressed: () {
-                // TODO: implement add logic
+                if (widget.onAddIngredients != null) {
+                  widget.onAddIngredients!(getSelectedIngredients());
+                }
               },
               icon: Icon(
                 Icons.add_shopping_cart,
                 color: theme.colorScheme.tertiary,
               ),
               label: Text(
-                'Add',
+                'Shopping list',
                 style: TextStyle(color: theme.colorScheme.tertiary),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.colorScheme.primaryContainer,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6), // circular corners
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
               ),
             ),
 
-            // Right: text + checkbox
-            Row(
-              children: [
-                Text(
-                  'Select all ingredients',
-                  style: TextStyle(
-                    color: theme.colorScheme.tertiary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+            // Custom-styled "Select All" checkbox
+            Padding(
+              padding: const EdgeInsets.only(
+                  right: 12.0), // match ingredient row padding
+              child: InkWell(
+                onTap: () {
+                  _toggleSelectAll(!_allSelected);
+                },
+                borderRadius: BorderRadius.circular(4),
+                child: Row(
+                  children: [
+                    Text(
+                      'Select all',
+                      style: TextStyle(
+                        color: theme.colorScheme.tertiary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: _allSelected
+                            ? theme.colorScheme.secondary
+                            : Colors.transparent,
+                        border: Border.all(
+                          color: _allSelected
+                              ? theme.colorScheme.primary
+                              : Colors.grey,
+                        ),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Icon(
+                        Icons.add,
+                        size: 16,
+                        color: _allSelected ? Colors.white : Colors.grey,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                // Default Checkbox with normal padding.
-                Checkbox(
-                  value: _allSelected,
-                  onChanged: _toggleSelectAll,
-                ),
-                const SizedBox(width: 8),
-              ],
+              ),
             ),
           ],
         ),
         const SizedBox(height: 8),
-        // List of individual ingredient rows.
+
+        // Ingredient List
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: List.generate(widget.ingredients.length, (index) {
@@ -137,64 +165,71 @@ class _IngredientListState extends State<IngredientList> {
                 ),
               );
             }
+
             final isSelected = _selected[index];
+
             return Container(
               margin: const EdgeInsets.symmetric(vertical: 4),
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? theme.colorScheme.secondary.withOpacity(0.3)
-                    : theme.colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.brightness_1,
-                    size: 8,
-                    color: theme.colorScheme.tertiary,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      ingredient,
-                      style: TextStyle(color: theme.colorScheme.tertiary),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    setState(() {
+                      _selected[index] = !_selected[index];
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? theme.colorScheme.secondary.withOpacity(0.3)
+                          : theme.colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                  ),
-                  // Individual checkbox with InkWell feedback.
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        setState(() {
-                          _selected[index] = !isSelected;
-                        });
-                      },
-                      borderRadius: BorderRadius.circular(4),
-                      child: Container(
-                        width: 24,
-                        height: 24,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? theme.colorScheme.secondary
-                              : Colors.transparent,
-                          border: Border.all(
-                            color: isSelected
-                                ? theme.colorScheme.primary
-                                : Colors.grey,
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.brightness_1,
+                          size: 8,
+                          color: theme.colorScheme.tertiary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            ingredient,
+                            style: TextStyle(
+                              color: theme.colorScheme.tertiary,
+                            ),
                           ),
-                          borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Icon(
-                          Icons.add,
-                          size: 16,
-                          color: isSelected ? Colors.white : Colors.grey,
+                        const SizedBox(
+                            width: 4), // spacing between text and checkbox, as they were hugging before
+                        Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? theme.colorScheme.secondary
+                                : Colors.transparent,
+                            border: Border.all(
+                              color: isSelected
+                                  ? theme.colorScheme.primary
+                                  : Colors.grey,
+                            ),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Icon(
+                            Icons.add,
+                            size: 16,
+                            color: isSelected ? Colors.white : Colors.grey,
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
             );
           }),

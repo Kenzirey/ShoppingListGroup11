@@ -16,21 +16,21 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
   // Example placeholder for the current week number.
   int currentWeek = 12;
 
+  // This represents the actual current week, we do need to use datetime or something instead.
+  final int actualCurrentWeek = 12;
+
   /// A private helper for UI development process only.
+  /// This should be refactored out and be made into a controller / service method.
   void _removeMeal(
       BuildContext context, String day, Map<String, dynamic> meal) {
     final plan = ref.read(mealPlannerProvider);
-
     final removedIndex = plan[day]!.indexOf(meal);
-
     final updatedMap = {...plan};
     final updatedList = [...?updatedMap[day]];
     updatedList.removeAt(removedIndex);
     updatedMap[day] = updatedList;
-
     ref.read(mealPlannerProvider.notifier).state = updatedMap;
 
-    //TODO: set up a separate snackbar to keep consistency across app.
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Removed "${meal['name']}"'),
@@ -53,7 +53,7 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
   Widget build(BuildContext context) {
     final mealPlan = ref.watch(mealPlannerProvider);
 
-    // Gather all meal names for the search bar suggestions, temporary setup
+    // Gather all meal names for the search bar suggestions, temporary setup.
     final allMeals = mealPlan.values
         .expand((dayList) => dayList.map((meal) => meal['name'].toString()))
         .toList();
@@ -73,7 +73,7 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
             ),
             const SizedBox(height: 16),
 
-            // title, week n filter icon
+            // title row and the week/time picker.
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -84,32 +84,63 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
                     color: Theme.of(context).colorScheme.tertiary,
                   ),
                 ),
-                Row(
-                  children: [
-                    Text(
-                      'Week $currentWeek',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Theme.of(context).colorScheme.tertiary,
+                DropdownButton<int>(
+                  value: currentWeek,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.tertiary,
+                    fontSize: 16,
+                  ),
+                  dropdownColor: Theme.of(context).colorScheme.surface,
+                  items: List.generate(52, (index) {
+                    final week = index + 1;
+                    final bool isCurrentWeek = week == actualCurrentWeek;
+                    return DropdownMenuItem<int>(
+                      value: week,
+                      child: Text(
+                        isCurrentWeek ? 'Current Week $week' : 'Week $week',
+                        style: TextStyle(
+                          color: isCurrentWeek
+                              ? Theme.of(context).colorScheme.secondary
+                              : Theme.of(context).colorScheme.tertiary,
+                          fontWeight: isCurrentWeek
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        // filter for weeks here
-                      },
-                      icon: Icon(
-                        Icons.filter_alt,
-                        color: Theme.of(context).colorScheme.tertiary,
-                      ),
-                    ),
-                  ],
+                    );
+                  }),
+                   // the days + meals section below
+                  selectedItemBuilder: (BuildContext context) {
+                    return List.generate(52, (index) {
+                      final week = index + 1;
+                      return Container(
+                        alignment: Alignment.center,
+                        child: Text(
+                          week == actualCurrentWeek
+                              ? 'Current Week $week'
+                              : 'Week $week',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.tertiary,
+                            fontSize: 16,
+                          ),
+                        ),
+                      );
+                    });
+                  },
+                  onChanged: (newWeek) {
+                    if (newWeek != null) {
+                      setState(() {
+                        currentWeek = newWeek;
+                      });
+                    }
+                  },
                 ),
               ],
             ),
             const Divider(),
             const SizedBox(height: 8),
 
-            // the days + meals section below
+            // The days + meals section below.
             Expanded(
               child: ListView.builder(
                 physics: const BouncingScrollPhysics(),
@@ -168,8 +199,7 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
                             },
                             child: MealItem(
                               mealName: meal['name'],
-                              servings: meal['servings'] ??
-                                  1, // defaults to one portion :)
+                              servings: meal['servings'] ?? 1,
                               lactoseFree: meal['lactoseFree'] ?? false,
                               vegan: meal['vegan'] ?? false,
                               vegetarian: meal['vegetarian'] ?? false,
