@@ -90,6 +90,19 @@ class MyDrawer extends ConsumerWidget {
                 ),
               const SizedBox(height: 20),
 
+              // Filter
+              ListTile(
+                leading: Icon(Icons.filter_list,
+                    color: Theme.of(context).colorScheme.tertiary),
+                title: Text(
+                  'Purchase Statistics',
+                  //TODO: set up piecharts and such to show the purchase history across categories for the user.
+                  style:
+                      TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                ),
+                onTap: () {},
+              ),
+
               // Chat
               ListTile(
                 leading: Icon(Icons.chat,
