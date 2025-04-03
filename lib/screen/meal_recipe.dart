@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shopping_list_g11/models/saved_recipe.dart';
 import 'package:shopping_list_g11/providers/recipe_provider.dart';
 import 'package:shopping_list_g11/widget/ingredient_list.dart';
 import '../controllers/recipe_controller.dart';
+import '../controllers/saved_recipe_controller.dart';
 import '../models/recipe.dart';
+import '../providers/current_user_provider.dart';
+import '../providers/saved_recipe_provider.dart';
 
 /// Screen for showing the recipe details for a meal.
 /// with both ingredients and instructions.
@@ -30,12 +34,16 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
   Widget build(BuildContext context) {
     final Recipe? recipe = ref.watch(recipeProvider);
 
-    // While loading in recipe for visual feedback.
+    // Show a progress indicator while the recipe is loading.
     if (recipe == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
+
+    final savedRecipes = ref.watch(savedRecipesProvider);
+    // Check if the current recipe is already saved (comparing by recipe name for now).
+    final isSaved = savedRecipes.any((sr) => sr.recipe.name == recipe.name);
 
     return Scaffold(
       body: SingleChildScrollView(
@@ -43,49 +51,112 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Title for the recipe
-            Text(
-              recipe.name,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.tertiary,
-              ),
+            // Title row with the recipe name and heart icon (for saving/unsaving recipe).
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    recipe.name,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.tertiary,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    isSaved ? Icons.favorite : Icons.favorite_border,
+                    color: isSaved
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.tertiary,
+                  ),
+                  onPressed: () async {
+                    final currentRecipe = ref.read(recipeProvider);
+                    final currentUser = ref.read(currentUserProvider);
+                    if (currentRecipe == null) return;
+                    if (currentUser == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('You must be logged in to save a recipe.'),
+                        ),
+                      );
+                      return;
+                    }
+                    final savedRecipesController =
+                        ref.read(savedRecipesControllerProvider);
+                    if (isSaved) {
+                      // Try to find the corresponding saved recipe.
+                      SavedRecipe? savedRecipe;
+                      try {
+                        savedRecipe = savedRecipes.firstWhere(
+                          (sr) => sr.recipe.name == currentRecipe.name,
+                        );
+                      } catch (e) {
+                        savedRecipe = null;
+                      }
+                      if (savedRecipe != null) {
+                        await savedRecipesController.removeRecipeByAuthId(
+                          currentUser.authId,
+                          savedRecipe,
+                        );
+                        // Need to set up a reusable scaffoldmessenger to reuse.
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              '${currentRecipe.name} removed from saved recipes.',
+                            ),
+                          ),
+                        );
+                      }
+                    } else {
+                      await savedRecipesController.addRecipeByAuthId(
+                        currentUser.authId,
+                        currentRecipe,
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content:
+                              Text('${currentRecipe.name} saved to your recipes.'),
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ],
             ),
             const SizedBox(height: 12),
-            // Time for recipe and serving size/yields (person)
+            // Row displaying prep time, cook time, and yields.
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Prep time with its icon.
+                // Prep time.
                 Row(
                   children: [
-                    const Icon(Icons.timer_outlined,
-                        size: 16), // icon for prep time
+                    const Icon(Icons.timer_outlined, size: 16),
                     const SizedBox(width: 4),
                     Text(
-                      recipe.prepTime, // e.g. "15 minutes"
+                      recipe.prepTime,
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.tertiary,
                       ),
                     ),
                   ],
                 ),
-                // Cook time with a different icon.
+                // Cook time.
                 Row(
                   children: [
-                    const Icon(Icons.local_fire_department,
-                        size: 16), // icon for cook time
+                    const Icon(Icons.local_fire_department, size: 16),
                     const SizedBox(width: 4),
                     Text(
-                      recipe.cookTime, // e.g. "120 minutes"
+                      recipe.cookTime,
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.tertiary,
                       ),
                     ),
                   ],
                 ),
-                // Yields (serving size)
+                // Yields (servings).
                 Row(
                   children: [
                     const Icon(Icons.people, size: 16),
@@ -101,7 +172,7 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            // Ingredients Section ⏬
+            // Ingredients Section with ExpansionTile.
             Column(
               children: [
                 ListTileTheme(
@@ -110,12 +181,14 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                   horizontalTitleGap: 0.0,
                   minLeadingWidth: 0,
                   child: ExpansionTile(
+                    // Set a tilePadding with right padding to add extra space.
+                    tilePadding: const EdgeInsets.only(left: 0, right: 12),
+                    collapsedIconColor: Theme.of(context).colorScheme.tertiary,
+                    iconColor: Theme.of(context).colorScheme.primary,
                     title: const Text(
                       'Ingredients',
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
-                    trailing: const Icon(Icons.keyboard_arrow_down),
                     initiallyExpanded: true,
                     onExpansionChanged: (bool expanded) {
                       setState(() {
@@ -126,18 +199,15 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Add extra vertical space here:
                           const SizedBox(height: 8),
-
                           IngredientList(ingredients: recipe.ingredients),
-
                           const SizedBox(height: 16),
                         ],
                       ),
                     ],
                   ),
                 ),
-                // Divider when ingredients are collapsed (the _ line)
+                // Divider when ingredients are collapsed.
                 Visibility(
                   visible: !_isExpanded,
                   child: Divider(
@@ -148,7 +218,7 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            // Instructions
+            // Instructions Section.
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -161,15 +231,17 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                ...recipe.instructions.map((step) => Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Text(
-                        step,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.tertiary,
-                        ),
+                ...recipe.instructions.map(
+                  (step) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      step,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.tertiary,
                       ),
-                    )),
+                    ),
+                  ),
+                ),
               ],
             ),
           ],

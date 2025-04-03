@@ -134,6 +134,22 @@ class SavedRecipesController {
       debugPrint('Feil i removeRecipe: $e\n$st');
     }
   }
+
+  /// Removes a recipe from the saved recipes list by using the auth ID.
+  Future<void> removeRecipeByAuthId(String authId, SavedRecipe savedRecipe) async {
+  try {
+    final profileResponse = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('auth_id', authId)
+        .single();
+    final profileId = profileResponse['id'] as String;
+    await removeRecipe(profileId, savedRecipe);
+  } catch (e, st) {
+    debugPrint('Error in removeRecipeByAuthId: $e\n$st');
+  }
+}
+
 }
 
 final savedRecipesControllerProvider = Provider<SavedRecipesController>((ref) {
