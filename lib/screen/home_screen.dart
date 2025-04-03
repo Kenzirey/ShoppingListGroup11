@@ -42,6 +42,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'ShelfAware',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.tertiary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Divider(),
+            const SizedBox(height: 8),
             Text(
               'Expiring Soon',
               style: TextStyle(
@@ -62,7 +76,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 10, horizontal: 14),
                     decoration: BoxDecoration(
                       color: Colors.red.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
@@ -85,7 +100,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
-                                    color: Theme.of(context).colorScheme.tertiary,
+                                    color:
+                                        Theme.of(context).colorScheme.tertiary,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -99,7 +115,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.tertiary.withOpacity(0.7),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .tertiary
+                                .withOpacity(0.7),
                           ),
                         ),
                       ],
@@ -108,7 +127,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 },
               ),
             ),
-
             const SizedBox(height: 16),
             Text(
               'Meal Suggestions',
@@ -134,64 +152,92 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
-                    decoration: BoxDecoration(
+                    child: Material(
                       color: Theme.of(context).colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        // servings size with its icon, single icon or more depending on size 😎
-                        Icon(
-                          servings > 1 ? Icons.people : Icons.person,
-                          size: 20,
-                          color: Theme.of(context).colorScheme.tertiary,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '$servings',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Theme.of(context).colorScheme.tertiary,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-
-                        // name of the recipe
-                        Expanded(
+                      clipBehavior: Clip
+                          .hardEdge, // so that the "press / hold" feedback is contained within the item, not outside
+                      child: InkWell(
+                        onTap: () {
+                          // navigate via meal provider the meal which matches this name.
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 10, horizontal: 14),
                           child: Row(
                             children: [
-                              Flexible(
-                                child: Text(
-                                  mealName,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    color: Theme.of(context).colorScheme.tertiary,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                              // Servings icon and number.
+                              Icon(
+                                servings > 1 ? Icons.people : Icons.person,
+                                size: 20,
+                                color: Theme.of(context).colorScheme.tertiary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '$servings',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Theme.of(context).colorScheme.tertiary,
                                 ),
                               ),
-
-                              if (lactoseFree || vegan || vegetarian)
-                                const SizedBox(width: 8),
-                              if (lactoseFree) ...[
-                                Icon(Icons.icecream, size: 20, color: Theme.of(context).colorScheme.tertiary),
-                                const SizedBox(width: 4),
-                              ],
-                              if (vegan) ...[
-                                Icon(Icons.eco, size: 20, color: Theme.of(context).colorScheme.tertiary),
-                                const SizedBox(width: 4),
-                              ],
-                              if (vegetarian) ...[
-                                Icon(Icons.spa, size: 20, color: Theme.of(context).colorScheme.tertiary),
-                                const SizedBox(width: 4),
-                              ],
+                              const SizedBox(width: 10),
+                              // Meal name and additional icons.
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        mealName,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .tertiary,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (lactoseFree || vegan || vegetarian)
+                                      const SizedBox(width: 8),
+                                    if (lactoseFree) ...[
+                                      Icon(
+                                        Icons.icecream,
+                                        size: 20,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .tertiary,
+                                      ),
+                                      const SizedBox(width: 4),
+                                    ],
+                                    if (vegan) ...[
+                                      Icon(
+                                        Icons.eco,
+                                        size: 20,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .tertiary,
+                                      ),
+                                      const SizedBox(width: 4),
+                                    ],
+                                    if (vegetarian) ...[
+                                      Icon(
+                                        Icons.spa,
+                                        size: 20,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .tertiary,
+                                      ),
+                                      const SizedBox(width: 4),
+                                    ],
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   );
                 },
