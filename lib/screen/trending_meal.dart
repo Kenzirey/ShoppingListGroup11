@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Screen that shows currently popular recipes amongst fellow users.
 class TrendingRecipeScreen extends ConsumerStatefulWidget {
-  const TrendingRecipeScreen({Key? key}) : super(key: key);
+  const TrendingRecipeScreen({super.key});
 
   @override
   TrendingRecipesState createState() => TrendingRecipesState();

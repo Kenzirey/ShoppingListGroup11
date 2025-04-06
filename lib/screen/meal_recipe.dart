@@ -1,4 +1,6 @@
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shopping_list_g11/models/saved_recipe.dart';
 import 'package:shopping_list_g11/providers/recipe_provider.dart';
@@ -9,8 +11,6 @@ import '../models/recipe.dart';
 import '../providers/current_user_provider.dart';
 import '../providers/saved_recipe_provider.dart';
 
-/// Screen for showing the recipe details for a meal.
-/// with both ingredients and instructions.
 class MealRecipeScreen extends ConsumerStatefulWidget {
   const MealRecipeScreen({super.key});
 
@@ -19,12 +19,22 @@ class MealRecipeScreen extends ConsumerStatefulWidget {
 }
 
 class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
-  bool _isExpanded = true; // Track expansion state, initially expanded
+  bool _isExpanded = true;
+
+  // Gets weekdays from intl
+  final List<String> weekDays = List.generate(7, (index) {
+    // Using January 4, 2021 as a reference Monday.
+    final DateTime date = DateTime(2025, 1, 4).add(Duration(days: index));
+    return DateFormat('EEEE').format(date);
+  });
+
+  // Hold the selected days.
+  // should make this dynamic, to fetch a list of current meal plan for the user.
+  List<String> _selectedDays = [];
 
   @override
   void initState() {
     super.initState();
-    // If no recipe is present (none from chat bot, or from clicking a meal etc, fetch one from Supa. Temporary!)
     if (ref.read(recipeProvider) == null) {
       RecipeController(ref: ref).loadRecipeFromSupabase();
     }
@@ -34,7 +44,6 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
   Widget build(BuildContext context) {
     final Recipe? recipe = ref.watch(recipeProvider);
 
-    // Show a progress indicator while the recipe is loading.
     if (recipe == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -42,7 +51,6 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
     }
 
     final savedRecipes = ref.watch(savedRecipesProvider);
-    // Check if the current recipe is already saved (comparing by recipe name for now).
     final isSaved = savedRecipes.any((sr) => sr.recipe.name == recipe.name);
 
     return Scaffold(
@@ -51,7 +59,7 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Title row with the recipe name and heart icon (for saving/unsaving recipe).
+            // Title and save button row.
             Row(
               children: [
                 Expanded(
@@ -78,7 +86,8 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                     if (currentUser == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('You must be logged in to save a recipe.'),
+                          content:
+                              Text('You must be logged in to save a recipe.'),
                         ),
                       );
                       return;
@@ -86,7 +95,6 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                     final savedRecipesController =
                         ref.read(savedRecipesControllerProvider);
                     if (isSaved) {
-                      // Try to find the corresponding saved recipe.
                       SavedRecipe? savedRecipe;
                       try {
                         savedRecipe = savedRecipes.firstWhere(
@@ -100,12 +108,10 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                           currentUser.authId,
                           savedRecipe,
                         );
-                        // Need to set up a reusable scaffoldmessenger to reuse.
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              '${currentRecipe.name} removed from saved recipes.',
-                            ),
+                                '${currentRecipe.name} removed from saved recipes.'),
                           ),
                         );
                       }
@@ -116,8 +122,8 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                       );
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content:
-                              Text('${currentRecipe.name} saved to your recipes.'),
+                          content: Text(
+                              '${currentRecipe.name} saved to your recipes.'),
                         ),
                       );
                     }
@@ -171,8 +177,130 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            // Ingredients Section with ExpansionTile.
+            const SizedBox(height: 12),
+            // Multiselect dropdown using DropdownButton2. // https://pub.dev/packages/dropdown_button2
+            DropdownButtonHideUnderline(
+              child: DropdownButton2<String>(
+                isExpanded: true,
+                // Always display the static text in the button, instead of making it change upon day.. . don't ask.
+                hint: Text(
+                  "Add to weekly meal planner",
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(context).colorScheme.tertiary,
+                  ),
+                ),
+                // Dummy value
+                value: _selectedDays.isEmpty ? null : _selectedDays.last,
+                onChanged: (value) {},
+                selectedItemBuilder: (context) => weekDays
+                    .map(
+                      (e) => Container(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          "Add to weekly meal planner",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Theme.of(context).colorScheme.tertiary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    )
+                    .toList(),
+                items: weekDays.map((day) {
+                  return DropdownMenuItem<String>(
+                    value: day,
+                    // Disable default onTap so the menu doesn't close.
+                    enabled: false,
+                    child: StatefulBuilder(
+                      builder: (context, menuSetState) {
+                        final isSelected = _selectedDays.contains(day);
+                        return InkWell(
+                          //TODO: have them actually add to the weekly meal planner of current week, and then refresh when next week hits?
+                          onTap: () {
+                            if (isSelected) {
+                              _selectedDays.remove(day);
+                            } else {
+                              _selectedDays.add(day);
+                            }
+                            setState(() {});
+                            menuSetState(() {});
+                          },
+                          child: Container(
+                            height: double.infinity,
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 12.0),
+                            child: Row(
+                              children: [
+                                // generic calendar icon on left first.
+                                Icon(
+                                  Icons.calendar_today,
+                                  size: 20,
+                                  color: Theme.of(context).colorScheme.tertiary,
+                                ),
+                                const SizedBox(width: 8),
+                                // what day it is after calendar icon.
+                                Expanded(
+                                  child: Text(
+                                    day,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .tertiary,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                // checkbox here that is the selection for which day is to be added to the weekly meal planner.
+                                isSelected
+                                    ? Icon(
+                                        Icons.check_box_outlined,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                      )
+                                    : const Icon(
+                                        Icons.check_box_outline_blank,
+                                        color: Colors.white,
+                                      ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                }).toList(),
+                buttonStyleData: ButtonStyleData(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  height: 40,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                        color: Theme.of(context).colorScheme.primary),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                dropdownStyleData: DropdownStyleData(
+                  offset: const Offset(0, 0),
+                  maxHeight: 400,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                menuItemStyleData: const MenuItemStyleData(
+                  height: 50,
+                  padding: EdgeInsets.zero,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+            // Ingredients Section.
             Column(
               children: [
                 ListTileTheme(
@@ -181,13 +309,13 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                   horizontalTitleGap: 0.0,
                   minLeadingWidth: 0,
                   child: ExpansionTile(
-                    // Set a tilePadding with right padding to add extra space.
                     tilePadding: const EdgeInsets.only(left: 0, right: 12),
                     collapsedIconColor: Theme.of(context).colorScheme.tertiary,
                     iconColor: Theme.of(context).colorScheme.primary,
                     title: const Text(
                       'Ingredients',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     initiallyExpanded: true,
                     onExpansionChanged: (bool expanded) {

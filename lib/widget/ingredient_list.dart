@@ -8,10 +8,10 @@ class IngredientList extends StatefulWidget {
   final ValueChanged<List<String>>? onAddIngredients; // optional callback
 
   const IngredientList({
-    Key? key,
+    super.key,
     required this.ingredients,
     this.onAddIngredients,
-  }) : super(key: key);
+  });
 
   @override
   _IngredientListState createState() => _IngredientListState();

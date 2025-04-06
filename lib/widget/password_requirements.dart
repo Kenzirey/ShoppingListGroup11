@@ -3,7 +3,7 @@ import 'package:shopping_list_g11/utils/validators.dart';
 
 class PasswordRequirements extends StatelessWidget {
   final String password;
-  const PasswordRequirements({Key? key, required this.password}) : super(key: key);
+  const PasswordRequirements({super.key, required this.password});
 
   bool get hasMinLength => password.length >= minPasswordLength;
   bool get hasUppercase => uppercaseRegExp.hasMatch(password);
@@ -44,7 +44,7 @@ class PasswordRequirements extends StatelessWidget {
 class RequirementRow extends StatelessWidget {
   final String requirement;
   final bool fulfilled;
-  const RequirementRow({Key? key, required this.requirement, required this.fulfilled}) : super(key: key);
+  const RequirementRow({super.key, required this.requirement, required this.fulfilled});
 
   @override
   Widget build(BuildContext context) {
