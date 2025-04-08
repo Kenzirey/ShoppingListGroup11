@@ -4,6 +4,7 @@ import 'package:shopping_list_g11/routes/app_shell.dart';
 import 'package:shopping_list_g11/screen/chat_screen.dart';
 import 'package:shopping_list_g11/screen/home_screen.dart';
 import 'package:shopping_list_g11/screen/pantry_screen.dart';
+import 'package:shopping_list_g11/screen/purchase_statistics.dart';
 import 'package:shopping_list_g11/screen/shopping_suggestion.dart';
 import 'package:shopping_list_g11/screen/user_account/login.dart';
 import 'package:shopping_list_g11/screen/meal_planner.dart';
@@ -93,6 +94,11 @@ class AppRouter {
             builder: (context, state) => const TrendingRecipeScreen(),
           ),
           GoRoute(
+            path: '/purchase-statistics',
+            name: 'purchaseStatistics',
+            builder: (context, state) => const PurchaseStatistics(),
+          ),
+          GoRoute(
             path: '/account',
             name: 'accountPage',
             builder: (context, state) => const AccountPageScreen(),
@@ -162,6 +168,7 @@ class AppRouter {
         location.startsWith('/savedRecipes') ||
         location.startsWith('/edit-account-details') ||
         location.startsWith('/information') ||
+        location.startsWith('/purchase-statistics') ||
         location.startsWith('/update_avatar_screen');
   }
 

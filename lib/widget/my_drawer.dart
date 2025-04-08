@@ -100,7 +100,11 @@ class MyDrawer extends ConsumerWidget {
                   style:
                       TextStyle(color: Theme.of(context).colorScheme.tertiary),
                 ),
-                onTap: () {},
+                onTap: () {
+                  Navigator.of(context).pop();
+                  true; // Mark navigation as from the drawer
+                  context.pushNamed('purchaseStatistics');
+                },
               ),
 
               // Chat
