@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shopping_list_g11/models/shopping_item.dart';
 
+import '../providers/current_user_provider.dart';
+import '../providers/recommendation_service_provider.dart';
+
 /// Screen for giving suggestions on what the user should purchase next.
 /// Based on their habits of what they frequently buy.
 class ShoppingSuggestionsScreen extends ConsumerStatefulWidget {
@@ -35,63 +38,70 @@ class _ShoppingSuggestionsScreenState
     _fetchShoppingItems();
   }
 
-  /// Fetch shopping items dynamically (e.g., from an API or provider).
-  Future<void> _fetchShoppingItems() async {
-    // Dummy data for weekly and monthly items.
-    final fetchedItems = [
-      ShoppingItem(
-        id: '1',
-        userId: 'user123',
-        itemName: 'Eggs',
-        quantity: '12 pcs',
-        category: 'Dairy',
-        icon: Icons.shopping_cart,
-      ),
-      ShoppingItem(
-        id: '2',
-        userId: 'user123',
-        itemName: 'Milk',
-        quantity: '1 liter',
-        category: 'Dairy',
-        icon: Icons.no_drinks,
-      ),
-      ShoppingItem(
-        id: '3',
-        userId: 'user123',
-        itemName: 'Rice',
-        quantity: '5 kg',
-        category: 'Grains',
-        icon: Icons.eco,
-      ),
-      ShoppingItem(
-        id: '4',
-        userId: 'user123',
-        itemName: 'Tomato Sauce',
-        quantity: '1 bottle',
-        category: 'Condiments',
-        icon: Icons.no_food,
-      ),
-      ShoppingItem(
-        id: '5',
-        userId: 'user123',
-        itemName: 'Apples',
-        quantity: '1 kg',
-        category: 'Produce',
-        icon: Icons.apple,
-      ),
-      ShoppingItem(
-        id: '6',
-        userId: 'user123',
-        itemName: 'Canned Beans',
-        quantity: '3 cans',
-        category: 'Canned Goods',
-        icon: Icons.food_bank,
-      ),
-    ];
+  bool _isLoading = false;
+  String? _errorMsg;
 
+  Future<void> _fetchShoppingItems() async {
     setState(() {
-      shoppingItems = fetchedItems;
+      _isLoading = true;
+      _errorMsg = null;
     });
+
+    try {
+      // Get the current user from your Riverpod Auth provider
+      final user = ref.read(currentUserProvider);
+      if (user == null) {
+        setState(() {
+          _errorMsg = 'No user is logged in.';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Get the RecommendationService
+      final recommendationService = ref.read(recommendationServiceProvider);
+
+      // Fetch recommended item names.
+      final recommendedNames = await recommendationService.fetchRecommendations(user.authId);
+
+      // Convert these recommended item names to ShoppingItem objects
+      final recommendedItems = recommendedNames.map((itemName) => ShoppingItem(
+        id: itemName,
+        userId: user.authId,
+        itemName: itemName,
+        quantity: '1 unit',
+        category: 'Recommended',
+        icon: Icons.star,
+      )).toList();
+
+      final dummyItems = [
+        ShoppingItem(
+          id: '1',
+          userId: user.authId,
+          itemName: 'Eggs',
+          quantity: '12 pcs',
+          category: 'Dairy',
+          icon: Icons.shopping_cart,
+        ),
+      ];
+
+      final allItems = [
+        ...recommendedItems,
+        ...dummyItems,
+      ];
+
+      setState(() {
+        shoppingItems = allItems;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMsg = 'Error fetching recommendations: $e';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   /// Categorize items dynamically into weekly and monthly groups.
