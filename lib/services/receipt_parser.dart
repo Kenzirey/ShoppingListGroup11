@@ -69,7 +69,7 @@ class ReceiptParser {
   double extractTotal(List<String> lines) {
     final RegExp pricePattern = RegExp(r'(\d+[.,]\d{2})');
     final RegExp intermediateTotalPattern = RegExp(r'sum\s+\d+\s+varer', caseSensitive: false);
-    final List<String> keywords = ['total', 'totalt', 'sum', 'bank'];
+    final List<String> keywords = ['BANK'];
     double total = 0.0;
 
     for (int i = lines.length - 1; i >= 0; i--) {
