@@ -1,82 +1,66 @@
 import 'package:flutter/material.dart';
+import 'package:shopping_list_g11/utils/quantity_parser.dart';
+import 'package:shopping_list_g11/utils/measurement_config.dart';
+
 
 /// A shopping list item that shows the product to buy, and allows to add existing items
 /// or add a new custom item to the list via an add button.
 class ShoppingListItem extends StatelessWidget {
   final String item;
-  final int quantity;
+  final String quantityText;
   final String unitLabel;
   final ValueChanged<int> onQuantityChanged;
-  /// We should also change this one.
   final int? maxQuantity;
-  /// The step between consecutive dropdown values, we need to refactor this
-  /// as the value should be more dynamic, 1, 2 where needed, 10, 20, 30+ etc
   final int step;
 
-  // temporary
   final int actualDefaultQuantity = 1;
 
   const ShoppingListItem({
     super.key,
     required this.item,
-    required this.quantity,
+    required this.quantityText,
     required this.unitLabel,
     required this.onQuantityChanged,
     this.maxQuantity,
     this.step = 1,
   });
 
-  /// Compute a default maximum: if not provided, for units like grams/ml allow higher values.
-  /// This is a temporary solution until we have a better way to handle this, perhaps a more abstract solution.
-  int get _maxQuantity {
-    if (maxQuantity != null) return maxQuantity!;
-    if (unitLabel.toLowerCase() == 'g' ||
-        unitLabel.toLowerCase() == 'grams' ||
-        unitLabel.toLowerCase() == 'ml' ||
-        unitLabel.toLowerCase() == 'milliliters') {
-      return 5000;
-    }
-    return 100;
-  }
+int get _maxQuantity {
+  final unitKey = unitLabel.trim().toLowerCase();
+  return defaultUnitMaxValues[unitKey] ?? 100;
+}
 
-  /// Returns the number of dropdown items.
+
   int get _dropdownItemCount => (_maxQuantity / step).ceil();
 
-  /// Returns a fixed max width for the dropdown based on the selected text.
   double _calculateDropdownMaxWidth(BuildContext context) {
     final textStyle = TextStyle(
       fontSize: 16,
       fontWeight: FontWeight.bold,
       color: Theme.of(context).colorScheme.tertiary,
     );
-    final displayText = _formatQuantity(quantity);
+    final displayText = quantityText;
     final tp = TextPainter(
       text: TextSpan(text: displayText, style: textStyle),
       textDirection: TextDirection.ltr,
-    )..layout();
+    )
+      ..layout();
     const iconWidth = 24.0;
     return tp.width + iconWidth;
-  }
-
-  /// If the unit is grams and the value is high, convert to kilograms for display.
-  /// temporary method. Need to add setup for liter, ml etc too. But in its own file not here
-  String _formatQuantity(int value) {
-    if (unitLabel.toLowerCase() == 'g' && value >= 1000) {
-      final kgValue = (value / 1000).toStringAsFixed(1);
-      return '$kgValue kg';
-    }
-    return '$value $unitLabel';
   }
 
   @override
   Widget build(BuildContext context) {
     final dropdownMaxWidth = _calculateDropdownMaxWidth(context);
     final itemCount = _dropdownItemCount;
+    final int numericQuantity =
+        QuantityParser.parseLeadingNumber(quantityText, defaultValue: actualDefaultQuantity);
+    final String parsedUnit = QuantityParser.parseUnit(quantityText);
+    final String displayUnit = parsedUnit.isNotEmpty ? parsedUnit : unitLabel;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding:
-          const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.primaryContainer,
         borderRadius: BorderRadius.circular(8),
@@ -101,7 +85,7 @@ class ShoppingListItem extends StatelessWidget {
             child: ConstrainedBox(
               constraints: BoxConstraints(maxWidth: dropdownMaxWidth),
               child: DropdownButton<int>(
-                value: quantity,
+                value: numericQuantity,
                 isDense: true,
                 isExpanded: true,
                 style: TextStyle(
@@ -119,23 +103,22 @@ class ShoppingListItem extends StatelessWidget {
                   return DropdownMenuItem<int>(
                     value: value,
                     child: Text(
-                      _formatQuantity(value),
+                      QuantityParser.formatQuantity(value, displayUnit),
                       style: TextStyle(
-                        color: value == quantity
+                        color: value == numericQuantity
                             ? Theme.of(context).colorScheme.secondary
                             : Theme.of(context).colorScheme.tertiary,
                       ),
                     ),
                   );
                 }),
-                // Ensure the selected item’s text is left aligned.
                 selectedItemBuilder: (BuildContext context) {
                   return List.generate(itemCount, (index) {
                     final value = (index + 1) * step;
                     return Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        _formatQuantity(value),
+                        QuantityParser.formatQuantity(value, displayUnit),
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
