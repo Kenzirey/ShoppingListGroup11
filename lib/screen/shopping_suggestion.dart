@@ -14,61 +14,136 @@ class ShoppingSuggestionsScreen extends ConsumerStatefulWidget {
 
 class _ShoppingSuggestionsScreenState
     extends ConsumerState<ShoppingSuggestionsScreen> {
-  // Define sample shopping items.
-  final List<ShoppingItem> weeklyItems = [
-    ShoppingItem(name: 'Eggs'),
-    ShoppingItem(name: 'Milk', icon: Icons.no_drinks),
-    ShoppingItem(name: 'Bread', icon: Icons.no_food),
-    ShoppingItem(name: 'Cheese', icon: Icons.eco),
-  ];
 
-  final List<ShoppingItem> monthlyItems = [
-    ShoppingItem(name: 'Rice'),
-    ShoppingItem(name: 'Pasta', icon: Icons.no_food),
-    ShoppingItem(name: 'Canned Beans', icon: Icons.eco),
-    ShoppingItem(name: 'Tomato Sauce'),
-  ];
+  // These lists are subject to change depending on dynamic supabase shenanigans
+  List<ShoppingItem> shoppingItems = [];
 
-  // The constant quantity string.
-  // TEMPORARY :)
-  final String quantity = '1 unit';
+  final Set<String> selectedItems = {};
 
-  /// Toggles selection for all shopping items (weekly and monthly).
-  /// Probably need to alter this when things are dynamic.
-  void _toggleSelectAll() {
-    final bool allSelected = weeklyItems.every((item) => item.isSelected) &&
-        monthlyItems.every((item) => item.isSelected);
+  // Define a mapping of categories to their respective groups.
+  final Map<String, String> categoryMapping = {
+    'Dairy': 'weekly',
+    'Grains': 'monthly',
+    'Condiments': 'monthly',
+    'Canned Goods': 'monthly',
+    'Produce': 'weekly',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchShoppingItems();
+  }
+
+  /// Fetch shopping items dynamically (e.g., from an API or provider).
+  Future<void> _fetchShoppingItems() async {
+    // Dummy data for weekly and monthly items.
+    final fetchedItems = [
+      ShoppingItem(
+        id: '1',
+        userId: 'user123',
+        itemName: 'Eggs',
+        quantity: '12 pcs',
+        category: 'Dairy',
+        icon: Icons.shopping_cart,
+      ),
+      ShoppingItem(
+        id: '2',
+        userId: 'user123',
+        itemName: 'Milk',
+        quantity: '1 liter',
+        category: 'Dairy',
+        icon: Icons.no_drinks,
+      ),
+      ShoppingItem(
+        id: '3',
+        userId: 'user123',
+        itemName: 'Rice',
+        quantity: '5 kg',
+        category: 'Grains',
+        icon: Icons.eco,
+      ),
+      ShoppingItem(
+        id: '4',
+        userId: 'user123',
+        itemName: 'Tomato Sauce',
+        quantity: '1 bottle',
+        category: 'Condiments',
+        icon: Icons.no_food,
+      ),
+      ShoppingItem(
+        id: '5',
+        userId: 'user123',
+        itemName: 'Apples',
+        quantity: '1 kg',
+        category: 'Produce',
+        icon: Icons.apple,
+      ),
+      ShoppingItem(
+        id: '6',
+        userId: 'user123',
+        itemName: 'Canned Beans',
+        quantity: '3 cans',
+        category: 'Canned Goods',
+        icon: Icons.food_bank,
+      ),
+    ];
+
     setState(() {
-      for (var item in weeklyItems) {
-        item.isSelected = !allSelected;
+      shoppingItems = fetchedItems;
+    });
+  }
+
+  /// Categorize items dynamically into weekly and monthly groups.
+  /// Need to tweak this later with dynamically fetched data
+  List<ShoppingItem> _getItemsByCategory(String group) {
+    return shoppingItems
+        .where((item) => categoryMapping[item.category] == group)
+        .toList();
+  }
+
+  /// Toggles selection for all items.
+  void _toggleSelectAll() {
+    setState(() {
+      if (selectedItems.length == shoppingItems.length) {
+        selectedItems.clear();
+      } else {
+        selectedItems.addAll(shoppingItems.map((item) => item.id!));
       }
-      for (var item in monthlyItems) {
-        item.isSelected = !allSelected;
+    });
+  }
+
+  /// Toggles selection for a single item.
+  void _toggleItemSelection(String itemId) {
+    setState(() {
+      if (selectedItems.contains(itemId)) {
+        selectedItems.remove(itemId);
+      } else {
+        selectedItems.add(itemId);
       }
     });
   }
 
   /// Action for the "Shopping list" button.
+  /// temporary
   void _onAddPressed() {
-    final selectedItems = [
-      ...weeklyItems.where((item) => item.isSelected),
-      ...monthlyItems.where((item) => item.isSelected),
-    ];
+    final selected =
+        shoppingItems.where((item) => selectedItems.contains(item.id)).toList();
     debugPrint(
-        "Add pressed. Selected items: ${selectedItems.map((i) => i.name).toList()}");
+        "Add pressed. Selected items: ${selected.map((i) => i.itemName).toList()}");
   }
 
   @override
   Widget build(BuildContext context) {
-    // Access theme colors, to not have to repeat all the theme of stuff.
     final color = Theme.of(context).colorScheme.tertiary;
     final primaryColor = Theme.of(context).colorScheme.primary;
     final primaryContainer = Theme.of(context).colorScheme.primaryContainer;
     final background = primaryContainer;
 
-    // find if all are selected
-    final bool allSelected = weeklyItems.every((item) => item.isSelected) &&
-        monthlyItems.every((item) => item.isSelected);
+    final weeklyItems = _getItemsByCategory('weekly');
+    final monthlyItems = _getItemsByCategory('monthly');
+
+    final bool allSelected = selectedItems.length == shoppingItems.length;
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -173,22 +248,17 @@ class _ShoppingSuggestionsScreenState
                 color: color,
               ),
             ),
-            const SizedBox(height: 10),
-            // Weekly items.
+            const SizedBox(height: 6),
             ...weeklyItems.map((item) {
+              final isSelected = selectedItems.contains(item.id);
               final containerColor =
-                  item.isSelected ? primaryColor.withOpacity(0.3) : background;
+                  isSelected ? primaryColor.withOpacity(0.3) : background;
               return Container(
                 margin: const EdgeInsets.only(bottom: 8),
-                // wrap container to only have inkwell splash contained with the actual item
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        item.isSelected = !item.isSelected;
-                      });
-                    },
+                    onTap: () => _toggleItemSelection(item.id!),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 10),
@@ -198,17 +268,15 @@ class _ShoppingSuggestionsScreenState
                       ),
                       child: Row(
                         children: [
-                          // Display the cart icon.
                           Icon(
-                            Icons.shopping_cart,
+                            item.icon ?? Icons.help_outline,
                             size: 20,
                             color: color,
                           ),
                           const SizedBox(width: 8),
-                          // Item name and quantity.
                           Expanded(
                             child: Text(
-                              '${item.name} | $quantity',
+                              '${item.itemName} | ${item.quantity ?? "1 unit"}',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w500,
@@ -217,8 +285,7 @@ class _ShoppingSuggestionsScreenState
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          // Checkbox indicator.
-                          item.isSelected
+                          isSelected
                               ? Icon(Icons.check_box_outlined,
                                   size: 20, color: primaryColor)
                               : Icon(Icons.check_box_outline_blank,
@@ -231,9 +298,8 @@ class _ShoppingSuggestionsScreenState
               );
             }),
 
+            // Monthly items section.
             const SizedBox(height: 16),
-
-            // Monthly Section Header.
             Text(
               'Monthly',
               style: TextStyle(
@@ -242,21 +308,17 @@ class _ShoppingSuggestionsScreenState
                 color: color,
               ),
             ),
-            const SizedBox(height: 10),
-            // Monthly items.
+            const SizedBox(height: 6),
             ...monthlyItems.map((item) {
+              final isSelected = selectedItems.contains(item.id);
               final containerColor =
-                  item.isSelected ? primaryColor.withOpacity(0.3) : background;
+                  isSelected ? primaryColor.withOpacity(0.3) : background;
               return Container(
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        item.isSelected = !item.isSelected;
-                      });
-                    },
+                    onTap: () => _toggleItemSelection(item.id!),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 10),
@@ -267,14 +329,14 @@ class _ShoppingSuggestionsScreenState
                       child: Row(
                         children: [
                           Icon(
-                            Icons.shopping_cart,
+                            item.icon ?? Icons.help_outline,
                             size: 20,
                             color: color,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              '${item.name} | $quantity',
+                              '${item.itemName} | ${item.quantity ?? "1 unit"}',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w500,
@@ -283,7 +345,7 @@ class _ShoppingSuggestionsScreenState
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          item.isSelected
+                          isSelected
                               ? Icon(Icons.check_box_outlined,
                                   size: 20, color: primaryColor)
                               : Icon(Icons.check_box_outline_blank,

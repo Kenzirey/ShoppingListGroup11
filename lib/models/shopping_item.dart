@@ -1,10 +1,13 @@
 
+import 'package:flutter/material.dart';
+
 class ShoppingItem {
   final String? id;
   final String userId;
   final String itemName;
   final String? quantity;
   final String? category;
+  final IconData? icon;
 
   ShoppingItem({
     this.id,
@@ -12,6 +15,7 @@ class ShoppingItem {
     required this.itemName,
     this.quantity,
     this.category,
+    this.icon,
   });
 
   factory ShoppingItem.fromMap(Map<String, dynamic> map) {
