@@ -4,6 +4,11 @@ import 'package:shopping_list_g11/widget/add_product_dialog.dart';
 import 'package:shopping_list_g11/widget/search_bar.dart';
 import 'package:shopping_list_g11/widget/shopping_list_item.dart';
 import '../data/measurement_type.dart';
+import 'package:shopping_list_g11/models/shopping_item.dart';
+import 'package:shopping_list_g11/providers/shopping_items_provider.dart';
+import 'package:shopping_list_g11/controllers/shopping_list_controller.dart';
+import 'package:shopping_list_g11/providers/current_user_provider.dart';
+import 'package:shopping_list_g11/utils/quantity_parser.dart';
 
 /// A screen for showing what products the user wishes to buy
 /// on their next shopping trip.
@@ -15,33 +20,25 @@ class ShoppingListScreen extends ConsumerStatefulWidget {
 }
 
 class ShoppingListState extends ConsumerState<ShoppingListScreen> {
-  // For regular items, we just store their quantity.
-  Map<String, int> itemQuantities = {
-    'Apples': 12,
-    'Bananas': 1,
-    'Carrots': 1,
-    'Eggs': 1,
-    'Milk': 3,
-    'Bread': 1,
-    'Cheese': 1,
-    'Energy Drink': 50,
-    'Frozen Pizza': 5,
-  };
-
-  // For custom items (added via the FAB) we store their unit in a separate map.
-  Map<String, String> customItemUnits = {};
-
-  final SearchController _searchController = SearchController();
-
-  // For undo.
-  String? lastDeletedItem;
-  int? lastDeletedQuantity;
+ 
+  ShoppingItem? lastDeletedItem;
   int? lastDeletedIndex;
-  String? lastDeletedUnit; // for custom items
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final currentUser = ref.read(currentUserProvider);
+      if (currentUser != null && currentUser.profileId != null) {
+        await ref
+            .read(shoppingListControllerProvider)
+            .fetchShoppingItems(currentUser.profileId!);
+      }
+    });
+  }
+  @override
   Widget build(BuildContext context) {
-    final shoppingItems = itemQuantities.keys.toList();
+    final shoppingItems = ref.watch(shoppingItemsProvider);
     const horizontalPadding = 32.0;
 
     return Scaffold(
@@ -56,7 +53,7 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 CustomSearchBarWidget(
-                  suggestions: shoppingItems,
+                  suggestions: shoppingItems.map((e) => e.itemName).toList(),
                   onSuggestionSelected: (suggestion) {
                     debugPrint("Selected: $suggestion");
                   },
@@ -91,24 +88,14 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
                     padding: const EdgeInsets.only(bottom: 120.0),
                     itemCount: shoppingItems.length,
                     itemBuilder: (context, index) {
-                      final item = shoppingItems[index];
-                      final quantity = itemQuantities[item]!;
-                      // Determine the unit:
-                      // • If the item exists in your grocery mapping (via a case‑insensitive lookup),
-                      //   use the mapped unit.
-                      // • Otherwise, if there’s a custom unit saved for this item, use that.
-                      // • Otherwise, use empty string.
-                      String unit;
-                      final mappedType = groceryMapping[item.toLowerCase()];
-                      if (mappedType != null) {
-                        unit = getUnitLabel(mappedType);
-                      } else if (customItemUnits.containsKey(item)) {
-                        unit = customItemUnits[item]!;
-                      } else {
-                        unit = '';
-                      }
+                      final itemObj = shoppingItems[index];
+                      final itemName = itemObj.itemName;
+                      final quantityText = itemObj.quantity ?? '';
+                      final String parsedUnit = QuantityParser.parseUnit(quantityText);
+                      final String displayUnit = parsedUnit.isNotEmpty ? parsedUnit : (itemObj.category ?? '');
+
                       return Dismissible(
-                        key: Key(item),
+                        key: Key(itemObj.id ?? itemName),
                         direction: DismissDirection.endToStart,
                         background: Container(
                           alignment: Alignment.centerRight,
@@ -120,45 +107,31 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
                           ),
                           child: const Icon(Icons.delete, color: Colors.white),
                         ),
-                        onDismissed: (direction) {
-                          setState(() {
-                            lastDeletedItem = item;
-                            lastDeletedQuantity = itemQuantities[item];
-                            lastDeletedIndex = index;
-                            lastDeletedUnit = customItemUnits.containsKey(item)
-                                ? customItemUnits[item]
-                                : '';
-                            itemQuantities.remove(item);
-                            customItemUnits.remove(item);
-                          });
+                         onDismissed: (direction) async {
+                          lastDeletedItem = itemObj;
+                          lastDeletedIndex = index;
+                          if (itemObj.id != null) {
+                            await ref
+                                .read(shoppingListControllerProvider)
+                                .removeShoppingItem(itemObj.id!);
+                          }
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('$item removed'),
+                              content: Text('$itemName removed'),
                               duration: const Duration(seconds: 4),
                               action: SnackBarAction(
                                 label: 'Undo',
-                                textColor:
-                                    Theme.of(context).colorScheme.secondary,
-                                onPressed: () {
+                                textColor: Theme.of(context).colorScheme.secondary,
+                                onPressed: () async {
                                   if (lastDeletedItem != null &&
-                                      lastDeletedQuantity != null &&
                                       lastDeletedIndex != null) {
-                                    setState(() {
-                                      final entries =
-                                          itemQuantities.entries.toList();
-                                      entries.insert(
-                                        lastDeletedIndex!,
-                                        MapEntry(lastDeletedItem!,
-                                            lastDeletedQuantity!),
-                                      );
-                                      itemQuantities = Map.fromEntries(entries);
-                                      // Also restore custom unit if applicable.
-                                      if (lastDeletedUnit != null &&
-                                          lastDeletedUnit!.isNotEmpty) {
-                                        customItemUnits[lastDeletedItem!] =
-                                            lastDeletedUnit!;
-                                      }
-                                    });
+                                    final currentUser = ref.read(currentUserProvider);
+                                    if (currentUser != null &&
+                                        currentUser.profileId != null) {
+                                      await ref
+                                          .read(shoppingListControllerProvider)
+                                          .addShoppingItem(lastDeletedItem!);
+                                    }
                                   }
                                 },
                               ),
@@ -166,15 +139,21 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
                           );
                         },
                         child: ShoppingListItem(
-                          item: item,
-                          quantity: quantity,
-                          unitLabel: unit,
-                          onQuantityChanged: (newQuantity) {
-                            setState(() {
-                              itemQuantities[item] = newQuantity;
-                            });
+                          item: itemName,
+                          quantityText: quantityText,
+                          unitLabel: displayUnit,
+                          onQuantityChanged: (newQuantity) async {
+                            if (itemObj.id != null) {
+                              final oldUnit = QuantityParser.parseUnit(itemObj.quantity ?? '');
+                              final newQuantityString = '$newQuantity ${oldUnit}'.trim();
+                              await ref.read(shoppingListControllerProvider).updateShoppingItem(
+                                itemId: itemObj.id!,
+                                newQuantity: newQuantityString,
+                              );
+                            }
                           },
                         ),
+
                       );
                     },
                   ),
@@ -186,15 +165,34 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
             bottom: 16.0,
             right: horizontalPadding,
             child: ElevatedButton(
-              onPressed: () async {
-                final result = await showDialog<Map<String, dynamic>>(
-                  context: context,
-                  builder: (context) => const AddProductDialog(),
-                );
-                if (result != null) {
-                  // add logic :)
+            onPressed: () async {
+              final result = await showDialog<Map<String, dynamic>>(
+                context: context,
+                builder: (context) => const AddProductDialog(),
+              );
+              if (result != null) {
+                final name = result['name'] as String;
+                final amountValue = result['amount'] as int? ?? 1;
+                final unit = result['unit'] as String? ?? '';
+                final finalQuantity = '$amountValue $unit'.trim();
+
+                debugPrint('Final quantity: "$finalQuantity"');
+                debugPrint('Chars: ${finalQuantity.codeUnits}');
+
+                final currentUser = ref.read(currentUserProvider);
+                if (currentUser != null && currentUser.profileId != null) {
+                  await ref.read(shoppingListControllerProvider).addShoppingItem(
+                    ShoppingItem(
+                      userId: currentUser.profileId!,
+                      itemName: name,
+                      quantity: finalQuantity,
+                      category: unit,
+                    ),
+                  );
                 }
-              },
+              }
+            },
+
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.secondary,
                 shape: const CircleBorder(),
