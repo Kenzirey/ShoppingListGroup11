@@ -4,12 +4,14 @@ class ReceiptItem {
   int quantity;
   double price;
   String? allergy;
+  String unit;
 
   ReceiptItem({
     required this.name,
     this.quantity = 1,
     required this.price,
     this.allergy,
+    this.unit = '',
   });
 
   double get totalPrice => quantity * price;
