@@ -22,13 +22,60 @@ class ReceiptParser {
     return raw;
   }
 
-  /// Extracts the store name from the recognized text
-  int extractQuantity(String text) {
-    final match = RegExp(r'\b(\d+)\s*(?:stk|x)\b', caseSensitive: false).firstMatch(text);
+  /// Extracts quantity information from product text
+  Map<String, dynamic> extractQuantity(String text) {
+    // Default values
+    int quantity = 1;
+    String modifiedText = text;
+
+    // Case 1: Pattern like "2 stk" or "3 x"
+    final standardPattern = RegExp(r'\b(\d+[.,]?\d*)\s*(?:stk|x|pk|pakke|box|pose)\b', caseSensitive: false);
+    var match = standardPattern.firstMatch(text);
     if (match != null) {
-      return int.tryParse(match.group(1)!) ?? 1;
+      final parsed = double.tryParse(match.group(1)!.replaceAll(',', '.')) ?? 1.0;
+      quantity = parsed.toInt();
+      // Remove the matched pattern from text
+      modifiedText = text.replaceFirst(match.group(0)!, '').trim();
+      return {'quantity': quantity, 'text': modifiedText};
     }
-    return 1;
+
+    // Case 2: Pattern like "2x" without space
+    final compactPattern = RegExp(r'\b(\d+[.,]?\d*)x\b', caseSensitive: false);
+    match = compactPattern.firstMatch(text);
+    if (match != null) {
+      final parsed = double.tryParse(match.group(1)!.replaceAll(',', '.')) ?? 1.0;
+      quantity = parsed.toInt();
+      // Remove the matched pattern from text
+      modifiedText = text.replaceFirst(match.group(0)!, '').trim();
+      return {'quantity': quantity, 'text': modifiedText};
+    }
+
+    // Case 3: Pattern like "2 for 30"
+    final forPattern = RegExp(r'\b(\d+[.,]?\d*)\s*for\b', caseSensitive: false);
+    match = forPattern.firstMatch(text);
+    if (match != null) {
+      final parsed = double.tryParse(match.group(1)!.replaceAll(',', '.')) ?? 1.0;
+      quantity = parsed.toInt();
+      // Remove the matched pattern from text
+      modifiedText = text.replaceFirst(match.group(0)!, '').trim();
+      return {'quantity': quantity, 'text': modifiedText};
+    }
+
+    // Case 4: Number at start of text that might indicate quantity
+    final startNumberPattern = RegExp(r'^\s*(\d+[.,]?\d*)\s+');
+    match = startNumberPattern.firstMatch(text);
+    if (match != null) {
+      // Only use this if it looks like a standalone number, not part of the product name
+      final potentialQuantity = double.tryParse(match.group(1)!.replaceAll(',', '.'));
+      if (potentialQuantity != null && potentialQuantity < 20) { // Reasonable quantity limit
+        quantity = potentialQuantity.toInt();
+        // Remove the matched pattern from text
+        modifiedText = text.replaceFirst(match.group(0)!, '').trim();
+        return {'quantity': quantity, 'text': modifiedText};
+      }
+    }
+
+    return {'quantity': quantity, 'text': modifiedText};
   }
 
   /// Extracts the store name from the recognized text.
@@ -99,6 +146,34 @@ class ReceiptParser {
     return total;
   }
 
+  /// Extracts unit information (e.g., 400g, 0,5L) from a product name
+  String extractUnit(String text) {
+    // Match common measurement patterns
+    final RegExp unitPattern = RegExp(
+        r'(\d+[,.]?\d*)\s*(g|kg|ml|l|cl|dl|stk|pk|box|pakke)',
+        caseSensitive: false
+    );
+
+    final match = unitPattern.firstMatch(text);
+    if (match != null) {
+      return match.group(0)!.trim();
+    }
+    return '';
+  }
+
+  /// Separates the product name from its unit
+  Map<String, String> separateNameAndUnit(String text) {
+    final unit = extractUnit(text);
+    final name = unit.isNotEmpty
+        ? text.replaceFirst(unit, '').trim()
+        : text;
+
+    return {
+      'name': name,
+      'unit': unit
+    };
+  }
+
   List<ReceiptItem> extractItemsByBoundingBox(RecognizedText recognizedText) {
     final List<OcrLine> allLines = [];
     for (TextBlock block in recognizedText.blocks) {
@@ -158,31 +233,42 @@ class ReceiptParser {
 
       String rawNameText = '';
       String priceText = '';
-      int quantity = 1;
 
       if (row.length == 2) {
         rawNameText = row[0].text.trim();
         priceText = row[1].text.trim();
-        quantity = extractQuantity(row[0].text);
       } else if (row.length == 1) {
         rawNameText = row[0].text.trim();
         final match = RegExp(r'(\d+[.,]\d{2})').firstMatch(rawNameText);
         if (match != null) {
           priceText = rawNameText.substring(match.start).trim();
           rawNameText = rawNameText.substring(0, match.start).trim();
-          quantity = extractQuantity(rawNameText);
         }
       } else {
         rawNameText = row.sublist(0, row.length - 1).map((l) => l.text).join(' ');
         priceText = row.last.text.trim();
-        quantity = extractQuantity(rawNameText);
       }
 
-      final cleanedName = cleanName(rawNameText);
+      // Extract quantity and clean name in one step
+      final quantityInfo = extractQuantity(rawNameText);
+      final quantity = quantityInfo['quantity'] as int;
+      final nameWithoutQuantity = quantityInfo['text'] as String;
+
+      final cleanedName = cleanName(nameWithoutQuantity);
       final priceVal = _parsePrice(priceText);
 
+      // Extract unit information
+      final unitInfo = separateNameAndUnit(cleanedName);
+      final productName = unitInfo['name'] ?? cleanedName;
+      final unit = unitInfo['unit'] ?? '';
+
       if (priceVal != null && cleanedName.isNotEmpty) {
-        items.add(ReceiptItem(name: cleanedName, price: priceVal, quantity: quantity));
+        items.add(ReceiptItem(
+            name: productName,
+            price: priceVal,
+            quantity: quantity,
+            unit: unit
+        ));
       }
     }
     return items;
