@@ -4,7 +4,6 @@ import 'package:shopping_list_g11/widget/pantry_tile.dart';
 import 'package:shopping_list_g11/controllers/pantry_controller.dart';
 import 'package:shopping_list_g11/providers/pantry_items_provider.dart';
 import 'package:shopping_list_g11/providers/current_user_provider.dart';
-import '../models/pantry_item.dart';
 
 /// Screen for showing which food items the user has in stock,
 /// from fridge to dry goods, canned food etc.

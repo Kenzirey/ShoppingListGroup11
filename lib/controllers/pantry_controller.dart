@@ -60,4 +60,28 @@ class PantryController {
     }
   }
 
+  /// Update an existing pantry item.
+  Future<void> updatePantryItem(String itemId,
+      {required String name, required double amount, required String unit}) async {
+    try {
+      final updateData = {
+        'name': name,
+        'amount': amount,
+        'unit': unit,
+      };
+
+      final List<dynamic> updateResponse = await Supabase.instance.client
+          .from('inventory')
+          .update(updateData)
+          .match({'id': itemId})
+          .select();
+
+      if (updateResponse.isNotEmpty) {
+        final updatedItem = PantryItem.fromMap(updateResponse.first);
+        ref.read(pantryItemsProvider.notifier).updateItem(updatedItem);
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

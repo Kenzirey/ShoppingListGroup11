@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shopping_list_g11/widget/add_product_dialog.dart';
 import 'package:shopping_list_g11/widget/search_bar.dart';
 import 'package:shopping_list_g11/widget/shopping_list_item.dart';
-import '../data/measurement_type.dart';
 import 'package:shopping_list_g11/models/shopping_item.dart';
 import 'package:shopping_list_g11/providers/shopping_items_provider.dart';
 import 'package:shopping_list_g11/controllers/shopping_list_controller.dart';
@@ -175,10 +174,6 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
                 final amountValue = result['amount'] as int? ?? 1;
                 final unit = result['unit'] as String? ?? '';
                 final finalQuantity = '$amountValue $unit'.trim();
-
-                debugPrint('Final quantity: "$finalQuantity"');
-                debugPrint('Chars: ${finalQuantity.codeUnits}');
-
                 final currentUser = ref.read(currentUserProvider);
                 if (currentUser != null && currentUser.profileId != null) {
                   await ref.read(shoppingListControllerProvider).addShoppingItem(
