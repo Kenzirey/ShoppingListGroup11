@@ -58,7 +58,8 @@ class SupabaseService {
           'name': item.name,
           'quantity': item.quantity,
           'price': item.price,
-          'allergy': item.allergy,
+          "allergy": item.allergy,
+          "unit": item.unit,
           'added_at': DateTime.now().toIso8601String(),
           'expiration_date': expirationDate.toIso8601String(),
         }).select().single();
