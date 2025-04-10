@@ -115,35 +115,80 @@ class ReceiptParser {
   /// Extracts the total amount from the recognized text
   double extractTotal(List<String> lines) {
     final RegExp pricePattern = RegExp(r'(\d+[.,]\d{2})');
-    final RegExp intermediateTotalPattern = RegExp(r'sum\s+\d+\s+varer', caseSensitive: false);
-    final List<String> keywords = ['BANK'];
-    double total = 0.0;
 
+    // More comprehensive list of keywords that might indicate total amount
+    final List<String> totalKeywords = [
+      'total', 'sum', 'å betale', 'bank', 'beløp'
+    ];
+
+    // Patterns that specifically indicate totals
+    final RegExp totalPattern = RegExp(
+        r'(total|sum|beløp|betalt)\s*(?:kr\.?|nok)?\s*(\d+[.,]\d{2})',
+        caseSensitive: false
+    );
+
+    // Check for explicit total patterns first
     for (int i = lines.length - 1; i >= 0; i--) {
+      final match = totalPattern.firstMatch(lines[i].toLowerCase());
+      if (match != null) {
+        return double.tryParse(match.group(2)!.replaceAll(',', '.')) ?? 0.0;
+      }
+    }
+
+    // Then check for keywords + nearby prices
+    for (int i = lines.length - 1; i >= math.max(0, lines.length - 15); i--) {
       final String lineLower = lines[i].toLowerCase();
-      if (intermediateTotalPattern.hasMatch(lineLower)) continue;
-      if (keywords.any((k) => lineLower.contains(k))) {
+
+      // Skip intermediate subtotals specifically mentioned as "sum X varer" where X is count
+      if (RegExp(r'sum\s+\d+\s+varer', caseSensitive: false).hasMatch(lineLower) &&
+          !RegExp(r'total|å betale|betalt', caseSensitive: false).hasMatch(lineLower)) {
+        continue;
+      }
+
+      if (totalKeywords.any((k) => lineLower.contains(k.toLowerCase()))) {
+        // First check this line
         final match = pricePattern.firstMatch(lines[i]);
         if (match != null) {
-          total = double.tryParse(match.group(1)!.replaceAll(',', '.')) ?? 0.0;
-          return total;
-        } else {
-          // Fallback: look at the next few lines
-          final candidatePrices = <double>[];
-          for (int j = i + 1; j < math.min(i + 4, lines.length); j++) {
-            final nextMatch = pricePattern.firstMatch(lines[j]);
+          return double.tryParse(match.group(1)!.replaceAll(',', '.')) ?? 0.0;
+        }
+
+        // Check nearby lines (both before and after)
+        for (int offset = 1; offset <= 2; offset++) {
+          // Check line after
+          if (i + offset < lines.length) {
+            final nextMatch = pricePattern.firstMatch(lines[i + offset]);
             if (nextMatch != null) {
-              final p = double.tryParse(nextMatch.group(1)!.replaceAll(',', '.')) ?? 0.0;
-              candidatePrices.add(p);
+              return double.tryParse(nextMatch.group(1)!.replaceAll(',', '.')) ?? 0.0;
             }
           }
-          if (candidatePrices.isNotEmpty) {
-            return candidatePrices.last;
+
+          // Check line before
+          if (i - offset >= 0) {
+            final prevMatch = pricePattern.firstMatch(lines[i - offset]);
+            if (prevMatch != null) {
+              return double.tryParse(prevMatch.group(1)!.replaceAll(',', '.')) ?? 0.0;
+            }
           }
         }
       }
     }
-    return total;
+
+    // Last resort: find the largest amount in the last few lines
+    final candidates = <double>[];
+    for (int i = lines.length - 1; i >= math.max(0, lines.length - 10); i--) {
+      final matches = pricePattern.allMatches(lines[i]);
+      for (final match in matches) {
+        final value = double.tryParse(match.group(1)!.replaceAll(',', '.')) ?? 0.0;
+        candidates.add(value);
+      }
+    }
+
+    if (candidates.isNotEmpty) {
+      candidates.sort();
+      return candidates.last;  // Return the largest amount
+    }
+
+    return 0.0;
   }
 
   /// Extracts unit information (e.g., 400g, 0,5L) from a product name
@@ -249,7 +294,7 @@ class ReceiptParser {
         priceText = row.last.text.trim();
       }
 
-      // Extract quantity and clean name in one step
+      // Extract quantity and clean name from the raw name text
       final quantityInfo = extractQuantity(rawNameText);
       final quantity = quantityInfo['quantity'] as int;
       final nameWithoutQuantity = quantityInfo['text'] as String;
@@ -263,13 +308,21 @@ class ReceiptParser {
       final unit = unitInfo['unit'] ?? '';
 
       if (priceVal != null && cleanedName.isNotEmpty) {
-        items.add(ReceiptItem(
-            name: productName,
-            price: priceVal,
+        // Calculate unit price for multi-quantity items
+        double unitPrice = priceVal;
+        if (quantity > 1) {
+          unitPrice = priceVal / quantity;
+        }
+
+        items.add(
+          ReceiptItem(
+            name: cleanedName,
+            price: unitPrice,
             quantity: quantity,
-            unit: unit
-        ));
+          ),
+        );
       }
+
     }
     return items;
   }
