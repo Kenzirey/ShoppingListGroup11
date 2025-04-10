@@ -14,10 +14,10 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   // THese are only temporary for testing and showing the ui look.
   final Map<String, String> expiringItems = {
-    'Milk': '2 days',
-    'Cheese': '3 days',
-    'Yogurt': '5 days',
-    'Carrots': '2 days',
+    'Milk': '2',
+    'Cheese': '3',
+    'Yogurt': '5',
+    'Carrots': '2',
   };
 
   /// Returns an icon for expiring items, temporary setup
@@ -38,7 +38,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -110,17 +110,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                         ),
                         // when it expires
-                        Text(
-                          expiryTime ?? '',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .tertiary
-                                .withOpacity(0.7),
+                        Row(
+                        children: [
+                          Icon(
+                            Icons.access_time, // Use the desired icon here.
+                            size: 20,
+                            color: Theme.of(context).colorScheme.tertiary.withOpacity(0.7),
                           ),
-                        ),
+                          const SizedBox(width: 4),
+                          Text(
+                            expiryTime ?? '',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.tertiary.withOpacity(0.7),
+                            ),
+                          ),
+                        ],
+                      ),
                       ],
                     ),
                   );

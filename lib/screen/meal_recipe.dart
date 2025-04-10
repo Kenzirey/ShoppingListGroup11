@@ -55,7 +55,7 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
 
     return Scaffold(
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
