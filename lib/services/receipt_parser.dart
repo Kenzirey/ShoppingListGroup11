@@ -116,12 +116,12 @@ class ReceiptParser {
   double extractTotal(List<String> lines) {
     final RegExp pricePattern = RegExp(r'(\d+[.,]\d{2})');
 
-    // More comprehensive list of keywords that might indicate total amount
+    // Keywords to identify total amounts
     final List<String> totalKeywords = [
       'total', 'sum', 'å betale', 'bank', 'beløp'
     ];
 
-    // Patterns that specifically indicate totals
+    // Pattern to match explicit total amounts
     final RegExp totalPattern = RegExp(
         r'(total|sum|beløp|betalt)\s*(?:kr\.?|nok)?\s*(\d+[.,]\d{2})',
         caseSensitive: false
@@ -135,26 +135,24 @@ class ReceiptParser {
       }
     }
 
-    // Then check for keywords + nearby prices
+    // If no explicit total found, check for keywords in the last few lines
     for (int i = lines.length - 1; i >= math.max(0, lines.length - 15); i--) {
       final String lineLower = lines[i].toLowerCase();
 
-      // Skip intermediate subtotals specifically mentioned as "sum X varer" where X is count
       if (RegExp(r'sum\s+\d+\s+varer', caseSensitive: false).hasMatch(lineLower) &&
           !RegExp(r'total|å betale|betalt', caseSensitive: false).hasMatch(lineLower)) {
         continue;
       }
 
+      // Check if the line contains any of the keywords
       if (totalKeywords.any((k) => lineLower.contains(k.toLowerCase()))) {
-        // First check this line
         final match = pricePattern.firstMatch(lines[i]);
         if (match != null) {
           return double.tryParse(match.group(1)!.replaceAll(',', '.')) ?? 0.0;
         }
 
-        // Check nearby lines (both before and after)
         for (int offset = 1; offset <= 2; offset++) {
-          // Check line after
+
           if (i + offset < lines.length) {
             final nextMatch = pricePattern.firstMatch(lines[i + offset]);
             if (nextMatch != null) {
@@ -162,7 +160,6 @@ class ReceiptParser {
             }
           }
 
-          // Check line before
           if (i - offset >= 0) {
             final prevMatch = pricePattern.firstMatch(lines[i - offset]);
             if (prevMatch != null) {
@@ -185,7 +182,7 @@ class ReceiptParser {
 
     if (candidates.isNotEmpty) {
       candidates.sort();
-      return candidates.last;  // Return the largest amount
+      return candidates.last;
     }
 
     return 0.0;
@@ -308,17 +305,12 @@ class ReceiptParser {
       final unit = unitInfo['unit'] ?? '';
 
       if (priceVal != null && cleanedName.isNotEmpty) {
-        // Calculate unit price for multi-quantity items
-        double unitPrice = priceVal;
-        if (quantity > 1) {
-          unitPrice = priceVal / quantity;
-        }
-
         items.add(
           ReceiptItem(
             name: cleanedName,
-            price: unitPrice,
+            price: priceVal,
             quantity: quantity,
+            unit: unit,
           ),
         );
       }
