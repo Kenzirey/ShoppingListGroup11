@@ -38,7 +38,7 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
         child: ListView(
           physics: const BouncingScrollPhysics(),
           children: [
@@ -140,17 +140,9 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
 
 
   String _formatExpiration(DateTime? expiry) {
-    if (expiry == null) return 'N/A';
+    // Return only a numeric value of days left until expiry.
+    if (expiry == null) return '0';
     final diff = expiry.difference(DateTime.now()).inDays;
-
-    if (diff < 0) {
-      return 'Expired ${diff.abs()} days ago';
-    } else if (diff == 0) {
-      return 'Expires today';
-    } else if (diff == 1) {
-      return '1 day left';
-    } else {
-      return '$diff days left';
-    }
+    return diff.toString();
   }
 }

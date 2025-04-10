@@ -64,7 +64,7 @@ class _PurchaseStatisticsState extends State<PurchaseStatistics> {
     final tertiaryColor = Theme.of(context).colorScheme.tertiary;
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,7 +86,7 @@ class _PurchaseStatisticsState extends State<PurchaseStatistics> {
               DropdownButton<int>(
                 isExpanded: true,
                 value: selectedMonth,
-                style: TextStyle(color: tertiaryColor, fontSize: 16),
+                style: TextStyle(color: tertiaryColor, fontSize: 18),
                 items: List.generate(
                   months.length,
                   (index) => DropdownMenuItem<int>(

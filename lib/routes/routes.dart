@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shopping_list_g11/models/receipt_data.dart';
 import 'package:shopping_list_g11/routes/app_shell.dart';
 import 'package:shopping_list_g11/screen/chat_screen.dart';
 import 'package:shopping_list_g11/screen/home_screen.dart';
 import 'package:shopping_list_g11/screen/pantry_screen.dart';
 import 'package:shopping_list_g11/screen/purchase_statistics.dart';
+import 'package:shopping_list_g11/screen/receipts/view_scanned_receipt_screen.dart';
 import 'package:shopping_list_g11/screen/shopping_suggestion.dart';
 import 'package:shopping_list_g11/screen/user_account/login.dart';
 import 'package:shopping_list_g11/screen/meal_planner.dart';
@@ -14,7 +16,7 @@ import 'package:shopping_list_g11/screen/shopping_list.dart';
 import 'package:shopping_list_g11/screen/purchase_history.dart';
 import 'package:shopping_list_g11/screen/user_account/signup_screen.dart';
 import 'package:shopping_list_g11/screen/trending_meal.dart';
-import 'package:shopping_list_g11/screen/scan_receipt_screen.dart';
+import 'package:shopping_list_g11/screen/receipts/scan_receipt_screen.dart';
 import 'package:shopping_list_g11/screen/user_account/account_page_screen.dart';
 import 'package:shopping_list_g11/screen/user_account/update_avatar_screen.dart';
 import 'package:shopping_list_g11/screen/information_screen.dart';
@@ -123,6 +125,16 @@ class AppRouter {
             name: 'updateAvatarScreen',
             builder: (context, state) => const UpdateAvatarScreen(),
           ),
+        GoRoute(
+          path: '/receipt-screen',
+          name: 'receiptScreen',
+          builder: (context, state) {
+            // Directly cast extra; this assumes that you always push the route with a valid ReceiptData.
+            final receiptData = state.extra as ReceiptData;
+            return ReceiptDisplayScreen(receiptData: receiptData);
+          },
+        ),
+
         ],
       ),
 

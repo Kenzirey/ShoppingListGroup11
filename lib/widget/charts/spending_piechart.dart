@@ -47,7 +47,7 @@ class _PurchaseHabitPieChartState extends State<PurchaseHabitPieChart> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final availableWidth = constraints.maxWidth - 20;
+        final availableWidth = constraints.maxWidth - 40;
         // Clamp to widget.maxSize
         final chartSize = availableWidth.clamp(0.0, widget.maxSize);
         final baseRadius = chartSize * 0.38;

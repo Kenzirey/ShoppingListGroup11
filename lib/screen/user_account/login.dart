@@ -92,7 +92,7 @@ class _LoginState extends ConsumerState<LoginScreen>
               child: SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 32.0, vertical: 24),
+                      horizontal: 16.0, vertical: 24),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -324,6 +324,7 @@ class _LoginState extends ConsumerState<LoginScreen>
                       const SizedBox(height: 24),
                       SocialButton(
                           onPressed: () async {
+                            FocusScope.of(context).unfocus();
                             if (_isLoading) return;
 
                             setState(() {

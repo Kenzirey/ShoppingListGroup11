@@ -75,10 +75,8 @@ class GeminiController {
           isUser: false,
         );
 
-    // get the full response from gemini here
-    final geminiResponse = await _getGeminiResponse(userMessage);
-
     // then parse it via the factory method
+    final geminiResponse = await _getGeminiResponse(userMessage);
     final parsedRecipe = Recipe.fromString(geminiResponse);
 
     // only store it if it is valid
@@ -89,6 +87,10 @@ class GeminiController {
       ref.read(chatProvider.notifier).updateLastBotMessage(geminiResponse);
     } else {
       debugPrint("Error: Recipe parsing failed.");
+      // update the temporary message with an error message.
+      ref
+          .read(chatProvider.notifier)
+          .updateLastBotMessage("Something went wrong. Please try asking for a new recipe.");
     }
   }
 }

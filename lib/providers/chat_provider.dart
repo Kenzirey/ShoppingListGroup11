@@ -12,7 +12,6 @@ class ChatState {
 }
 
 /// StateNotifier to manage chat messages and recipe.
-/// TODO: create a separate service/controller for this.
 class ChatNotifier extends StateNotifier<ChatState> {
   ChatNotifier() : super(ChatState(messages: []));
 
@@ -26,25 +25,27 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
   /// Updates the last bot message, attempt to parse a recipe.
   void updateLastBotMessage(String newText) {
+
     final parsedRecipe = Recipe.fromString(newText);
-
-    if (parsedRecipe.name.isEmpty ||
-        parsedRecipe.ingredients.isEmpty ||
-        parsedRecipe.instructions.isEmpty) {
-      debugPrint("⚠️ Error: Parsed recipe is missing critical data.");
-      return;
-    }
-
-    final summaryText = parsedRecipe.summary;
-
     final newMessages = [...state.messages];
+
+    // Remove the last bot message 
     if (newMessages.isNotEmpty && !newMessages.last.isUser) {
       newMessages.removeLast();
     }
 
-    newMessages.add(Message(text: summaryText, isUser: false));
-
-    state = ChatState(messages: newMessages, recipe: parsedRecipe);
+    // If the recipe is valid, display the formatted summary; otherwise, just show the raw text.
+    if (parsedRecipe.name.isNotEmpty &&
+        parsedRecipe.ingredients.isNotEmpty &&
+        parsedRecipe.instructions.isNotEmpty) {
+      final summaryText = parsedRecipe.summary;
+      newMessages.add(Message(text: summaryText, isUser: false));
+      state = ChatState(messages: newMessages, recipe: parsedRecipe);
+    } else {
+      // Not a valid recipe
+      newMessages.add(Message(text: newText, isUser: false));
+      state = ChatState(messages: newMessages, recipe: null);
+    }
   }
 }
 

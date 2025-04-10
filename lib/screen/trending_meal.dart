@@ -61,7 +61,7 @@ class TrendingRecipesState extends ConsumerState<TrendingRecipeScreen> {
 
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: ListView(
           physics: const BouncingScrollPhysics(),
           children: [

@@ -38,7 +38,7 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
   @override
   Widget build(BuildContext context) {
     final shoppingItems = ref.watch(shoppingItemsProvider);
-    const horizontalPadding = 32.0;
+    const horizontalPadding = 16.0;
 
     return Scaffold(
       body: Stack(
