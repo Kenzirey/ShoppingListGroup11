@@ -18,6 +18,8 @@ class ShoppingListScreen extends ConsumerStatefulWidget {
   ShoppingListState createState() => ShoppingListState();
 }
 
+//TODO: set up dropdown for items such as bananas which are measured by quantity, not weight usually. 
+// Keep text field for items such as flour, which are measured by weight.
 class ShoppingListState extends ConsumerState<ShoppingListScreen> {
  
   ShoppingItem? lastDeletedItem;

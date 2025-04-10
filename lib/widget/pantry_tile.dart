@@ -67,23 +67,20 @@ class _PantryItemTileState extends State<PantryItemTile> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
-        // Center everything vertically.
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Left icon.
           Icon(
             widget.icon,
             size: 20,
             color: color,
           ),
-          const SizedBox(width: 8), // space between icon and left group.
-          // Left group: wraps product name, vertical divider, time icon and expiration dropdown.
+          const SizedBox(width: 8),
           Expanded(
             child: IntrinsicHeight(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Product name takes available space and can wrap.
+                  // Product name can actually wrap now.
                   Expanded(
                     child: Text(
                       widget.itemName,
@@ -96,7 +93,6 @@ class _PantryItemTileState extends State<PantryItemTile> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // Vertical divider replacing the "|" text.
                   VerticalDivider(
                     color: color,
                     thickness: 1,
@@ -109,7 +105,6 @@ class _PantryItemTileState extends State<PantryItemTile> {
                     color: color,
                   ),
                   const SizedBox(width: 4),
-                  // Expiration dropdown (default underline preserved).
                   DropdownButton<String>(
                     value: _expiration,
                     onChanged: (newValue) {
@@ -135,7 +130,6 @@ class _PantryItemTileState extends State<PantryItemTile> {
             ),
           ),
           const SizedBox(width: 8),
-          // Quantity dropdown on the right wrapped in a Container with fixed width for alignment.
           Container(
             constraints: const BoxConstraints(minWidth: 80, maxWidth: 80),
             alignment: Alignment.centerRight,
