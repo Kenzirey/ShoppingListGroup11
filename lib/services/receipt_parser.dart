@@ -217,106 +217,161 @@ class ReceiptParser {
   }
 
   List<ReceiptItem> extractItemsByBoundingBox(RecognizedText recognizedText) {
-    final List<OcrLine> allLines = [];
+    final List<OcrLine> allLines = _extractOcrLines(recognizedText);
+    final List<List<OcrLine>> rows = _groupLinesByRow(allLines);
+    return _processRowsIntoItems(rows);
+  }
+
+  /// Extract individual OCR lines from recognized text blocks
+  List<OcrLine> _extractOcrLines(RecognizedText recognizedText) {
+    final List<OcrLine> lines = [];
     for (TextBlock block in recognizedText.blocks) {
       for (TextLine line in block.lines) {
-        allLines.add(OcrLine(box: line.boundingBox, text: line.text));
+        lines.add(OcrLine(box: line.boundingBox, text: line.text));
       }
     }
+    lines.sort((a, b) => a.box.top.compareTo(b.box.top));
+    return lines;
+  }
 
-    // Sort by boundingBox top
-    allLines.sort((a, b) => a.box.top.compareTo(b.box.top));
-
-    // Group lines that belong on the same "row"
-    const double rowThreshold = 20.0;
+  /// Group lines that belong on the same visual row
+  List<List<OcrLine>> _groupLinesByRow(List<OcrLine> allLines) {
+    const double rowThreshold = 18.0;
     final List<List<OcrLine>> rows = [];
+
     for (final line in allLines) {
       bool placed = false;
+
       for (final row in rows) {
-        final avgTop = row.map((l) => l.box.top).reduce((a, b) => a + b) / row.length;
-        if ((line.box.top - avgTop).abs() < rowThreshold) {
-          row.add(line);
-          placed = true;
-          break;
+        // Check if the line is close to the median top of the row
+        final rowTops = row.map((l) => l.box.top).toList()..sort();
+        final medianTop = rowTops[rowTops.length ~/ 2];
+
+        if ((line.box.top - medianTop).abs() < rowThreshold) {
+          bool overlaps = false;
+          for (final rowLine in row) {
+            if (math.max(line.box.left, rowLine.box.left) <
+                math.min(line.box.right, rowLine.box.right) - 20) {
+              overlaps = true;
+              break;
+            }
+          }
+
+          if (!overlaps) {
+            row.add(line);
+            placed = true;
+            break;
+          }
         }
       }
+
       if (!placed) {
         rows.add([line]);
       }
     }
+    return rows;
+  }
 
-    final RegExp quantityPricePattern = RegExp(r'^\d+\s*x\s*(?:kr\s*)?\d+[.,]\d{2}$', caseSensitive: false);
+  /// Process grouped rows into receipt items
+  List<ReceiptItem> _processRowsIntoItems(List<List<OcrLine>> rows) {
+    final RegExp quantityPricePattern = RegExp(r'^\d+\s*x\s*(?:kr\s*)?\d+[.,]\d{2}$',
+        caseSensitive: false);
     final items = <ReceiptItem>[];
     bool stopParsing = false;
-    for (int i = 0; i < rows.length; i++) {
-      if (stopParsing) break;
+
+    for (int i = 0; i < rows.length && !stopParsing; i++) {
       final row = rows[i];
-
       final combinedLower = row.map((l) => l.text.toLowerCase()).join(' ');
-      // If we see lines that indicate a total, we assume the item section is done.
-      if (RegExp(r'sum\s+\d+\s+varer', caseSensitive: false).hasMatch(combinedLower) ||
-          combinedLower.contains('subtotal') ||
-          combinedLower.contains('bank')) {
-        stopParsing = true;
-        break;
-      }
-      // Also skip lines that mention 'pant'
-      if (combinedLower.contains('pant')) {
-        debugPrint('Skipping pant line: $combinedLower');
-        continue;
-      }
-      if (quantityPricePattern.hasMatch(combinedLower)) {
-        debugPrint('Skipping quantity/price-only line: $combinedLower');
-        continue;
-      }
 
-      // Sort row elements by boundingBox left, so [name..., possible price]
-      row.sort((a, b) => a.box.left.compareTo(b.box.left));
-
-      String rawNameText = '';
-      String priceText = '';
-
-      if (row.length == 2) {
-        rawNameText = row[0].text.trim();
-        priceText = row[1].text.trim();
-      } else if (row.length == 1) {
-        rawNameText = row[0].text.trim();
-        final match = RegExp(r'(\d+[.,]\d{2})').firstMatch(rawNameText);
-        if (match != null) {
-          priceText = rawNameText.substring(match.start).trim();
-          rawNameText = rawNameText.substring(0, match.start).trim();
+      if (_isFooterSection(combinedLower) ||
+          _isSpecialEntry(combinedLower) ||
+          quantityPricePattern.hasMatch(combinedLower)) {
+        if (_isFooterSection(combinedLower)) {
+          stopParsing = true;
         }
-      } else {
-        rawNameText = row.sublist(0, row.length - 1).map((l) => l.text).join(' ');
-        priceText = row.last.text.trim();
+        continue;
       }
 
-      // Extract quantity and clean name from the raw name text
-      final quantityInfo = extractQuantity(rawNameText);
-      final quantity = quantityInfo['quantity'] as int;
-      final nameWithoutQuantity = quantityInfo['text'] as String;
-
-      final cleanedName = cleanName(nameWithoutQuantity);
-      final priceVal = _parsePrice(priceText);
-
-      // Extract unit information
-      final unitInfo = separateNameAndUnit(cleanedName);
-      final productName = unitInfo['name'] ?? cleanedName;
-      final unit = unitInfo['unit'] ?? '';
-
-      if (priceVal != null && cleanedName.isNotEmpty) {
-        items.add(
-          ReceiptItem(
-            name: cleanedName,
-            price: priceVal,
-            quantity: quantity,
-            unit: unit,
-          ),
-        );
+      final itemDetails = _extractItemDetailsFromRow(row);
+      if (itemDetails != null) {
+        items.add(itemDetails);
       }
-
     }
+
     return items;
+  }
+
+  /// Check if line indicates the receipt footer section
+  bool _isFooterSection(String text) {
+    return RegExp(r'sum\s+\d+\s+varer', caseSensitive: false).hasMatch(text) ||
+        text.contains('subtotal') ||
+        text.contains('bank') ||
+        text.contains('total') ||
+        text.contains('å betale');
+  }
+
+  /// Check if line is a special entry (like pant, discount)
+  bool _isSpecialEntry(String text) {
+    return text.contains('pant') ||
+        text.contains('rabatt') ||
+        text.contains('konto') ||
+        text.contains('betaling');
+  }
+
+  /// Extract item details from a row of text lines
+  ReceiptItem? _extractItemDetailsFromRow(List<OcrLine> row) {
+    row.sort((a, b) => a.box.left.compareTo(b.box.left));
+
+    String rawNameText = '';
+    String priceText = '';
+
+    // Extract price and name from the row
+    if (row.length >= 2) {
+      priceText = row.last.text.trim();
+      rawNameText = row.sublist(0, row.length - 1).map((l) => l.text).join(' ');
+    } else if (row.length == 1) {
+      final match = RegExp(r'(\d+[.,]\d{2})').firstMatch(row[0].text);
+      if (match != null) {
+        priceText = row[0].text.substring(match.start).trim();
+        rawNameText = row[0].text.substring(0, match.start).trim();
+      } else {
+        rawNameText = row[0].text.trim();
+      }
+    }
+
+    // Skip if the raw text contains suspicious patterns suggesting merged lines
+    if (_containsMergedLinePatterns(rawNameText)) {
+      return null;
+    }
+
+    // Process name and extract quantity information
+    final quantityInfo = extractQuantity(rawNameText);
+    final quantity = quantityInfo['quantity'] as int;
+    final nameWithoutQuantity = quantityInfo['text'] as String;
+    final cleanedName = cleanName(nameWithoutQuantity);
+
+    // Parse price from the text
+    final priceVal = _parsePrice(priceText);
+    final unitInfo = separateNameAndUnit(cleanedName);
+    final unit = unitInfo['unit'] ?? '';
+
+    // Create ReceiptItem if valid name and price are found
+    if (priceVal != null && cleanedName.isNotEmpty) {
+      return ReceiptItem(
+        name: cleanedName,
+        price: priceVal,
+        quantity: quantity,
+        unit: unit,
+      );
+    }
+
+    return null;
+  }
+
+  /// Check for patterns suggesting incorrectly merged lines
+  bool _containsMergedLinePatterns(String text) {
+    return RegExp(r'\d+[.,]\d+kg\s*x\s*kr').hasMatch(text) ||
+        RegExp(r'kr\s+\d+[.,]\d+\s+[A-ZÆØÅ]').hasMatch(text);
   }
 
   double? _parsePrice(String text) {
