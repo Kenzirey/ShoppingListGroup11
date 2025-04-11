@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shopping_list_g11/controllers/gemini_controller.dart';
 import 'package:shopping_list_g11/providers/meal_suggestions.dart';
 
 /// Home screen for the app.
@@ -51,6 +52,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).colorScheme.tertiary,
                 ),
+              ),
+            ),
+            /// TEMPORARY BUTTON UNTIL THE TESTING OF CATEGORY THING IS DONE WITH GEMINI 
+            Center(
+              child: ElevatedButton(
+                onPressed: () async {
+                  final controller = GeminiController(
+                      ref: ref,
+                      controller:
+                          TextEditingController());
+                  await controller.processProducts();
+                },
+                child: const Text('Buy More Pokemon'),
               ),
             ),
             const SizedBox(height: 4),
@@ -111,23 +125,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                         // when it expires
                         Row(
-                        children: [
-                          Icon(
-                            Icons.access_time, // Use the desired icon here.
-                            size: 20,
-                            color: Theme.of(context).colorScheme.tertiary.withOpacity(0.7),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            expiryTime ?? '',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.tertiary.withOpacity(0.7),
+                          children: [
+                            Icon(
+                              Icons.access_time, // Use the desired icon here.
+                              size: 20,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .tertiary
+                                  .withOpacity(0.7),
                             ),
-                          ),
-                        ],
-                      ),
+                            const SizedBox(width: 4),
+                            Text(
+                              expiryTime ?? '',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .tertiary
+                                    .withOpacity(0.7),
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   );
