@@ -5,6 +5,7 @@ class ReceiptItem {
   double price;
   String? allergy;
   String unit;
+  DateTime? expirationDate;
 
   ReceiptItem({
     required this.name,
@@ -12,11 +13,13 @@ class ReceiptItem {
     required this.price,
     this.allergy,
     this.unit = '',
+    this.expirationDate
   });
 
   double get totalPrice => quantity * price;
 
   @override
   String toString() =>
-      'ReceiptItem(name: $name, quantity: $quantity, unitPrice: $price, allergy: $allergy)';
+      'ReceiptItem(name: $name, quantity: $quantity, unitPrice: $price, allergy: $allergy ' "expirationDate: $expirationDate"
+          ')';
 }
