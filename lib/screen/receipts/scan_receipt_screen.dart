@@ -1,14 +1,13 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shopping_list_g11/models/receipt_data.dart';
 import 'package:shopping_list_g11/screen/receipts/view_scanned_receipt_screen.dart';
 import 'package:shopping_list_g11/services/image_processing.dart';
 import 'package:shopping_list_g11/services/kassal_service.dart';
-import 'package:shopping_list_g11/services/receipt_parser.dart';
 import 'package:shopping_list_g11/services/supabase_ocr_service.dart';
+import '../../services/expiration_service.dart';
+import '../../services/gemini_ocr_service.dart';
 
 /// Screen for scanning a receipt and extracting data
 class ScanReceiptScreen extends StatefulWidget {
@@ -19,13 +18,13 @@ class ScanReceiptScreen extends StatefulWidget {
 }
 
 class ScanReceiptScreenState extends State<ScanReceiptScreen> {
-  final TextRecognizer _textRecognizer =
-      TextRecognizer(script: TextRecognitionScript.latin);
   final ImageProcessingService _imageService = ImageProcessingService();
-  final ReceiptParser _receiptParser = ReceiptParser();
   final KassalService _kassalService = KassalService();
   final SupabaseService _supabaseService = SupabaseService();
+  final GeminiOcrService _geminiService = GeminiOcrService();
+  final ExpirationService _expirationService = ExpirationService();
 
+  ReceiptData? _receiptData;  // Add this
   bool _isProcessing = false;
   File? _image;
 
@@ -40,21 +39,38 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
         _isProcessing = true;
       });
 
-      // Preprocess the image and run OCR
       final processedImage = await _imageService.preprocessImage(_image!);
-      final inputImage = InputImage.fromFile(processedImage);
-      final recognizedText = await _textRecognizer.processImage(inputImage);
+      final receiptData = await _geminiService.extractReceiptData(processedImage);
 
-      // Parse receipt data using ReceiptParser
-      final rawLines = recognizedText.text.split('\n');
-      final storeName = _receiptParser.extractStoreName(rawLines);
-      final date = _receiptParser.extractDate(rawLines);
-      final total = _receiptParser.extractTotal(rawLines);
-      final items = _receiptParser.extractItemsByBoundingBox(recognizedText);
-      final receiptData = ReceiptData(
-          storeName: storeName, date: date, items: items, total: total);
+      // Check if receiptData is null before proceeding
+      if (receiptData == null) {
+        setState(() {
+          _isProcessing = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to extract receipt data')),
+        );
+        return;
+      }
 
-      // Update items with Kassal allergen info
+      // Process each item with product normalizer through expiration service
+      for (final item in receiptData.items) {
+        // Get better expiration date prediction
+        if (item.expirationDate == null) {
+          final predictedDate = await _expirationService.predictExpirationDate(item.name);
+          item.expirationDate = predictedDate;
+        } else {
+          // If Gemini provided a date but we have a more accurate system, consider overriding
+          final shelfLifeDays = _expirationService.getShelfLifeDays(item.name);
+          // If shelf life is less than 100 days, we can assume it's a valid date
+          if (shelfLifeDays > 0 && shelfLifeDays < 100) {
+            final predictedDate = DateTime.now().add(Duration(days: shelfLifeDays));
+            item.expirationDate = predictedDate;
+          }
+        }
+      }
+
+      // Allergen lookup
       final uniqueNames = receiptData.items.map((e) => e.name).toSet();
       final searchResultsFutures = uniqueNames.map((name) async {
         final result = await _kassalService.searchProducts(name);
@@ -67,17 +83,13 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
         final results = searchMap[item.name] ?? [];
         if (results.isNotEmpty && results.first is Map<String, dynamic>) {
           final bestMatch = results.first as Map<String, dynamic>;
-
-          debugPrint(
-              'Product: ${bestMatch['name']} Allergens: ${bestMatch['allergens']}');
-
           final allergenList = bestMatch['allergens'];
           if (allergenList is List) {
             final relevantAllergens = allergenList
                 .where((a) =>
-                    a is Map &&
-                    a['contains'] != null &&
-                    a['contains'].toString().toUpperCase() == 'YES')
+            a is Map &&
+                a['contains'] != null &&
+                a['contains'].toString().toUpperCase() == 'YES')
                 .map((a) => a['display_name'])
                 .toList();
             final allergenString = relevantAllergens.join(', ');
@@ -90,6 +102,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
       await _supabaseService.saveReceipt(receiptData);
 
       setState(() {
+        _receiptData = receiptData;
         _isProcessing = false;
       });
 
@@ -206,7 +219,6 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
 
   @override
   void dispose() {
-    _textRecognizer.close();
     super.dispose();
   }
 }
