@@ -36,35 +36,24 @@ class EditAccountDetailsNotifier extends StateNotifier<AsyncValue<void>> {
       await authController.login(currentUser.email, currentPassword);
 
       // Then change the password
-      await authController.changePassword(newPassword);
+      await authController.updatePassword(newPassword);
     }
 
-    // Update dietary preferences if changed.
-    final shouldUpdateProfile =
-        selectedDiets.toString() != currentUser.dietaryPreferences.toString();
-    if (shouldUpdateProfile) {
-      await authController.updateProfile(
-        avatarUrl: currentUser.avatarUrl,
-        dietaryPreferences: selectedDiets,
-      );
-    }
+  // Check if the non sensitive profile details have changed.
+  final bool nameChanged =
+      newName.isNotEmpty && newName != currentUser.name;
+  final bool dietsChanged =
+      selectedDiets.toString() != currentUser.dietaryPreferences.toString();
 
-    // Update name if changed.
-    if (newName.isNotEmpty && newName != currentUser.name) {
-      final updatedData = await Supabase.instance.client
-          .from('profiles')
-          .update({'name': newName})
-          .eq('auth_id', currentUser.authId)
-          .select()
-          .maybeSingle();
-
-      if (updatedData != null) {
-        final updatedUser = AppUser.fromMap(updatedData, currentUser.email);
-        ref.read(currentUserProvider.notifier).state = updatedUser;
-      }
-    }
-
-    // Reset state to data after completeion
-    state = const AsyncValue.data(null);
+  if (nameChanged || dietsChanged) {
+    final updatedUser = await authController.updateProfileWithoutPassword(
+      newName: nameChanged ? newName : currentUser.name,
+      avatarUrl: currentUser.avatarUrl,
+      dietaryPreferences: selectedDiets,
+    );
+    ref.read(currentUserProvider.notifier).state = updatedUser;
   }
+
+  state = const AsyncValue.data(null);
+}
 }

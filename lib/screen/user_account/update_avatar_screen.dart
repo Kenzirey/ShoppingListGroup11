@@ -267,7 +267,7 @@ class _UpdateAvatarScreenState extends ConsumerState<UpdateAvatarScreen>
                           try {
                             await ref
                                 .read(authControllerProvider)
-                                .updateProfile(
+                                .updateProfileWithoutPassword(
                                   avatarUrl: selectedAvatar,
                                   dietaryPreferences:
                                       currentUser.dietaryPreferences,

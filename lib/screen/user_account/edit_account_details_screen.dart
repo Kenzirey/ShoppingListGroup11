@@ -531,16 +531,23 @@ class _EditAccountDetailsScreenState
                                 ),
                                 const SizedBox(height: 16),
                                 _buildPasswordField(
-                                  controller: _currentPasswordController,
-                                  label: 'Current Password',
-                                  prefixIcon: Icons.lock_outline,
-                                  showPassword: _showCurrentPassword,
-                                  onToggleVisibility: () {
-                                    setState(() {
-                                      _showCurrentPassword = !_showCurrentPassword;
-                                    });
-                                  },
-                                ),
+                                controller: _currentPasswordController,
+                                label: 'Current Password',
+                                prefixIcon: Icons.lock_outline,
+                                showPassword: _showCurrentPassword,
+                                onToggleVisibility: () {
+                                  setState(() {
+                                    _showCurrentPassword = !_showCurrentPassword;
+                                  });
+                                },
+                                validator: (value) {
+                                  if (_newPasswordController.text.isNotEmpty &&
+                                      (value == null || value.isEmpty)) {
+                                    return 'Please enter your current password to change it.';
+                                  }
+                                  return null;
+                                },
+                              ),
                                 const SizedBox(height: 16),
                                 _buildPasswordField(
                                   controller: _newPasswordController,
@@ -552,7 +559,12 @@ class _EditAccountDetailsScreenState
                                       _showNewPassword = !_showNewPassword;
                                     });
                                   },
-                                  validator: (value) => validatePassword(value),
+                                  validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return null;
+                                  }
+                                  return validatePassword(value);
+                                },
                                   onChanged: (value) {
                                     setState(() {
                                       _newPassword = value;

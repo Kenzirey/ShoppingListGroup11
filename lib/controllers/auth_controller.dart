@@ -1,100 +1,57 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 import '../services/auth_service.dart';
 import '../models/app_user.dart';
 import '../providers/current_user_provider.dart';
 
 /// A provider that exposes a single AuthController instance.
 final authControllerProvider = Provider<AuthController>((ref) {
-  return AuthController(ref);
+  return AuthController(ref, AuthService());
 });
 
-/// A controller that handles authentication logic and user state updates.
+/// A controller that handles authentication logic and user state updates in Riverpod.
 class AuthController {
   final Ref ref;
+  final AuthService _authService;
 
-  final AuthService _authService = AuthService();
+  AuthController(this.ref, this._authService);
 
-  AuthController(this.ref);
-
-  /// Creates a new user account, stores it in 'profiles', and updates the currentUserProvider.
+  /// Creates a new user with email/password and updates the current user state
   Future<AppUser> signUp(
     String email,
     String password, {
-    String? userName,
-  }) async {
-  try {
-    final user = await _authService.signUp(email, password, userName: userName);
-    
-    final profileResponse = await Supabase.instance.client
-        .from('profiles')
-        .select('id')
-        .eq('auth_id', user.authId)
-        .maybeSingle();
-    String? profileId;
-    if (profileResponse != null) {
-      profileId = profileResponse['id'] as String;
+    String? userName}) async {
+    try {
+      final user = await _authService.signUp(email, password, userName: userName);
+      ref.read(currentUserProvider.notifier).state = user;
+      return user;
+    } catch (e) {
+      rethrow;
     }
-    
-    final updatedUser = user.copyWith(profileId: profileId);
-    
-    ref.read(currentUserProvider.notifier).state = updatedUser;
-    return updatedUser;
-  } catch (e) {
-    rethrow;
   }
-}
 
-  /// Logs in a user via Supabase and updates the currentUserProvider.
-Future<AppUser> login(String email, String password) async {
-  try {
-    final user = await _authService.login(email, password);
-
-    final profileResponse = await Supabase.instance.client
-        .from('profiles')
-        .select('id')
-        .eq('auth_id', user.authId)
-        .maybeSingle();
-    String? profileId;
-    if (profileResponse != null) {
-      profileId = profileResponse['id'] as String;
+  /// logges in existing user with email/password
+  Future<AppUser> login(String email, String password) async {
+    try {
+      final user = await _authService.login(email, password);
+      ref.read(currentUserProvider.notifier).state = user;
+      return user;
+    } catch (e) {
+      rethrow;
     }
-
-    final updatedUser = user.copyWith(profileId: profileId);
-
-    ref.read(currentUserProvider.notifier).state = updatedUser;
-    return updatedUser;
-  } catch (e) {
-    rethrow;
   }
-}
 
-
-
-
-  /// Logs the user in with Google via Supabase, updating the currentUserProvider.
+  /// Logges in user via Google (or creates a profile if it doesnt exist)
   Future<AppUser> signInWithGoogle() async {
     try {
       final user = await _authService.signInWithGoogleNative();
-    final profileResponse = await Supabase.instance.client
-        .from('profiles')
-        .select('id')
-        .eq('auth_id', user.authId)
-        .maybeSingle();
-    String? profileId;
-    if (profileResponse != null) {
-      profileId = profileResponse['id'] as String;
+      ref.read(currentUserProvider.notifier).state = user;
+      return user;
+    } catch (e) {
+      rethrow;
     }
-    
-    final updatedUser = user.copyWith(profileId: profileId);
-    ref.read(currentUserProvider.notifier).state = updatedUser;
-    return updatedUser;
-  } catch (e) {
-    rethrow;
   }
-}
-  /// Logs out the current user clearing their session and setting currentUserProvider to null.
+
+  /// Logges out the current logged in user
   Future<void> logout() async {
     final currentUser = ref.read(currentUserProvider);
     final bool isGoogle = currentUser?.isGoogleUser ?? false;
@@ -106,67 +63,50 @@ Future<AppUser> login(String email, String password) async {
     }
   }
 
-  /// Updates the users profile in Supabase.
-  Future<AppUser> updateProfile({
-    String? avatarUrl,
-    List<String>? dietaryPreferences,
-  }) async {
-    try {
-      final supabaseUser = Supabase.instance.client.auth.currentUser;
-      if (supabaseUser == null) {
-        throw Exception('No logged-in user found.');
-      }
-
-      final updatedUser = await _authService.updateProfile(
-        authId: supabaseUser.id,
-        avatarUrl: avatarUrl,
-        dietaryPreferences: dietaryPreferences,
-      );
-
-      ref.read(currentUserProvider.notifier).state = updatedUser;
-      return updatedUser;
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  /// Changes the users password (for non Google accounts), if they are logged in.
-  Future<void> changePassword(String newPassword) async {
-    try {
-      await _authService.changePassword(newPassword);
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-/// Sends a password reset email to the specified email.
-Future<void> resetPassword(String email) async {
-  final isGoogle = await _authService.isGoogleUserByEmail(email);
-  if (isGoogle) {
-    throw Exception(
-      'Password reset is not available for Google accounts.'
-    );
-  }
-
+/// Updates profile fields (name, avatar, dietary preferences) without requiring a password.
+Future<AppUser> updateProfileWithoutPassword({
+  String? newName,
+  String? avatarUrl,
+  List<String>? dietaryPreferences,
+}) async {
   try {
-    await Supabase.instance.client.auth.resetPasswordForEmail(email);
+    final updatedUser = await _authService.updateProfileWithoutPassword(
+      newName: newName,
+      avatarUrl: avatarUrl,
+      dietaryPreferences: dietaryPreferences,
+    );
+    ref.read(currentUserProvider.notifier).state = updatedUser;
+    return updatedUser;
   } catch (e) {
     rethrow;
   }
 }
 
-Future<void> verifyPasswordReset(String token, String newPassword) async {
+/// Changes the users password. (includes password verification.)
+Future<void> updatePassword(String newPassword) async {
   try {
-    final updateResponse = await Supabase.instance.client.auth.updateUser(
-      UserAttributes(password: newPassword),
-    );
-
-    if (updateResponse.user == null) {
-      throw Exception('Failed to update password.');
-    }
+    await _authService.updatePassword(newPassword);
   } catch (e) {
     rethrow;
   }
 }
 
+
+  /// Sends reset password mail if the account is not google
+  Future<void> resetPassword(String email) async {
+    try {
+      await _authService.resetPassword(email);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Confirms password reset from superbase url (new password)
+  Future<void> verifyPasswordReset(String token, String newPassword) async {
+    try {
+      await _authService.verifyPasswordReset(token, newPassword);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

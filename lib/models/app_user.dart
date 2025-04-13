@@ -61,7 +61,7 @@ factory AppUser.fromMap(Map<String, dynamic> map, String email) {
       avatarUrl: map['avatar_url'] ?? '',
       googleAvatarUrl: map['google_avatar_url'] ?? '',
       provider: provider,
-      profileId: map['profile_id'],
+      profileId: map['id'],
     );
 }
 

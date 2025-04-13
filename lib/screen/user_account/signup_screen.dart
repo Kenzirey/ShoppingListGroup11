@@ -160,6 +160,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
                           // Username Field
                           TextFormField(
                             controller: _userNameController,
+                            style: const TextStyle(color: Colors.white),
                             decoration: InputDecoration(
                               labelText: "Username",
                               hintText: "Enter your username",
@@ -188,6 +189,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
                           // Email Field
                           TextFormField(
                             controller: _emailController,
+                            style: const TextStyle(color: Colors.white),
                             decoration: InputDecoration(
                               labelText: "Email",
                               hintText: "Enter your email",
@@ -212,6 +214,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
                           // Password Field
                           TextFormField(
                             controller: _passwordController,
+                            style: const TextStyle(color: Colors.white),
                             obscureText: _obscurePassword,
                             decoration: InputDecoration(
                               labelText: "Password",
