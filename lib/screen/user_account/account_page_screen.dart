@@ -7,7 +7,6 @@ import 'package:shopping_list_g11/widget/actions/account_action.dart';
 import 'package:shopping_list_g11/widget/dietary_preference.dart';
 import 'package:shopping_list_g11/widget/logout_confirmation_dialog.dart';
 import 'package:shopping_list_g11/widget/profile_menu_item.dart';
-import 'package:shopping_list_g11/widget/styles/account_stat_section.dart';
 import 'package:shopping_list_g11/widget/styles/profile_header.dart';
 
 /// The main account page screen.
@@ -86,58 +85,24 @@ class _AccountPageScreenState extends ConsumerState<AccountPageScreen>
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        centerTitle: true,
-        leading: IconButton(
-          onPressed: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            } else {
-              context.goNamed('home');
-            }
-          },
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-        ),
-        title: Text(
-          'Profile',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFF1E1E1E),
-              Color(0xFF2D2D2D),
-              Color(0xFF3A3A3A),
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SafeArea(
+      body: SafeArea(
           child: FadeTransition(
             opacity: _fadeAnimation,
             child: SlideTransition(
               position: _slideAnimation,
               child: ListView(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 children: [
                   ProfileHeader(currentUser: currentUser),
-                  const SizedBox(height: 24),
-                  const StatsSection(),
-                  const SizedBox(height: 24),
-                  if (currentUser.dietaryPreferences.isNotEmpty)
-                    DietaryPreferences(currentUser: currentUser),
                   const SizedBox(height: 30),
                   const AccountActions(),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 16),
+                  if (currentUser.dietaryPreferences.isNotEmpty)
+                    DietaryPreferences(currentUser: currentUser),
+                  const SizedBox(height: 10),
+
+                  const SizedBox(height: 10),
                   const Divider(color: Colors.white24),
                   const SizedBox(height: 16),
                   ProfileMenuItem(
@@ -177,7 +142,6 @@ class _AccountPageScreenState extends ConsumerState<AccountPageScreen>
             ),
           ),
         ),
-      ),
     );
   }
 }

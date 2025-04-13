@@ -30,7 +30,7 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
 
   // Hold the selected days.
   // should make this dynamic, to fetch a list of current meal plan for the user.
-  List<String> _selectedDays = [];
+  final List<String> _selectedDays = [];
 
   @override
   void initState() {

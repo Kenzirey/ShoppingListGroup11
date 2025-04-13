@@ -18,10 +18,7 @@ class ShoppingListScreen extends ConsumerStatefulWidget {
   ShoppingListState createState() => ShoppingListState();
 }
 
-//TODO: set up dropdown for items such as bananas which are measured by quantity, not weight usually. 
-// Keep text field for items such as flour, which are measured by weight.
 class ShoppingListState extends ConsumerState<ShoppingListScreen> {
- 
   ShoppingItem? lastDeletedItem;
   int? lastDeletedIndex;
 
@@ -37,6 +34,7 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
       }
     });
   }
+
   @override
   Widget build(BuildContext context) {
     final shoppingItems = ref.watch(shoppingItemsProvider);
@@ -74,7 +72,7 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
                     ),
                     IconButton(
                       onPressed: () {
-                        // TODO: Implement filter toggle logic.
+                        // any logic for reordering/deleting etc.
                       },
                       icon: Icon(
                         Icons.swap_vert,
@@ -92,8 +90,10 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
                       final itemObj = shoppingItems[index];
                       final itemName = itemObj.itemName;
                       final quantityText = itemObj.quantity ?? '';
-                      final String parsedUnit = QuantityParser.parseUnit(quantityText);
-                      final String displayUnit = parsedUnit.isNotEmpty ? parsedUnit : (itemObj.category ?? '');
+                      final String parsedUnit =
+                          QuantityParser.parseUnit(quantityText);
+                      final bool isCountBased = parsedUnit.isEmpty;
+                      final String displayUnit = isCountBased ? '' : parsedUnit;
 
                       return Dismissible(
                         key: Key(itemObj.id ?? itemName),
@@ -108,7 +108,7 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
                           ),
                           child: const Icon(Icons.delete, color: Colors.white),
                         ),
-                         onDismissed: (direction) async {
+                        onDismissed: (direction) async {
                           lastDeletedItem = itemObj;
                           lastDeletedIndex = index;
                           if (itemObj.id != null) {
@@ -122,11 +122,13 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
                               duration: const Duration(seconds: 4),
                               action: SnackBarAction(
                                 label: 'Undo',
-                                textColor: Theme.of(context).colorScheme.secondary,
+                                textColor:
+                                    Theme.of(context).colorScheme.secondary,
                                 onPressed: () async {
                                   if (lastDeletedItem != null &&
                                       lastDeletedIndex != null) {
-                                    final currentUser = ref.read(currentUserProvider);
+                                    final currentUser =
+                                        ref.read(currentUserProvider);
                                     if (currentUser != null &&
                                         currentUser.profileId != null) {
                                       await ref
@@ -145,16 +147,19 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
                           unitLabel: displayUnit,
                           onQuantityChanged: (newQuantity) async {
                             if (itemObj.id != null) {
-                              final oldUnit = QuantityParser.parseUnit(itemObj.quantity ?? '');
-                              final newQuantityString = '$newQuantity ${oldUnit}'.trim();
-                              await ref.read(shoppingListControllerProvider).updateShoppingItem(
-                                itemId: itemObj.id!,
-                                newQuantity: newQuantityString,
-                              );
+                              final oldUnit =
+                                  QuantityParser.parseUnit(itemObj.quantity ?? '');
+                              final newQuantityString =
+                                  '$newQuantity $oldUnit'.trim();
+                              await ref
+                                  .read(shoppingListControllerProvider)
+                                  .updateShoppingItem(
+                                    itemId: itemObj.id!,
+                                    newQuantity: newQuantityString,
+                                  );
                             }
                           },
                         ),
-
                       );
                     },
                   ),
@@ -166,30 +171,29 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
             bottom: 16.0,
             right: horizontalPadding,
             child: ElevatedButton(
-            onPressed: () async {
-              final result = await showDialog<Map<String, dynamic>>(
-                context: context,
-                builder: (context) => const AddProductDialog(),
-              );
-              if (result != null) {
-                final name = result['name'] as String;
-                final amountValue = result['amount'] as int? ?? 1;
-                final unit = result['unit'] as String? ?? '';
-                final finalQuantity = '$amountValue $unit'.trim();
-                final currentUser = ref.read(currentUserProvider);
-                if (currentUser != null && currentUser.profileId != null) {
-                  await ref.read(shoppingListControllerProvider).addShoppingItem(
-                    ShoppingItem(
-                      userId: currentUser.profileId!,
-                      itemName: name,
-                      quantity: finalQuantity,
-                      category: unit,
-                    ),
-                  );
+              onPressed: () async {
+                final result = await showDialog<Map<String, dynamic>>(
+                  context: context,
+                  builder: (context) => const AddProductDialog(),
+                );
+                if (result != null) {
+                  final name = result['name'] as String;
+                  final amountValue = result['amount'] as int? ?? null;
+                  final unit = result['unit'] as String? ?? '';
+                  final finalQuantity = '$amountValue $unit'.trim();
+                  final currentUser = ref.read(currentUserProvider);
+                  if (currentUser != null && currentUser.profileId != null) {
+                    await ref.read(shoppingListControllerProvider).addShoppingItem(
+                      ShoppingItem(
+                        userId: currentUser.profileId!,
+                        itemName: name,
+                        quantity: finalQuantity,
+                        category: unit,
+                      ),
+                    );
+                  }
                 }
-              }
-            },
-
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.secondary,
                 shape: const CircleBorder(),

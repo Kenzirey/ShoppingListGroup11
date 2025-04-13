@@ -28,7 +28,7 @@ class DietaryPreferences extends StatelessWidget {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(30),
+                borderRadius: BorderRadius.circular(8),
                 gradient: LinearGradient(
                   colors: [
                     theme.colorScheme.secondary.withOpacity(0.5),

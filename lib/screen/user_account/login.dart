@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shopping_list_g11/controllers/auth_controller.dart';
 import 'package:shopping_list_g11/widget/styles/custom_text_field.dart';
-import 'package:shopping_list_g11/widget/styles/gradient_button.dart';
-import 'package:shopping_list_g11/widget/styles/social_button.dart';
+import 'package:shopping_list_g11/widget/styles/buttons/gradient_button.dart';
+import 'package:shopping_list_g11/widget/styles/buttons/social_button.dart';
 import 'package:shopping_list_g11/widget/styles/status_overlay_feedback.dart';
 import 'package:shopping_list_g11/utils/error_utils.dart';
 
@@ -74,16 +74,6 @@ class _LoginState extends ConsumerState<LoginScreen>
 
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              theme.colorScheme.primary.withOpacity(0.1),
-              theme.colorScheme.surface,
-            ],
-          ),
-        ),
         child: SafeArea(
           child: FadeTransition(
             opacity: _fadeAnimation,
@@ -221,76 +211,78 @@ class _LoginState extends ConsumerState<LoginScreen>
                       ),
                       const SizedBox(height: 32),
                       GradientButton(
-                          context: context,
-                          onPressed: () async {
-                            if (_isLoading) return;
+                        context: context,
+                        onPressed: () async {
+                          if (_isLoading) return;
 
-                            final email = _emailController.text.trim();
-                            final password = _passwordController.text.trim();
+                          final email = _emailController.text.trim();
+                          final password = _passwordController.text.trim();
 
-                            if (email.isEmpty || password.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content:
-                                      const Text('Please fill in all fields'),
-                                  backgroundColor: Colors.red[700],
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  margin: const EdgeInsets.all(16),
+                          if (email.isEmpty || password.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content:
+                                    const Text('Please fill in all fields'),
+                                backgroundColor: Colors.red[700],
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                              );
-                              return;
-                            }
+                                margin: const EdgeInsets.all(16),
+                              ),
+                            );
+                            return;
+                          }
 
+                          setState(() {
+                            _isLoading = true;
+                          });
+
+                          try {
+                            final authController =
+                                ref.read(authControllerProvider);
+                            await authController.login(email, password);
+
+                            if (!context.mounted) return;
+                            await StatusOverlayFeedback.showSuccessOverlay(
+                              context,
+                              title: 'Great!',
+                              message: 'You have successfully logged in',
+                            );
+
+                            if (!context.mounted) return;
+                            context.go('/');
+                          } catch (e) {
+                            if (!context.mounted) return;
+                            StatusOverlayFeedback.showErrorOverlay(
+                              context,
+                              title: 'Login Failed',
+                              message: getUserFriendlyErrorMessage(e),
+                            );
+                          } finally {
                             setState(() {
-                              _isLoading = true;
+                              _isLoading = false;
                             });
-
-                            try {
-                              final authController =
-                                  ref.read(authControllerProvider);
-                              await authController.login(email, password);
-
-                              if (!context.mounted) return;
-                              await StatusOverlayFeedback.showSuccessOverlay(
-                                context,
-                                title: 'Great!',
-                                message: 'You have successfully logged in',
-                              );
-
-                              if (!context.mounted) return;
-                              context.go('/');
-                            } catch (e) {
-                              if (!context.mounted) return;
-                              StatusOverlayFeedback.showErrorOverlay(
-                                context,
-                                title: 'Login Failed',
-                                message: getUserFriendlyErrorMessage(e),
-                              );
-                            } finally {
-                              setState(() {
-                                _isLoading = false;
-                              });
-                            }
-                          },
-                          child: _isLoading
-                              ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 3,
-                                  ),
-                                )
-                              : const Text(
-                                  "Login",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                )),
+                          }
+                        },
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 3,
+                                ),
+                              )
+                            : const Text(
+                                "Login",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                      ),
                       const SizedBox(height: 24),
                       Row(
                         children: [

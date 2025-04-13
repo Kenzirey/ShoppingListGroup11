@@ -13,92 +13,82 @@ class ProfileHeader extends StatelessWidget {
     final theme = Theme.of(context);
     return Column(
       children: [
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            Container(
-              width: 140,
-              height: 140,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: theme.colorScheme.primary.withOpacity(0.3),
-                    blurRadius: 25,
-                    spreadRadius: 5,
-                  ),
-                ],
-              ),
-            ),
-            // Avatar container
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    theme.colorScheme.primary,
-                    theme.colorScheme.secondary,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: CircleAvatar(
-                radius: 60,
-                backgroundColor: Colors.grey[800],
-                backgroundImage: (currentUser.avatarUrl != null &&
-                        currentUser.avatarUrl!.isNotEmpty)
-                    ? (currentUser.avatarUrl!.startsWith('assets/')
-                        ? AssetImage(currentUser.avatarUrl!) as ImageProvider
-                        : NetworkImage(currentUser.avatarUrl!))
-                    : null,
-                child: (currentUser.avatarUrl == null ||
-                        currentUser.avatarUrl!.isEmpty)
-                    ? const Icon(
-                        Icons.account_circle,
-                        size: 80,
-                        color: Colors.grey,
-                      )
-                    : null,
-              ),
-            ),
-            // Edit button
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: GestureDetector(
-                onTap: () => context.pushNamed('updateAvatarScreen'),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    gradient: LinearGradient(
-                      colors: [
-                        theme.colorScheme.primary,
-                        theme.colorScheme.secondary,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: theme.colorScheme.primary.withOpacity(0.4),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
+        SizedBox(
+                          width: 140,
+                height: 140,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Avatar container
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.colorScheme.primary,
+                      theme.colorScheme.secondary,
                     ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  child: const Icon(
-                    Icons.edit,
-                    color: Colors.white,
-                    size: 20,
+                ),
+                child: CircleAvatar(
+                  radius: 60,
+                  backgroundColor: Colors.grey[800],
+                  backgroundImage: (currentUser.avatarUrl != null &&
+                          currentUser.avatarUrl!.isNotEmpty)
+                      ? (currentUser.avatarUrl!.startsWith('assets/')
+                          ? AssetImage(currentUser.avatarUrl!) as ImageProvider
+                          : NetworkImage(currentUser.avatarUrl!))
+                      : null,
+                  child: (currentUser.avatarUrl == null ||
+                          currentUser.avatarUrl!.isEmpty)
+                      ? const Icon(
+                          Icons.account_circle,
+                          size: 80,
+                          color: Colors.grey,
+                        )
+                      : null,
+                ),
+              ),
+              // Edit button
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: GestureDetector(
+                  onTap: () => context.pushNamed('updateAvatarScreen'),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      gradient: LinearGradient(
+                        colors: [
+                          theme.colorScheme.primary,
+                          theme.colorScheme.secondary,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: theme.colorScheme.primary.withOpacity(0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.edit,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         const SizedBox(height: 20),
         Column(

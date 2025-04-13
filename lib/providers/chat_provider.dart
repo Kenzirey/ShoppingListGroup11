@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shopping_list_g11/models/message.dart';
 import 'package:shopping_list_g11/models/recipe.dart';
-import 'package:flutter/material.dart';
 
 /// Holds both chat messages and parsed recipe.
 class ChatState {

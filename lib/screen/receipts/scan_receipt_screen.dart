@@ -172,7 +172,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
                               backgroundColor:
                                   Theme.of(context).colorScheme.primaryContainer,
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 24, vertical: 20),
+                                  horizontal: 22, vertical: 18),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -201,7 +201,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
                               backgroundColor:
                                   Theme.of(context).colorScheme.primaryContainer,
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 24, vertical: 20),
+                                  horizontal: 22, vertical: 18),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),

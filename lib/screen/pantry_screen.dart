@@ -21,19 +21,18 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final currentUser = ref.read(currentUserProvider);
       if (currentUser != null && currentUser.profileId != null) {
-        await ref
-            .read(pantryControllerProvider)
-            .fetchPantryItems(currentUser.profileId!);
+        await ref.read(pantryControllerProvider).fetchPantryItems(currentUser.profileId!);
       }
     });
   }
 
-@override
+  @override
   Widget build(BuildContext context) {
     final pantryItems = ref.watch(pantryItemsProvider);
     final fridgeItems = pantryItems.where((p) => p.category == 'Fridge').toList();
     final dryGoodsItems = pantryItems.where((p) => p.category == 'Dry Goods').toList();
     final cannedFoodItems = pantryItems.where((p) => p.category == 'Canned Food').toList();
+    //TODO: thinking we should have fridge + freezer + then "dry" section?
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -57,61 +56,78 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
             const Divider(),
             const SizedBox(height: 8),
 
-            // Fridge Section
             _buildSectionHeader('Fridge'),
             const SizedBox(height: 12),
             if (fridgeItems.isEmpty)
               _noItemsPlaceholder()
             else
-              ...fridgeItems.map((item) => PantryItemTile(
-                    icon: Icons.kitchen,
-                    itemName: item.name,
-                    expiration: _formatExpiration(item.expirationDate),
-                    quantity: item.quantity ?? 'N/A',
+              ...fridgeItems.map((item) => Dismissible(
+                    key: ValueKey(item.id),
+                    background: Container(color: Colors.redAccent, alignment: Alignment.centerRight, padding: const EdgeInsets.only(right: 16), child: const Icon(Icons.delete, color: Colors.white)),
+                    direction: DismissDirection.endToStart,
+                    onDismissed: (_) => _deleteItem(item.id!),
+                    child: PantryItemTile(
+                      icon: Icons.kitchen,
+                      itemName: item.name,
+                      expiration: _formatExpiration(item.expirationDate),
+                      quantity: item.quantity ?? 'N/A',
+                    ),
                   )),
 
             const SizedBox(height: 24),
 
-            // Dry Goods Section
             _buildSectionHeader('Dry Goods'),
             const SizedBox(height: 12),
             if (dryGoodsItems.isEmpty)
               _noItemsPlaceholder()
             else
-              ...dryGoodsItems.map((item) => PantryItemTile(
-                    icon: Icons.store,
-                    itemName: item.name,
-                    expiration: _formatExpiration(item.expirationDate),
-                    quantity: item.quantity ?? 'N/A',
+              ...dryGoodsItems.map((item) => Dismissible(
+                    key: ValueKey(item.id),
+                    background: Container(color: Colors.redAccent, alignment: Alignment.centerRight, padding: const EdgeInsets.only(right: 16), child: const Icon(Icons.delete, color: Colors.white)),
+                    direction: DismissDirection.endToStart,
+                    onDismissed: (_) => _deleteItem(item.id!),
+                    child: PantryItemTile(
+                      icon: Icons.store,
+                      itemName: item.name,
+                      expiration: _formatExpiration(item.expirationDate),
+                      quantity: item.quantity ?? 'N/A',
+                    ),
                   )),
 
             const SizedBox(height: 24),
 
-            // Canned Food Section
             _buildSectionHeader('Canned Food'),
             const SizedBox(height: 12),
             if (cannedFoodItems.isEmpty)
               _noItemsPlaceholder()
             else
-              ...cannedFoodItems.map((item) => PantryItemTile(
-                    icon: Icons.archive,
-                    itemName: item.name,
-                    expiration: _formatExpiration(item.expirationDate),
-                    quantity: item.quantity ?? 'N/A',
+              ...cannedFoodItems.map((item) => Dismissible(
+                    key: ValueKey(item.id),
+                    background: Container(color: Colors.redAccent, alignment: Alignment.centerRight, padding: const EdgeInsets.only(right: 16), child: const Icon(Icons.delete, color: Colors.white)),
+                    direction: DismissDirection.endToStart,
+                    onDismissed: (_) => _deleteItem(item.id!),
+                    child: PantryItemTile(
+                      icon: Icons.archive,
+                      itemName: item.name,
+                      expiration: _formatExpiration(item.expirationDate),
+                      quantity: item.quantity ?? 'N/A',
+                    ),
                   )),
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // TODO: Implement Logic here
+        },
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
 
-    floatingActionButton: FloatingActionButton(
-      onPressed: () {
-        // TODO: Implement Logic here 
-      },
-      child: const Icon(Icons.add),
-    ),
-
-        );
-      }
+  void _deleteItem(String itemId) {
+    ref.read(pantryControllerProvider).removePantryItem(itemId);
+  }
 
   Widget _buildSectionHeader(String title) {
     return Text(
@@ -138,9 +154,7 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
     );
   }
 
-
   String _formatExpiration(DateTime? expiry) {
-    // Return only a numeric value of days left until expiry.
     if (expiry == null) return '0';
     final diff = expiry.difference(DateTime.now()).inDays;
     return diff.toString();

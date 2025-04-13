@@ -39,15 +39,14 @@ class TrendingRecipesState extends ConsumerState<TrendingRecipeScreen> {
   ];
 
   // Filter options.
-  final List<String> filters = ['All', 'Vegan', 'Vegetarian'];
+  final List<String> filters = ['All', 'Vegan', 'Vegetarian']; // todo: add all the ones from the account details to match options
   String selectedFilter = 'All';
 
-  // Returns a filtered list based on the current selected filter.
+  // Returns a filtered list based on the current selected filter. 
   List<Map<String, dynamic>> get filteredRecipes {
     if (selectedFilter == 'Vegan') {
       return savedRecipes.where((recipe) => recipe['isVegan'] == true).toList();
     } else if (selectedFilter == 'Vegetarian') {
-      // Assuming vegetarian means non-vegan recipes.
       return savedRecipes.where((recipe) => recipe['isVegan'] == false).toList();
     } else {
       return savedRecipes;
