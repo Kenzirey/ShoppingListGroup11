@@ -4,7 +4,6 @@ import 'package:shopping_list_g11/routes/routes.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:shopping_list_g11/providers/current_user_provider.dart';
 
 // https://pub.dev/packages/flutter_gemini
 const gemApi = 'AIzaSyD0lMRQQP0rx4D024lV55WX1SoaeyFrzPg';
@@ -34,7 +33,6 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context,WidgetRef ref) {
-    final currentUser = ref.watch(currentUserProvider);
     return MaterialApp.router(
       title: 'Shopping List',
       theme: ThemeData(
