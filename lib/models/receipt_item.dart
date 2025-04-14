@@ -1,7 +1,7 @@
 /// ReceiptItem model class
 class ReceiptItem {
   String name;
-  int quantity;
+  double quantity;
   double price;
   String? allergy;
   String unit;
@@ -9,7 +9,7 @@ class ReceiptItem {
 
   ReceiptItem({
     required this.name,
-    this.quantity = 1,
+    this.quantity = 1.0,
     required this.price,
     this.allergy,
     this.unit = '',
