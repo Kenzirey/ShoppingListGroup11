@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_gemini/flutter_gemini.dart';
 import 'package:shopping_list_g11/routes/routes.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,6 +36,10 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context,WidgetRef ref) {
     final currentUser = ref.watch(currentUserProvider);
+    SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]); // turn off auto-rotation for the entire app. https://stackoverflow.com/questions/49418332/flutter-how-to-prevent-device-orientation-changes-and-force-portrait
     return MaterialApp.router(
       title: 'Shopping List',
       theme: ThemeData(
