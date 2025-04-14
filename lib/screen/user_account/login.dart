@@ -25,7 +25,6 @@ class _LoginState extends ConsumerState<LoginScreen>
 
   bool _passwordVisible = false;
   bool _isLoading = false;
-  bool _rememberMe = false;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -159,56 +158,6 @@ class _LoginState extends ConsumerState<LoginScreen>
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              SizedBox(
-                                height: 24,
-                                width: 24,
-                                child: Checkbox(
-                                  value: _rememberMe,
-                                  activeColor: theme.colorScheme.primary,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _rememberMe = value ?? false;
-                                    });
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                "Remember me",
-                                style: TextStyle(
-                                  color: theme.colorScheme.tertiary,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              context.go('/forgot-password');
-                            },
-                            style: TextButton.styleFrom(
-                              foregroundColor: theme.colorScheme.primary,
-                              padding: EdgeInsets.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: const Text(
-                              "Forgot Password?",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
                       const SizedBox(height: 32),
                       GradientButton(
                         context: context,
