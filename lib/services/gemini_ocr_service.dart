@@ -21,18 +21,23 @@ You are an OCR system specialized in analyzing receipts. Extract the following i
 - Total amount
 - List of items with:
   - Product name
-  - Quantity (default to 1)
+  - Quantity
   - Price
-  - unit (e.g. "473ml", "500g", "1L", or "pcs")
+  - unit (e.g. ml, pcs, kg)
   - Allergy info (default to "none")
   - expirationDate (YYYY-MM-DD)
   
   Important:
-1) Ignore any line that contains 'pant'.
-2) If you see something like "473ml" or "1l" in the product name, use that as the unit. Otherwise default to "pcs".
-3) Try to expiration date by guessing typical shelf life. Provide a date in YYYY-MM-DD format.
-4) If you see for example 2 x kr 25.90, count it as 2 quantities of the item. You generally see it the line under the product name. 
-5) Output only JSON, with no additional text.
+1) Always return quantities as floating point numbers (e.g., 1.0, 473.0) not integers
+2) Ignore any line that contains 'pant'
+3) For product quantities and units:
+   - If you see measurements like "473ml" or "1L" in product names:
+     * Extract the unit (ml, L, etc.) for the 'unit' field
+     * Extract the numeric value as a decimal for 'quantity' (e.g., 0.5 for "0,5L")
+   - Otherwise default unit to "pcs" and quantity to 1.0
+4) Determine expiration dates by estimating typical shelf life in YYYY-MM-DD format
+5) If you see pricing like "2 x kr 25.90", set quantity to 2.0
+6) Return ONLY valid JSON with no additional text or code formatting
 
 Format as valid JSON:
 {
@@ -44,7 +49,7 @@ Format as valid JSON:
       "name": "Product Name",
       "quantity": 1,
       "price": 10.99,
-      "unit": "473ml",
+      "unit": "ml",
       "allergy": "none"
       "expirationDate": "2025-04-12"
     }
@@ -92,8 +97,7 @@ Use reasonable defaults for missing information. Clean product names of promotio
         for (var item in data['items']) {
           items.add(ReceiptItem(
             name: item['name'] ?? 'Unknown Item',
-            quantity: item['quantity'] ?? 1,
-            price: (item['price'] is num) ? item['price'].toDouble() : 0.0,
+            quantity: (item['quantity'] is num) ? item['quantity'].toDouble() : 1.0,            price: (item['price'] is num) ? item['price'].toDouble() : 0.0,
             unit: item['unit'] ?? 'pcs',
             allergy: item['allergy'] ?? 'none',
             expirationDate: _parseDate(item['expirationDate']),
