@@ -119,7 +119,8 @@ class GeminiController {
 
       final prompt = """
         Categorize the following product names. Provide the main product category (e.g., dry food, dairy, frozen meats) and the specific product type (e.g., milk, yogurt, chicken breast). 
-        Return the response as a JSON array of objects, where each object has 'name', 'category', and 'type' keys.
+        Also add what sort of storage typing it has, from these 3 storage types (fridge, freezer, dry storage)
+        Return the response as a JSON array of objects, where each object has 'name', 'category', 'type', 'storage' keys.
 
         Products: ${quotedNames.join(", ")}
 
