@@ -18,6 +18,7 @@ class BottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     // Use a valid index when nothing is highlighted.
     final int effectiveIndex = (selectedIndex == -1) ? 0 : selectedIndex;
+    final router = GoRouter.of(context);
 
     return NavigationBar(
       selectedIndex: effectiveIndex,
@@ -30,16 +31,28 @@ class BottomNavBar extends StatelessWidget {
         } else {
           switch (index) {
             case 1:
-              context.pushNamed('shoppingList');
+              final target = router.namedLocation('shoppingList');
+              if (GoRouterState.of(context).uri.toString() != target) {
+                context.pushNamed('shoppingList');
+              }
               break;
-            case 2:
-              context.pushNamed('home');
+            case 2: // Home button
+              final target = router.namedLocation('home');
+              if (GoRouterState.of(context).uri.toString() != target) {
+                context.pushNamed('home');
+              }
               break;
             case 3:
-              context.pushNamed('scanReceipt');
+              final target = router.namedLocation('scanReceipt');
+              if (GoRouterState.of(context).uri.toString() != target) {
+                context.pushNamed('scanReceipt');
+              }
               break;
             case 4:
-              context.pushNamed('purchaseHistory');
+              final target = router.namedLocation('purchaseHistory');
+              if (GoRouterState.of(context).uri.toString() != target) {
+                context.pushNamed('purchaseHistory');
+              }
               break;
           }
         }

@@ -10,6 +10,7 @@ class MyDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUser = ref.watch(currentUserProvider);
+    final router = GoRouter.of(context);
     return SizedBox(
       width: 240,
       child: Drawer(
@@ -26,8 +27,11 @@ class MyDrawer extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: InkWell(
                     onTap: () {
-                      Navigator.of(context).pop();
-                      context.pushNamed('loginPage');
+                      final target = router.namedLocation('loginPage');
+                      if (GoRouterState.of(context).uri.toString() != target) {
+                                              Navigator.of(context).pop();
+                        context.pushNamed('loginPage');
+                      }
                     },
                     child: Row(
                       children: [
@@ -96,7 +100,6 @@ class MyDrawer extends ConsumerWidget {
                     color: Theme.of(context).colorScheme.tertiary),
                 title: Text(
                   'Purchase Statistics',
-                  //TODO: set up piecharts and such to show the purchase history across categories for the user.
                   style:
                       TextStyle(color: Theme.of(context).colorScheme.tertiary),
                 ),
@@ -132,8 +135,11 @@ class MyDrawer extends ConsumerWidget {
                       TextStyle(color: Theme.of(context).colorScheme.tertiary),
                 ),
                 onTap: () {
-                  Navigator.of(context).pop();
-                  context.pushNamed('trending');
+                  final target = router.namedLocation('trending');
+                  if (GoRouterState.of(context).uri.toString() != target) {
+                    Navigator.of(context).pop();
+                    context.pushNamed('trending');
+                  }
                 },
               ),
               ListTile(
@@ -145,8 +151,11 @@ class MyDrawer extends ConsumerWidget {
                       TextStyle(color: Theme.of(context).colorScheme.tertiary),
                 ),
                 onTap: () {
-                  Navigator.of(context).pop();
-                  context.pushNamed('mealPlanner');
+                  final target = router.namedLocation('mealPlanner');
+                  if (GoRouterState.of(context).uri.toString() != target) {
+                    Navigator.of(context).pop();
+                    context.pushNamed('mealPlanner');
+                  }
                 },
               ),
               // Meal planner for the week (Mon-Sun).
@@ -159,8 +168,11 @@ class MyDrawer extends ConsumerWidget {
                       TextStyle(color: Theme.of(context).colorScheme.tertiary),
                 ),
                 onTap: () {
-                  Navigator.of(context).pop();
-                  context.pushNamed('shoppingSuggestions');
+                  final target = router.namedLocation('shoppingSuggestions');
+                  if (GoRouterState.of(context).uri.toString() != target) {
+                    Navigator.of(context).pop();
+                    context.pushNamed('shoppingSuggestions');
+                  }
                 },
               ),
               // Current stock of pantry items
@@ -173,8 +185,11 @@ class MyDrawer extends ConsumerWidget {
                       TextStyle(color: Theme.of(context).colorScheme.tertiary),
                 ),
                 onTap: () {
-                  Navigator.of(context).pop();
-                  context.pushNamed('pantry');
+                  final target = router.namedLocation('pantry');
+                  if (GoRouterState.of(context).uri.toString() != target) {
+                    Navigator.of(context).pop();
+                    context.pushNamed('pantry');
+                  }
                 },
               ),
 
@@ -188,8 +203,11 @@ class MyDrawer extends ConsumerWidget {
                       TextStyle(color: Theme.of(context).colorScheme.tertiary),
                 ),
                 onTap: () {
-                  Navigator.of(context).pop();
-                  context.pushNamed('savedRecipes');
+                  final target = router.namedLocation('savedRecipes');
+                  if (GoRouterState.of(context).uri.toString() != target) {
+                    Navigator.of(context).pop();
+                    context.pushNamed('savedRecipes');
+                  }
                 },
               ),
             ],
