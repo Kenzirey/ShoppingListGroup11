@@ -1,15 +1,17 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lottie/lottie.dart';
 import 'package:shopping_list_g11/models/app_user.dart';
 import 'package:shopping_list_g11/providers/current_user_provider.dart';
 import 'package:shopping_list_g11/providers/edit_account_details_provider.dart';
 import 'package:shopping_list_g11/utils/error_utils.dart';
 import 'package:shopping_list_g11/utils/validators.dart';
 import 'package:shopping_list_g11/widget/password_requirements.dart';
+import 'package:shopping_list_g11/widget/user_feedback/status_overlay_feedback.dart';
+import '../../widget/account_setup/edit_profile_header.dart';
 
+/// Screen for editing the account details of a user.
+/// Allows to change username, password, and dietary preferences.
 class EditAccountDetailsScreen extends ConsumerStatefulWidget {
   const EditAccountDetailsScreen({super.key});
 
@@ -18,8 +20,8 @@ class EditAccountDetailsScreen extends ConsumerStatefulWidget {
       _EditAccountDetailsScreenState();
 }
 
-class _EditAccountDetailsScreenState
-    extends ConsumerState<EditAccountDetailsScreen> with SingleTickerProviderStateMixin {
+class _EditAccountDetailsScreenState extends ConsumerState<EditAccountDetailsScreen>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _nameController;
@@ -34,12 +36,10 @@ class _EditAccountDetailsScreenState
     'Keto'
   ];
   List<String> _selectedDiets = [];
-  OverlayEntry? _successOverlayEntry;
   bool _showCurrentPassword = false;
   bool _showNewPassword = false;
   bool _isLoading = false;
   String _newPassword = '';
-
 
   late final AnimationController _animationController;
   late final Animation<double> _fadeAnimation;
@@ -76,175 +76,43 @@ class _EditAccountDetailsScreenState
     super.dispose();
   }
 
-  //TODO: extract and reuse overlay
-  void _showSuccessOverlay(BuildContext context) {
-    _successOverlayEntry = OverlayEntry(
-      builder: (context) {
-        final size = MediaQuery.of(context).size;
-        return Stack(
-          children: [
-            Positioned.fill(
-              child: Container(
-                color: Colors.black54,
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                  child: Container(color: Colors.transparent),
-                ),
-              ),
-            ),
-            Center(
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                margin: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: Colors.grey[900],
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                      blurRadius: 20,
-                      spreadRadius: 5,
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: size.width * 0.4,
-                      child: Lottie.asset('assets/animations/success.json', repeat: false),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Account Details Updated!',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Your changes have been saved successfully.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-    Overlay.of(context).insert(_successOverlayEntry!);
-  }
-
-  void _removeSuccessOverlay() {
-    _successOverlayEntry?.remove();
-    _successOverlayEntry = null;
-  }
-
-  Future<void> _saveChanges(AppUser currentUser, bool isGoogleUser) async {
+ void _saveChanges(AppUser currentUser, bool isGoogleUser) {
     if (!_formKey.currentState!.validate()) return;
-    setState(() {
-      _isLoading = true;
-    });
-    try {
-      await ref.read(editAccountDetailsProvider.notifier).saveChanges(
-        newName: _nameController.text.trim(),
-        currentPassword: _currentPasswordController.text.trim(),
-        newPassword: _newPasswordController.text.trim(),
-        selectedDiets: _selectedDiets,
-        currentUser: currentUser,
+    setState(() => _isLoading = true);
+
+    // The async call, to use then, catch, whenComplete to avoid the context across async gaps.
+    final future = ref.read(editAccountDetailsProvider.notifier).saveChanges(
+      newName: _nameController.text.trim(),
+      currentPassword: _currentPasswordController.text.trim(),
+      newPassword: _newPasswordController.text.trim(),
+      selectedDiets: _selectedDiets,
+      currentUser: currentUser,
+    );
+
+    future.then((_) {
+      if (!mounted) return;
+
+      StatusOverlayFeedback.showSuccessOverlay(
+        context,
+        title: 'Account Details Updated!',
+        message: 'Your changes have been saved successfully.',
       );
-      _showSuccessOverlay(context);
-      await Future.delayed(const Duration(seconds: 2));
-      _removeSuccessOverlay();
-      if (context.mounted) {
-        context.pop();
-      }
-    } catch (e) {
-      _showErrorSnackBar(getUserFriendlyErrorMessage(e));
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
+      context.pop();
+    })
 
-  void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.error_outline, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(child: Text(message)),
-          ],
-        ),
-        backgroundColor: Colors.redAccent,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
-  }
+    .catchError((error) {
+      if (!mounted) return;
+      StatusOverlayFeedback.showErrorOverlay(
+        context,
+        title: 'Error',
+        message: getUserFriendlyErrorMessage(error),
+      );
+    })
 
-  Widget _buildProfileHeader(AppUser currentUser) {
-    return Center(
-      child: Column(
-        children: [
-          CircleAvatar(
-            radius: 50,
-            backgroundColor: Colors.grey[800],
-            backgroundImage: (currentUser.avatarUrl != null &&
-                    currentUser.avatarUrl!.isNotEmpty)
-                ? (currentUser.avatarUrl!.startsWith('assets/')
-                    ? AssetImage(currentUser.avatarUrl!) as ImageProvider
-                    : NetworkImage(currentUser.avatarUrl!))
-                : null,
-            child: (currentUser.avatarUrl == null ||
-                    currentUser.avatarUrl!.isEmpty)
-                ? const Icon(Icons.account_circle, size: 80, color: Colors.grey)
-                : null,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            currentUser.name.isNotEmpty ? currentUser.name : 'No Name',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              currentUser.isGoogleUser
-                  ? Image.asset(
-                      'assets/images/google_logo.png',
-                      width: 18,
-                      height: 18,
-                    )
-                  : const Icon(
-                      Icons.email,
-                      size: 18,
-                      color: Colors.white70,
-                    ),
-              const SizedBox(width: 8),
-              Text(
-                currentUser.email,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+    .whenComplete(() {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+    });
   }
 
   Widget _buildTextField({
@@ -253,6 +121,7 @@ class _EditAccountDetailsScreenState
     required String hintText,
     required IconData prefixIcon,
   }) {
+    print('Context type in _buildTextField: ${context.runtimeType}');
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -315,47 +184,46 @@ class _EditAccountDetailsScreenState
   }
 
   Widget _buildPasswordField({
-  required TextEditingController controller,
-  required String label,
-  required IconData prefixIcon,
-  required bool showPassword,
-  required VoidCallback onToggleVisibility,
-  String? hintText,
-  String? Function(String?)? validator,
-  ValueChanged<String>? onChanged,
-}) {
-  final theme = Theme.of(context);
-  return Container(
-    decoration: BoxDecoration(
-      color: theme.colorScheme.surface,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: theme.colorScheme.tertiary.withOpacity(0.1)),
-    ),
-    child: TextFormField(
-      controller: controller,
-      obscureText: !showPassword,
-      validator: validator,
-      onChanged: onChanged,
-      style: TextStyle(color: theme.colorScheme.tertiary),
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hintText,
-        labelStyle: TextStyle(color: theme.colorScheme.tertiary.withOpacity(0.7)),
-        prefixIcon: Icon(prefixIcon, color: theme.colorScheme.primary),
-        suffixIcon: IconButton(
-          icon: Icon(
-            showPassword ? Icons.visibility_off : Icons.visibility,
-            color: theme.colorScheme.tertiary.withOpacity(0.7),
-          ),
-          onPressed: onToggleVisibility,
-        ),
-        border: InputBorder.none,
-        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+    required TextEditingController controller,
+    required String label,
+    required IconData prefixIcon,
+    required bool showPassword,
+    required VoidCallback onToggleVisibility,
+    String? hintText,
+    String? Function(String?)? validator,
+    ValueChanged<String>? onChanged,
+  }) {
+    final theme = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colorScheme.tertiary.withOpacity(0.1)),
       ),
-    ),
-  );
-}
-
+      child: TextFormField(
+        controller: controller,
+        obscureText: !showPassword,
+        validator: validator,
+        onChanged: onChanged,
+        style: TextStyle(color: theme.colorScheme.tertiary),
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hintText,
+          labelStyle: TextStyle(color: theme.colorScheme.tertiary.withOpacity(0.7)),
+          prefixIcon: Icon(prefixIcon, color: theme.colorScheme.primary),
+          suffixIcon: IconButton(
+            icon: Icon(
+              showPassword ? Icons.visibility_off : Icons.visibility,
+              color: theme.colorScheme.tertiary.withOpacity(0.7),
+            ),
+            onPressed: onToggleVisibility,
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        ),
+      ),
+    );
+  }
 
   Widget _buildDietaryPreferencesChips() {
     final theme = Theme.of(context);
@@ -368,7 +236,7 @@ class _EditAccountDetailsScreenState
           label: Text(diet),
           selected: isSelected,
           showCheckmark: false,
-          avatar: isSelected ? const Icon(Icons.check, size: 16) : null,
+          avatar: isSelected ? const Icon(Icons.check, size: 16, color: Colors.white,) : null,
           backgroundColor: Colors.white.withOpacity(0.05),
           selectedColor: theme.colorScheme.secondary.withOpacity(0.3),
           shape: RoundedRectangleBorder(
@@ -379,7 +247,7 @@ class _EditAccountDetailsScreenState
             ),
           ),
           labelStyle: TextStyle(
-            color: isSelected ? theme.colorScheme.secondary : Colors.white,
+            color: isSelected ? theme.colorScheme.primary : Colors.white,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
           onSelected: (selected) {
@@ -494,7 +362,7 @@ class _EditAccountDetailsScreenState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildProfileHeader(currentUser),
+                        ProfileHeader(context: context, currentUser: currentUser),
                         const SizedBox(height: 32),
                         Container(
                           padding: const EdgeInsets.all(24),
@@ -531,23 +399,23 @@ class _EditAccountDetailsScreenState
                                 ),
                                 const SizedBox(height: 16),
                                 _buildPasswordField(
-                                controller: _currentPasswordController,
-                                label: 'Current Password',
-                                prefixIcon: Icons.lock_outline,
-                                showPassword: _showCurrentPassword,
-                                onToggleVisibility: () {
-                                  setState(() {
-                                    _showCurrentPassword = !_showCurrentPassword;
-                                  });
-                                },
-                                validator: (value) {
-                                  if (_newPasswordController.text.isNotEmpty &&
-                                      (value == null || value.isEmpty)) {
-                                    return 'Please enter your current password to change it.';
-                                  }
-                                  return null;
-                                },
-                              ),
+                                  controller: _currentPasswordController,
+                                  label: 'Current Password',
+                                  prefixIcon: Icons.lock_outline,
+                                  showPassword: _showCurrentPassword,
+                                  onToggleVisibility: () {
+                                    setState(() {
+                                      _showCurrentPassword = !_showCurrentPassword;
+                                    });
+                                  },
+                                  validator: (value) {
+                                    if (_newPasswordController.text.isNotEmpty &&
+                                        (value == null || value.isEmpty)) {
+                                      return 'Please enter your current password to change it.';
+                                    }
+                                    return null;
+                                  },
+                                ),
                                 const SizedBox(height: 16),
                                 _buildPasswordField(
                                   controller: _newPasswordController,
@@ -560,11 +428,11 @@ class _EditAccountDetailsScreenState
                                     });
                                   },
                                   validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return null;
-                                  }
-                                  return validatePassword(value);
-                                },
+                                    if (value == null || value.isEmpty) {
+                                      return null;
+                                    }
+                                    return validatePassword(value);
+                                  },
                                   onChanged: (value) {
                                     setState(() {
                                       _newPassword = value;
@@ -574,7 +442,6 @@ class _EditAccountDetailsScreenState
                                 const SizedBox(height: 8),
                                 PasswordRequirements(password: _newPassword),
                                 const SizedBox(height: 24),
-
                               ] else ...[
                                 Container(
                                   padding: const EdgeInsets.all(16),
@@ -627,3 +494,4 @@ class _EditAccountDetailsScreenState
     );
   }
 }
+

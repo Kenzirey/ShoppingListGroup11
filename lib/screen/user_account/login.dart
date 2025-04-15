@@ -5,7 +5,7 @@ import 'package:shopping_list_g11/controllers/auth_controller.dart';
 import 'package:shopping_list_g11/widget/styles/custom_text_field.dart';
 import 'package:shopping_list_g11/widget/styles/buttons/gradient_button.dart';
 import 'package:shopping_list_g11/widget/styles/buttons/social_button.dart';
-import 'package:shopping_list_g11/widget/styles/status_overlay_feedback.dart';
+import 'package:shopping_list_g11/widget/user_feedback/status_overlay_feedback.dart';
 import 'package:shopping_list_g11/utils/error_utils.dart';
 
 /// Login entry point for the application.
@@ -195,9 +195,10 @@ class _LoginState extends ConsumerState<LoginScreen>
                             if (!context.mounted) return;
                             await StatusOverlayFeedback.showSuccessOverlay(
                               context,
-                              title: 'Great!',
-                              message: 'You have successfully logged in',
+                              title: 'Success',
+                              message: 'You have successfully logged in.',
                             );
+
 
                             if (!context.mounted) return;
                             context.go('/');

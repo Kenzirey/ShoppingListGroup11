@@ -59,7 +59,7 @@ class _CustomLazyDropdownState extends State<CustomLazyDropdown> {
 
   void _showOverlay() {
     _overlayEntry = _createOverlayEntry();
-    Overlay.of(context)!.insert(_overlayEntry!);
+    Overlay.of(context).insert(_overlayEntry!);
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToSelected());
   }
 

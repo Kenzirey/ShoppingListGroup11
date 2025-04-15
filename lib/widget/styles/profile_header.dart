@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shopping_list_g11/models/app_user.dart';
 
-/// Extracted widget for the profile header section.
+// Profile header for the user account page, displaying the user's avatar, name, and email.
 class ProfileHeader extends StatelessWidget {
   final AppUser currentUser;
 
@@ -14,8 +14,8 @@ class ProfileHeader extends StatelessWidget {
     return Column(
       children: [
         SizedBox(
-                          width: 140,
-                height: 140,
+          width: 140,
+          height: 140,
           child: Stack(
             alignment: Alignment.center,
             children: [
@@ -104,22 +104,22 @@ class ProfileHeader extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-               currentUser.isGoogleUser
-                  ? Image.asset(
-                      'assets/images/google_logo.png',
-                      width: 18,
-                      height: 18,
-                    )
-                  : const Icon(
-                      Icons.email,
-                      size: 18,
-                      color: Colors.white70,
-                    ),
-              const SizedBox(width: 6),
-              Text(
-                currentUser.email,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.white70,
+                currentUser.isGoogleUser
+                    ? Image.asset(
+                        'assets/images/google_logo.png',
+                        width: 18,
+                        height: 18,
+                      )
+                    : const Icon(
+                        Icons.email,
+                        size: 18,
+                        color: Colors.white70,
+                      ),
+                const SizedBox(width: 6),
+                Text(
+                  currentUser.email,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: Colors.white70,
                   ),
                 ),
               ],

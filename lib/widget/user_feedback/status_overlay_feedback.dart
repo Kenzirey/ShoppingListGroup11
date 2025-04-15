@@ -5,7 +5,7 @@ import 'package:lottie/lottie.dart';
 class StatusOverlayFeedback {
   static OverlayEntry? _overlayEntry;
 
-  // Private helper to build a styled overlay with a blurred background.
+  /// A private helper to build a styled overlay with a blurred background.
   static OverlayEntry _buildOverlayEntry({
     required BuildContext context,
     required String lottieAsset,
@@ -30,20 +30,23 @@ class StatusOverlayFeedback {
               padding: const EdgeInsets.all(24),
               margin: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                // You can adjust the background color or opacity here
-                color: Colors.white.withOpacity(0.9),
+                color: Theme.of(context)
+                    .colorScheme
+                    .primaryContainer
+                    .withOpacity(0.9),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Lottie.asset(
-                    lottieAsset,
-                    repeat: false,
-                    width: 100,
-                    height: 100,
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.4,
+                    child: Lottie.asset(
+                      lottieAsset,
+                      repeat: false,
+                    ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   content,
                 ],
               ),
@@ -75,21 +78,21 @@ class StatusOverlayFeedback {
           if (title != null)
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.green,
-              ),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.tertiary,
+                    decoration: TextDecoration.none,
+                  ),
             ),
           if (title != null && message != null) const SizedBox(height: 12),
           if (message != null)
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.black87,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.tertiary,
+                    decoration: TextDecoration.none,
+                  ),
             ),
         ],
       ),
@@ -119,35 +122,41 @@ class StatusOverlayFeedback {
           if (title != null)
             Text(
               title,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.red[700],
-              ),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red[700],
+                    decoration: TextDecoration.none,
+                  ),
             ),
           if (title != null && message != null) const SizedBox(height: 12),
           if (message != null)
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.black87,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.white,
+                    decoration: TextDecoration.none,
+                  ),
             ),
           const SizedBox(height: 20),
           ElevatedButton(
             onPressed: removeOverlay,
-
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red[700],
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
-            child: const Text('Try Again'),
+            child: Text(
+              'Try Again',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.white,
+                    decoration: TextDecoration.none,
+                  ),
+            ),
           ),
         ],
       ),
