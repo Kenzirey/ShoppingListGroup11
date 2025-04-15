@@ -24,12 +24,13 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
   final int _pageSize = 10;
   bool _isLoading = false;
 
+  // The currently selected month.
   late String selectedMonth;
 
   @override
   void initState() {
     super.initState();
-    // Set the selected month initially.
+    // Set the selected month initially to the current month.
     selectedMonth = DateFormat('MMMM yyyy').format(DateTime.now());
 
     // Create a sorted copy (descending by purchase date).
@@ -47,8 +48,7 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
     setState(() {
       _isLoading = true;
     });
-    // Adjust the delay if you need a snappier load.
-    await Future.delayed(const Duration(milliseconds: 800));
+
 
     final int start = _currentPage * _pageSize;
     int end = (_currentPage + 1) * _pageSize;
@@ -62,13 +62,15 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
     });
   }
 
-  /// Returns all the unique months from the provided list.
-  Set<String> getAvailableMonths(List<Product> prods) {
-    final Set<String> months = prods
-        .map((product) => DateFormat('MMMM yyyy').format(product.purchaseDate))
-        .toSet();
-    // Always include the current month.
-    months.add(DateFormat('MMMM yyyy').format(DateTime.now()));
+  /// Returns a list of all months for the current year in "MMMM yyyy" format.
+  /// Should we remove? Used for dropdown
+  List<String> getMonthsForCurrentYear() {
+    final currentYear = DateTime.now().year;
+    final List<String> months = [];
+    for (int i = 1; i <= 12; i++) {
+      final date = DateTime(currentYear, i);
+      months.add(DateFormat('MMMM yyyy').format(date));
+    }
     return months;
   }
 
@@ -90,6 +92,21 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
     }
     return grouped;
   }
+
+  /// Returns the previous months of the year (starting jan) up to the current month.
+  List<String> getMonthsUpToCurrent() {
+  final now = DateTime.now();
+  final currentYear = now.year;
+  final currentMonthIndex = now.month;
+  final List<String> months = [];
+  // Only loop from January (1) to the current month.
+  for (int i = 1; i <= currentMonthIndex; i++) {
+    final date = DateTime(currentYear, i);
+    months.add(DateFormat('MMMM yyyy').format(date));
+  }
+  return months;
+}
+
 
   /// Let the user pick a date, then prompt for price & amount, then create a new product.
   Future<void> handleAddItem(String itemName) async {
@@ -205,7 +222,6 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
       amount: amount,
     );
 
-    // When adding a new product, add it to the full list and rebuild to make it appear.
     setState(() {
       sortedProducts.add(newProduct);
       sortedProducts.sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate));
@@ -216,15 +232,18 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Filter the currently displayed products by selected month.
+    // Filter the currently displayed products by the selected month.
     final monthProducts = getProductsForSelectedMonth(displayedProducts);
-    // Sort descending.
     final groupedByDay = groupProductsByDay(monthProducts);
     final dayFormat = DateFormat('dd MMM, yyyy');
     final sortedDayKeys = groupedByDay.keys.toList()
       ..sort((a, b) => dayFormat.parse(b).compareTo(dayFormat.parse(a)));
 
     final mapSuggestions = groceryMapping.keys.toList()..sort();
+    // Get the list of months for the current year.
+    final months = getMonthsUpToCurrent();
+    // Get today's month string.
+    final currentMonth = DateFormat('MMMM yyyy').format(DateTime.now());
 
     return Scaffold(
       body: Padding(
@@ -232,14 +251,14 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // search bar at the very top, reusable widget
+            // Reusable search bar.
             CustomSearchBarWidget(
               suggestions: mapSuggestions,
               onSuggestionSelected: (itemName) => handleAddItem(itemName),
               hintText: 'Add product to purchase history...',
             ),
             const SizedBox(height: 16),
-            // Purchase history title + dropdown for month selection.
+            // Title and dropdown for month selection.
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -253,23 +272,43 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
                 ),
                 DropdownButton<String>(
                   value: selectedMonth,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.tertiary,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  dropdownColor: Theme.of(context).colorScheme.surface,
-                  items: getAvailableMonths(displayedProducts).map((month) {
+                  // This style is used for the dropdown items when open.
+                  items: months.map((month) {
+                    // Check whether this month equals the current month.
+                    final bool isCurrent = month == currentMonth;
                     return DropdownMenuItem<String>(
                       value: month,
                       child: Text(
                         month,
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.tertiary,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          // Only when the dropdown is open will the current month appear green.
+                          color: isCurrent
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.tertiary,
                         ),
                       ),
                     );
                   }).toList(),
+                  // Use selectedItemBuilder to force the closed dropdown to show only your default styling.
+                  selectedItemBuilder: (BuildContext context) {
+                    return months.map((month) {
+                      return Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          month,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            // Always use the default (tertiary) color when the dropdown is closed.
+                            color: Theme.of(context).colorScheme.tertiary,
+                          ),
+                        ),
+                      );
+                    }).toList();
+                  },
+                  dropdownColor: Theme.of(context).colorScheme.surface,
                   onChanged: (newMonth) {
                     if (newMonth != null) {
                       setState(() {
@@ -277,11 +316,11 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
                       });
                     }
                   },
-                ),
+                )
               ],
             ),
             const Divider(),
-            // Scrollable list with "lazy" loading.
+            // Lazy-loaded list of purchases.
             Expanded(
               child: NotificationListener<ScrollNotification>(
                 onNotification: (scrollInfo) {

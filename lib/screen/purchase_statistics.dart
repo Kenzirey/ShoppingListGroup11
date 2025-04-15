@@ -8,7 +8,7 @@ import 'package:shopping_list_g11/widget/charts/spending_piechart.dart';
 /// Screen for displaying the purchase habits / statistics of a user.
 /// From monthly spent per category, to yearly spending on groceries.
 class PurchaseStatistics extends StatefulWidget {
-  const PurchaseStatistics({Key? key}) : super(key: key);
+  const PurchaseStatistics({super.key});
 
   @override
   _PurchaseStatisticsState createState() => _PurchaseStatisticsState();
