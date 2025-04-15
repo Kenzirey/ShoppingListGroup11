@@ -28,6 +28,7 @@ class _ShoppingSuggestionsScreenState
   }
 
   Future<void> _fetchShoppingItems() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMsg = null;
@@ -36,6 +37,7 @@ class _ShoppingSuggestionsScreenState
     try {
       final user = ref.read(currentUserProvider);
       if (user == null) {
+        if (!mounted) return;
         setState(() {
           _errorMsg = 'No user is logged in.';
           _isLoading = false;
@@ -58,12 +60,14 @@ class _ShoppingSuggestionsScreenState
       )).toList();
 
       setState(() {
+        if (!mounted) return;
         shoppingItems = [
           ...recommendedItems,
         ];
       });
     } catch (e) {
       setState(() {
+         if (!mounted) return;
         _errorMsg = 'Error fetching recommendations: $e';
       });
     } finally {
@@ -75,6 +79,7 @@ class _ShoppingSuggestionsScreenState
 
   void _toggleSelectAll() {
     setState(() {
+      if (!mounted) return;
       if (selectedItems.length == shoppingItems.length) {
         selectedItems.clear();
       } else {

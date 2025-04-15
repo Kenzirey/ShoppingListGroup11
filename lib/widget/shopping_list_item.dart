@@ -63,53 +63,54 @@ class _ShoppingListItemState extends State<ShoppingListItem> {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-IntrinsicWidth(
-  child: useDropdown
-      ? CustomLazyDropdown(
-          initialValue: initialValue,
-          onChanged: (String value) {
-            final parsed = int.tryParse(value);
-            if (parsed != null && parsed > 0) {
-              widget.onQuantityChanged(parsed);
-            }
-          },
-        )
-      : TextField(
-          controller: _controller,
-          keyboardType: TextInputType.number,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          IntrinsicWidth(
+            child: useDropdown
+                ? CustomLazyDropdown(
+                    initialValue: initialValue,
+                    onChanged: (String value) {
+                      final parsed = int.tryParse(value);
+                      if (parsed != null && parsed > 0) {
+                        widget.onQuantityChanged(parsed);
+                      }
+                    },
+                  )
+                : TextField(
+                    controller: _controller,
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 4),
+                      isDense: true,
+                      border: const UnderlineInputBorder(),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                            color: Theme.of(context).colorScheme.tertiary),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                            color: Theme.of(context).colorScheme.primary),
+                      ),
+                      suffixText: widget.unitLabel,
+                      suffixStyle: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.tertiary,
+                      ),
+                    ),
+                    onChanged: (value) {
+                      final parsed = int.tryParse(value);
+                      if (parsed != null && parsed > 0) {
+                        widget.onQuantityChanged(parsed);
+                      }
+                    },
+                  ),
           ),
-          decoration: InputDecoration(
-            contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-            isDense: true,
-            border: const UnderlineInputBorder(),
-            enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: Theme.of(context).colorScheme.tertiary),
-            ),
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
-            ),
-            suffixText: widget.unitLabel,
-            suffixStyle: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Theme.of(context).colorScheme.tertiary,
-            ),
-          ),
-          onChanged: (value) {
-            final parsed = int.tryParse(value);
-            if (parsed != null && parsed > 0) {
-              widget.onQuantityChanged(parsed);
-            }
-          },
-        ),
-),
-
-
         ],
       ),
     );

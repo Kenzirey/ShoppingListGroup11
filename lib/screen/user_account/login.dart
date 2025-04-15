@@ -186,7 +186,7 @@ class _LoginState extends ConsumerState<LoginScreen>
                           setState(() {
                             _isLoading = true;
                           });
-
+                            FocusScope.of(context).unfocus();
                           try {
                             final authController =
                                 ref.read(authControllerProvider);
