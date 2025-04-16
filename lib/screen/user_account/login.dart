@@ -72,8 +72,7 @@ class _LoginState extends ConsumerState<LoginScreen>
     final theme = Theme.of(context);
 
     return Scaffold(
-      body: Container(
-        child: SafeArea(
+        body: SafeArea(
           child: FadeTransition(
             opacity: _fadeAnimation,
             child: SlideTransition(
@@ -314,7 +313,6 @@ class _LoginState extends ConsumerState<LoginScreen>
             ),
           ),
         ),
-      ),
     );
   }
 }

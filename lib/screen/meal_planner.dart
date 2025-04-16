@@ -19,17 +19,13 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
   // This represents the actual current week, we do need to use datetime or something instead.
   final int actualCurrentWeek = 12;
 
-  /// A private helper for UI development process only.
-  /// This should be refactored out and be made into a controller / service method.
   void _removeMeal(
       BuildContext context, String day, Map<String, dynamic> meal) {
-    final plan = ref.read(mealPlannerProvider);
-    final removedIndex = plan[day]!.indexOf(meal);
-    final updatedMap = {...plan};
-    final updatedList = [...?updatedMap[day]];
-    updatedList.removeAt(removedIndex);
-    updatedMap[day] = updatedList;
-    ref.read(mealPlannerProvider.notifier).state = updatedMap;
+    // so we can use the undo feature.
+    final removedIndex = ref.read(mealPlannerProvider)[day]!.indexOf(meal);
+
+    // Call the notifier's method to remove the meal
+    ref.read(mealPlannerProvider.notifier).removeMeal(day, meal);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -38,11 +34,10 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
           label: 'Undo',
           textColor: Theme.of(context).colorScheme.error,
           onPressed: () {
-            final undoMap = {...ref.read(mealPlannerProvider)};
-            final undoList = [...?undoMap[day]];
-            undoList.insert(removedIndex, meal);
-            undoMap[day] = undoList;
-            ref.read(mealPlannerProvider.notifier).state = undoMap;
+            // Use the insertMeal method to undo removal
+            ref
+                .read(mealPlannerProvider.notifier)
+                .insertMeal(day, removedIndex, meal);
           },
         ),
       ),
@@ -109,7 +104,7 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
                       ),
                     );
                   }),
-                   // the days + meals section below
+                  // the days + meals section below
                   selectedItemBuilder: (BuildContext context) {
                     return List.generate(52, (index) {
                       final week = index + 1;

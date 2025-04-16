@@ -150,7 +150,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
-                        // TODO: make sure user is actually logged in, user feedback / checks.
                         final currentRecipe = ref.read(recipeProvider);
                         final currentUser = ref.read(currentUserProvider);
                         final router = GoRouter.of(context);

@@ -11,7 +11,7 @@ class GeminiOcrService {
   Future<ReceiptData?> extractReceiptData(File imageFile) async {
     try {
       final bytes = await imageFile.readAsBytes();
-      final base64Image = base64Encode(bytes);
+
 
       // System prompt to guide Gemini on data extraction
       const systemPrompt = """

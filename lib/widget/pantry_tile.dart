@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shopping_list_g11/widget/styles/buttons/lazy_dropdown.dart';
 
-class PantryItemTile extends StatefulWidget {
+class PantryItemTile extends ConsumerStatefulWidget {
   final IconData icon;
   final String itemName;
   final String expiration;
@@ -16,10 +17,10 @@ class PantryItemTile extends StatefulWidget {
   });
 
   @override
-  _PantryItemTileState createState() => _PantryItemTileState();
+  ConsumerState<PantryItemTile> createState() => _PantryItemTileState();
 }
 
-class _PantryItemTileState extends State<PantryItemTile> {
+class _PantryItemTileState extends ConsumerState<PantryItemTile> {
   String? _expiration;
   String? _quantity;
 

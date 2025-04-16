@@ -114,9 +114,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      body: Container(
 
-        child: SafeArea(
+        body: SafeArea(
           child: FadeTransition(
             opacity: _fadeAnimation,
             child: Center(
@@ -320,7 +319,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
             ),
           ),
         ),
-      ),
     );
   }
 }

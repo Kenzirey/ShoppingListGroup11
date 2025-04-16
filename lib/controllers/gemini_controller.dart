@@ -16,8 +16,6 @@ class GeminiController {
 
   /// Makes a single, non-streaming prompt call to Gemini, returning the entire response at once.
   Future<String> _getGeminiResponse(String message) async {
-    //TODO: set up more guards for users
-    // So that the response is predictable, and user doesn't need to specify things.
     String systemPrompt = """
     You are an AI assistant that provides recipes. Please use the metric system.
     Please structure your response as follows:

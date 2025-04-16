@@ -30,9 +30,8 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
   Widget build(BuildContext context) {
     final pantryItems = ref.watch(pantryItemsProvider);
     final fridgeItems = pantryItems.where((p) => p.category == 'Fridge').toList();
-    final dryGoodsItems = pantryItems.where((p) => p.category == 'Dry Goods').toList();
-    final cannedFoodItems = pantryItems.where((p) => p.category == 'Canned Food').toList();
-    //TODO: thinking we should have fridge + freezer + then "dry" section?
+    final dryGoodsItems = pantryItems.where((p) => p.category == 'Freezer').toList();
+    final cannedFoodItems = pantryItems.where((p) => p.category == 'Dry Storage').toList();
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -76,7 +75,7 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
 
             const SizedBox(height: 24),
 
-            _buildSectionHeader('Dry Goods'),
+            _buildSectionHeader('Freezer'),
             const SizedBox(height: 12),
             if (dryGoodsItems.isEmpty)
               _noItemsPlaceholder()
@@ -96,7 +95,7 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
 
             const SizedBox(height: 24),
 
-            _buildSectionHeader('Canned Food'),
+            _buildSectionHeader('Dry Storage'),
             const SizedBox(height: 12),
             if (cannedFoodItems.isEmpty)
               _noItemsPlaceholder()

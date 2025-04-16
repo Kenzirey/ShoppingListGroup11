@@ -44,6 +44,7 @@ class SavedRecipesController {
 
       ref.read(savedRecipesProvider.notifier).state = newList;
     } catch (e) {
+      debugPrint('Error happened in saved recipe fetching: $e');
     }
   }
 

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// A widget that displays a pie chart representing purchase habits.
 /// Dynamically generates sections based on the provided purchase data.
 /// Colored box, category text and percentages are displayed.
-class PurchaseHabitPieChart extends StatefulWidget {
+class PurchaseHabitPieChart extends ConsumerStatefulWidget {
   final List<Map<String, dynamic>> purchaseData;
   // Maximum size in pixels (default is 400).
   final double maxSize;
@@ -16,10 +17,10 @@ class PurchaseHabitPieChart extends StatefulWidget {
   });
 
   @override
-  _PurchaseHabitPieChartState createState() => _PurchaseHabitPieChartState();
+  ConsumerState<PurchaseHabitPieChart> createState() => _PurchaseHabitPieChartState();
 }
 
-class _PurchaseHabitPieChartState extends State<PurchaseHabitPieChart> {
+class _PurchaseHabitPieChartState extends ConsumerState<PurchaseHabitPieChart> {
   int touchedIndex = -1;
 
   // Use the passed-in baseRadius to calculate section sizes, for "dynamic" sizing.

@@ -1,8 +1,9 @@
 // Updated CustomLazyDropdown with optional Icon
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class CustomLazyDropdown extends StatefulWidget {
+class CustomLazyDropdown extends ConsumerStatefulWidget {
   final String initialValue;
   final ValueChanged<String> onChanged;
   final IconData? icon;
@@ -15,10 +16,10 @@ class CustomLazyDropdown extends StatefulWidget {
   });
 
   @override
-  _CustomLazyDropdownState createState() => _CustomLazyDropdownState();
+  ConsumerState<CustomLazyDropdown> createState() => _CustomLazyDropdownState();
 }
 
-class _CustomLazyDropdownState extends State<CustomLazyDropdown> {
+class _CustomLazyDropdownState extends ConsumerState<CustomLazyDropdown> {
   late String _selectedValue;
   late int _currentItemCount;
   OverlayEntry? _overlayEntry;

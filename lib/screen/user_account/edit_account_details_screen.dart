@@ -121,7 +121,6 @@ class _EditAccountDetailsScreenState extends ConsumerState<EditAccountDetailsScr
     required String hintText,
     required IconData prefixIcon,
   }) {
-    print('Context type in _buildTextField: ${context.runtimeType}');
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shopping_list_g11/widget/charts/legend_piechart.dart';
 import 'package:shopping_list_g11/widget/charts/spending_line_chart.dart';
@@ -7,14 +8,14 @@ import 'package:shopping_list_g11/widget/charts/spending_piechart.dart';
 
 /// Screen for displaying the purchase habits / statistics of a user.
 /// From monthly spent per category, to yearly spending on groceries.
-class PurchaseStatistics extends StatefulWidget {
+class PurchaseStatistics extends ConsumerStatefulWidget {
   const PurchaseStatistics({super.key});
 
   @override
-  _PurchaseStatisticsState createState() => _PurchaseStatisticsState();
+  ConsumerState<PurchaseStatistics> createState() => _PurchaseStatisticsState();
 }
 
-class _PurchaseStatisticsState extends State<PurchaseStatistics> {
+class _PurchaseStatisticsState extends ConsumerState<PurchaseStatistics> {
   // TEMPORARY DUMMY DATA for Pie Chart.
   final List<Map<String, dynamic>> purchaseData = [
     {'category': 'Romsdaling shenanigans', 'value': 69.0, 'color': Colors.blue},
