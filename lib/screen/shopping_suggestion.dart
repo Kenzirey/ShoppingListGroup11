@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shopping_list_g11/models/shopping_item.dart';
 import '../providers/current_user_provider.dart';
-import '../providers/recommendation_service_provider.dart';
 
 class ShoppingSuggestionsScreen extends ConsumerStatefulWidget {
   const ShoppingSuggestionsScreen({super.key});

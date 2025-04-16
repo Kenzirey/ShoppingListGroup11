@@ -1,24 +1,24 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// A service for fetching product recommendations from a FastAPI backend.
 class RecommendationService {
-  final String baseUrl;
+  final SupabaseClient _client = Supabase.instance.client;
 
-  RecommendationService({required this.baseUrl});
+  Future<List<String>> fetchRecommendations(String userId) async {
+    try {
+      final result = await _client
+          .from('recommendations')
+          .select('items')
+          .eq('user_id', userId)
+          .maybeSingle();
 
-  /// Fetches recommended items for a given userId, returning a list of item IDs or names.
-  Future<List<String>> fetchRecommendations(String userId, {int topN = 5}) async {
-    final url = Uri.parse('$baseUrl/recommend/$userId?top_n=$topN');
-    final response = await http.get(url);
+      if (result == null || result['items'] == null) {
+        return [];
+      }
 
-    /// Check if the response is successful
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return List<String>.from(data['recommendations']);
-    } else {
-      throw Exception('Failed to fetch recommendations: '
-          'HTTP ${response.statusCode} - ${response.reasonPhrase}');
+      final List<dynamic> items = result['items'];
+      return items.map((item) => item.toString()).toList();
+    } catch (e) {
+      throw Exception('Failed to fetch recommendations: $e');
     }
   }
 }
