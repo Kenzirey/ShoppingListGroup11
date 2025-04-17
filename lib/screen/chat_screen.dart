@@ -4,7 +4,7 @@ import 'package:shopping_list_g11/controllers/gemini_controller.dart';
 import 'package:shopping_list_g11/providers/chat_provider.dart';
 import 'package:shopping_list_g11/providers/recipe_provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shopping_list_g11/widget/styles/chat_button_styles.dart';
+import 'package:shopping_list_g11/widget/styles/buttons/chat_button_styles.dart';
 import '../controllers/recipe_controller.dart';
 import '../controllers/saved_recipe_controller.dart';
 import '../providers/current_user_provider.dart';
