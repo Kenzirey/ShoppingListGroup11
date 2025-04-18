@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shopping_list_g11/data/dummy_purchase_history_data.dart';
+import 'package:shopping_list_g11/utils/month_day_util.dart';
 import 'package:shopping_list_g11/widget/search_bar.dart';
 import '../models/product.dart';
 import '../data/measurement_type.dart';
 
 /// Screen that shows the purchase history of the user.
-/// Allows user to add a new product with price, amount and date.
+/// Allows user to add a new product with price, amount, date, and optional unit.
 class PurchaseHistoryScreen extends StatefulWidget {
   const PurchaseHistoryScreen({super.key});
 
@@ -45,16 +46,12 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
     if (_isLoading) return;
     if (_currentPage * _pageSize >= sortedProducts.length) return;
 
-    setState(() {
-      _isLoading = true;
-    });
-
+    setState(() => _isLoading = true);
 
     final int start = _currentPage * _pageSize;
     int end = (_currentPage + 1) * _pageSize;
-    if (end > sortedProducts.length) {
-      end = sortedProducts.length;
-    }
+    if (end > sortedProducts.length) end = sortedProducts.length;
+
     setState(() {
       displayedProducts.addAll(sortedProducts.sublist(start, end));
       _currentPage++;
@@ -62,53 +59,7 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
     });
   }
 
-  /// Returns a list of all months for the current year in "MMMM yyyy" format.
-  /// Should we remove? Used for dropdown
-  List<String> getMonthsForCurrentYear() {
-    final currentYear = DateTime.now().year;
-    final List<String> months = [];
-    for (int i = 1; i <= 12; i++) {
-      final date = DateTime(currentYear, i);
-      months.add(DateFormat('MMMM yyyy').format(date));
-    }
-    return months;
-  }
-
-  /// Filters products to only those matching the selected month.
-  List<Product> getProductsForSelectedMonth(List<Product> prods) {
-    return prods.where((product) {
-      final productMonth = DateFormat('MMMM yyyy').format(product.purchaseDate);
-      return productMonth == selectedMonth;
-    }).toList();
-  }
-
-  /// Groups products by day ("dd MMM, yyyy").
-  Map<String, List<Product>> groupProductsByDay(List<Product> prods) {
-    final Map<String, List<Product>> grouped = {};
-    final dayFormat = DateFormat('dd MMM, yyyy');
-    for (final product in prods) {
-      final dayKey = dayFormat.format(product.purchaseDate);
-      grouped.putIfAbsent(dayKey, () => []).add(product);
-    }
-    return grouped;
-  }
-
-  /// Returns the previous months of the year (starting jan) up to the current month.
-  List<String> getMonthsUpToCurrent() {
-  final now = DateTime.now();
-  final currentYear = now.year;
-  final currentMonthIndex = now.month;
-  final List<String> months = [];
-  // Only loop from January (1) to the current month.
-  for (int i = 1; i <= currentMonthIndex; i++) {
-    final date = DateTime(currentYear, i);
-    months.add(DateFormat('MMMM yyyy').format(date));
-  }
-  return months;
-}
-
-
-  /// Let the user pick a date, then prompt for price & amount, then create a new product.
+  /// Let the user pick a date, then prompt for price, amount, and optional unit, then create a new product.
   Future<void> handleAddItem(String itemName) async {
     final chosenDate = await showDatePicker(
       context: context,
@@ -123,69 +74,86 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
       builder: (ctx) {
         String enteredPrice = '';
         String enteredAmount = '';
+        String? selectedUnit;
+        const unitOptions = ['kg', 'g', 'l', 'ml'];
         return AlertDialog(
           backgroundColor: Theme.of(ctx).colorScheme.surface,
           title: Text(
-            'Enter Price & Amount',
+            'Enter Price, Amount & Unit',
             style: TextStyle(
               color: Theme.of(ctx).colorScheme.tertiary,
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                style: TextStyle(color: Theme.of(ctx).colorScheme.tertiary),
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Price (kr)',
-                  labelStyle:
-                      TextStyle(color: Theme.of(ctx).colorScheme.tertiary),
-                  hintText: 'e.g. 49.99',
-                  hintStyle: TextStyle(
-                    color: Theme.of(ctx).colorScheme.tertiary.withOpacity(0.6),
-                  ),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide:
-                        BorderSide(color: Theme.of(ctx).colorScheme.tertiary),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Theme.of(ctx).colorScheme.tertiary,
-                      width: 2,
+          content: StatefulBuilder(
+            builder: (ctx2, setMb) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    style: TextStyle(color: Theme.of(ctx).colorScheme.tertiary),
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Price (kr)',
+                      labelStyle:
+                          TextStyle(color: Theme.of(ctx).colorScheme.tertiary),
+                      hintText: 'e.g. 49.99',
+                      hintStyle: TextStyle(
+                          color: Theme.of(ctx)
+                              .colorScheme
+                              .tertiary
+                              .withOpacity(0.6)),
                     ),
+                    onChanged: (val) => enteredPrice = val,
                   ),
-                ),
-                onChanged: (val) => enteredPrice = val,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                style: TextStyle(color: Theme.of(ctx).colorScheme.tertiary),
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Amount',
-                  labelStyle:
-                      TextStyle(color: Theme.of(ctx).colorScheme.tertiary),
-                  hintText: 'e.g. 2.5',
-                  hintStyle: TextStyle(
-                    color: Theme.of(ctx).colorScheme.tertiary.withOpacity(0.6),
-                  ),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide:
-                        BorderSide(color: Theme.of(ctx).colorScheme.tertiary),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Theme.of(ctx).colorScheme.tertiary,
-                      width: 2,
+                  const SizedBox(height: 12),
+                  TextField(
+                    style: TextStyle(color: Theme.of(ctx).colorScheme.tertiary),
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Amount',
+                      labelStyle:
+                          TextStyle(color: Theme.of(ctx).colorScheme.tertiary),
+                      hintText: 'e.g. 2.5',
+                      hintStyle: TextStyle(
+                          color: Theme.of(ctx)
+                              .colorScheme
+                              .tertiary
+                              .withOpacity(0.6)),
                     ),
+                    onChanged: (val) => enteredAmount = val,
                   ),
-                ),
-                onChanged: (val) => enteredAmount = val,
-              ),
-            ],
+                  const SizedBox(height: 12),
+                  DropdownButton<String>(
+                    hint: Text('Unit',
+                        style: TextStyle(
+                            color: Theme.of(ctx).colorScheme.tertiary)),
+                    value: selectedUnit,
+                    items: unitOptions.map((unit) {
+                      return DropdownMenuItem<String>(
+                        value: unit,
+                        child: Text(unit,
+                            style: TextStyle(
+                                color: Theme.of(ctx).colorScheme.tertiary)),
+                      );
+                    }).toList(),
+                    selectedItemBuilder: (_) => unitOptions.map((unit) {
+                      return Container(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          unit,
+                          style: TextStyle(
+                              fontSize: 16,
+                              color: Theme.of(ctx).colorScheme.tertiary),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (val) => setMb(() => selectedUnit = val),
+                  ),
+                ],
+              );
+            },
           ),
           actions: [
             TextButton(
@@ -197,12 +165,11 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
             TextButton(
               style: TextButton.styleFrom(
                   foregroundColor: Theme.of(ctx).colorScheme.tertiary),
-              onPressed: () {
-                Navigator.of(ctx).pop({
-                  'price': enteredPrice,
-                  'amount': enteredAmount,
-                });
-              },
+              onPressed: () => Navigator.of(ctx).pop({
+                'price': enteredPrice,
+                'amount': enteredAmount,
+                'unit': selectedUnit ?? '',
+              }),
               child: const Text('OK'),
             ),
           ],
@@ -211,15 +178,17 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
     );
 
     if (userInputs == null) return;
-    final price = userInputs['price'] ?? '';
-    final amount = userInputs['amount'] ?? '';
+    final price = userInputs['price']!;
+    final amount = userInputs['amount']!;
+    final unit = userInputs['unit'] ?? '';
     if (price.isEmpty || amount.isEmpty) return;
 
+    final amountText = unit.isEmpty ? amount : '$amount $unit';
     final newProduct = Product.fromName(
       name: itemName,
       purchaseDate: chosenDate,
       price: price,
-      amount: amount,
+      amount: amountText,
     );
 
     setState(() {
@@ -232,18 +201,16 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Filter the currently displayed products by the selected month.
-    final monthProducts = getProductsForSelectedMonth(displayedProducts);
-    final groupedByDay = groupProductsByDay(monthProducts);
-    final dayFormat = DateFormat('dd MMM, yyyy');
+    final monthProducts = MonthAndDayUtility.getProductsForSelectedMonth(
+        displayedProducts, selectedMonth);
+    final groupedByDay = MonthAndDayUtility.groupProductsByDay(monthProducts);
     final sortedDayKeys = groupedByDay.keys.toList()
-      ..sort((a, b) => dayFormat.parse(b).compareTo(dayFormat.parse(a)));
+      ..sort((a, b) => DateFormat('dd MMM, yyyy')
+          .parse(b)
+          .compareTo(DateFormat('dd MMM, yyyy').parse(a)));
 
     final mapSuggestions = groceryMapping.keys.toList()..sort();
-    // Get the list of months for the current year.
-    final months = getMonthsUpToCurrent();
-    // Get today's month string.
-    final currentMonth = DateFormat('MMMM yyyy').format(DateTime.now());
+    final months = MonthAndDayUtility.getMonthsUpToCurrent();
 
     return Scaffold(
       body: Padding(
@@ -251,14 +218,12 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Reusable search bar.
             CustomSearchBarWidget(
               suggestions: mapSuggestions,
-              onSuggestionSelected: (itemName) => handleAddItem(itemName),
+              onSuggestionSelected: handleAddItem,
               hintText: 'Add product to purchase history...',
             ),
             const SizedBox(height: 16),
-            // Title and dropdown for month selection.
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -272,10 +237,8 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
                 ),
                 DropdownButton<String>(
                   value: selectedMonth,
-                  // This style is used for the dropdown items when open.
                   items: months.map((month) {
-                    // Check whether this month equals the current month.
-                    final bool isCurrent = month == currentMonth;
+                    final isCurrent = month == months.last;
                     return DropdownMenuItem<String>(
                       value: month,
                       child: Text(
@@ -283,7 +246,6 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
-                          // Only when the dropdown is open will the current month appear green.
                           color: isCurrent
                               ? Theme.of(context).colorScheme.primary
                               : Theme.of(context).colorScheme.tertiary,
@@ -291,7 +253,6 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
                       ),
                     );
                   }).toList(),
-                  // Use selectedItemBuilder to force the closed dropdown to show only your default styling.
                   selectedItemBuilder: (BuildContext context) {
                     return months.map((month) {
                       return Align(
@@ -301,7 +262,6 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
-                            // Always use the default (tertiary) color when the dropdown is closed.
                             color: Theme.of(context).colorScheme.tertiary,
                           ),
                         ),
@@ -310,17 +270,13 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
                   },
                   dropdownColor: Theme.of(context).colorScheme.surface,
                   onChanged: (newMonth) {
-                    if (newMonth != null) {
-                      setState(() {
-                        selectedMonth = newMonth;
-                      });
-                    }
+                    if (newMonth != null)
+                      setState(() => selectedMonth = newMonth);
                   },
-                )
+                ),
               ],
             ),
             const Divider(),
-            // Lazy-loaded list of purchases.
             Expanded(
               child: NotificationListener<ScrollNotification>(
                 onNotification: (scrollInfo) {
@@ -359,14 +315,10 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
                           ),
                         ),
                         ...dayProducts.map((product) {
-                          final unitLabel =
-                              getUnitLabel(product.measurementType);
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.symmetric(
-                              vertical: 8,
-                              horizontal: 12,
-                            ),
+                                vertical: 8, horizontal: 12),
                             decoration: BoxDecoration(
                               color: Theme.of(context)
                                   .colorScheme
@@ -398,7 +350,7 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        'Amount: ${product.amount} $unitLabel',
+                                        'Amount: ${product.amount}',
                                         style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w400,

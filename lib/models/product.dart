@@ -3,37 +3,38 @@ import 'package:shopping_list_g11/data/measurement_type.dart';
 /// Represents one grocery item product.
 class Product {
   final String name;
-  final MeasurementType measurementType;
+  final MeasurementType? measurementType;
   final DateTime purchaseDate;
   final String? price;
   final String amount;
 
-  Product({
+  const Product({
     required this.name,
-    required this.measurementType,
+    this.measurementType,
     required this.purchaseDate,
     this.price,
     required this.amount,
   });
 
-  // Factory constructor that uses the mapping to determine measurementType.
+  /// Factory constructor with optional [measurementType].
+
   factory Product.fromName({
     required String name,
     required DateTime purchaseDate,
-    price,
+    String? price,
     required String amount,
+    MeasurementType? measurementType,
   }) {
-    final normalized = name.toLowerCase().trim();
-    final type = groceryMapping[normalized] ?? MeasurementType.amount;
     return Product(
       name: name,
-      measurementType: type,
+      measurementType: measurementType,
       purchaseDate: purchaseDate,
       price: price,
       amount: amount,
     );
   }
 }
+
 
 
 

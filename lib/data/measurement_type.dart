@@ -1,4 +1,4 @@
-enum MeasurementType { amount, liter, gram }
+enum MeasurementType { amount, liter, gram, milliliter, kilogram }
 
 // Eventuelt konvertere 5000 g til 5 kg f.eks
 
@@ -6,12 +6,34 @@ enum MeasurementType { amount, liter, gram }
 String getUnitLabel(MeasurementType type) {
   switch (type) {
     case MeasurementType.liter:
-      return 'liter';
+      return 'L';
+    case MeasurementType.milliliter:
+      return 'mL';
     case MeasurementType.gram:
-      return 'grams';
+      return 'g';
+    case MeasurementType.kilogram:
+      return 'kg';
     case MeasurementType.amount:
     default:
-      return '';
+      return ''; // countable items have no unit suffix
+  }
+}
+MeasurementType measurementTypeFromString(String s) {
+  switch (s.toLowerCase()) {
+    case 'l':
+    case 'liter':
+      return MeasurementType.liter;
+    case 'ml':
+    case 'milliliter':
+      return MeasurementType.milliliter;
+    case 'kg':
+    case 'kilogram':
+      return MeasurementType.kilogram;
+    case 'g':
+    case 'gram':
+      return MeasurementType.gram;
+    default:
+      return MeasurementType.amount;
   }
 }
 
