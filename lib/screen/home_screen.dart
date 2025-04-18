@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shopping_list_g11/controllers/gemini_controller.dart';
+import 'package:shopping_list_g11/widget/user_feedback/regular_custom_snackbar.dart';
 import 'package:shopping_list_g11/providers/meal_suggestions.dart';
 
 /// Home screen for the app.
@@ -21,7 +22,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     'Carrots': '2',
   };
 
-  /// Returns an icon for expiring items, temporary setup
   IconData _getExpiringIcon(String itemName) {
     final lower = itemName.toLowerCase();
     if (lower.contains('milk') ||
@@ -34,34 +34,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context).colorScheme;
+
+    // get meal changes:
     final mealSuggestions = ref.watch(mealSuggestionsProvider);
+    // Get access to controller methods (add, remove etc)
+    final notifier = ref.read(mealSuggestionsProvider.notifier);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: theme.surface,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'ShelfAware',
-                style: TextStyle(
+            Text(
+              'ShelfAware',
+              style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.tertiary,
-                ),
-              ),
+                  color: theme.tertiary),
             ),
             /// TEMPORARY BUTTON UNTIL THE TESTING OF CATEGORY THING IS DONE WITH GEMINI 
+            const SizedBox(height: 4),
             Center(
               child: ElevatedButton(
                 onPressed: () async {
                   final controller = GeminiController(
-                      ref: ref,
-                      controller:
-                          TextEditingController());
+                    ref: ref,
+                    controller: TextEditingController(),
+                  );
                   await controller.processProducts();
                 },
                 child: const Text('Buy More Pokemon'),
@@ -70,14 +72,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(height: 4),
             const Divider(),
             const SizedBox(height: 8),
-            Text(
-              'Expiring Soon',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.normal,
-                color: Theme.of(context).colorScheme.tertiary,
-              ),
-            ),
+
+            Text('Expiring Soon',
+                style: TextStyle(fontSize: 18, color: theme.tertiary)),
             const SizedBox(height: 12),
             Expanded(
               child: ListView.builder(
@@ -87,7 +84,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 itemBuilder: (context, index) {
                   final item = expiringItems.keys.elementAt(index);
                   final expiryTime = expiringItems[item];
-
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.symmetric(
@@ -98,53 +94,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                     child: Row(
                       children: [
-                        // left side, icon and name
                         Expanded(
                           child: Row(
                             children: [
-                              Icon(
-                                _getExpiringIcon(item),
-                                size: 20,
-                                color: Theme.of(context).colorScheme.tertiary,
-                              ),
+                              Icon(_getExpiringIcon(item),
+                                  size: 20, color: theme.tertiary),
                               const SizedBox(width: 10),
                               Flexible(
                                 child: Text(
                                   item,
                                   style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    color:
-                                        Theme.of(context).colorScheme.tertiary,
-                                  ),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                      color: theme.tertiary),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        // when it expires
                         Row(
                           children: [
-                            Icon(
-                              Icons.access_time, // Use the desired icon here.
-                              size: 20,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .tertiary
-                                  .withOpacity(0.7),
-                            ),
+                            Icon(Icons.access_time,
+                                size: 20,
+                                color: theme.tertiary.withOpacity(0.7)),
                             const SizedBox(width: 4),
                             Text(
                               expiryTime ?? '',
                               style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .tertiary
-                                    .withOpacity(0.7),
-                              ),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.tertiary.withOpacity(0.7)),
                             ),
                           ],
                         ),
@@ -155,14 +135,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            Text(
-              'Meal Suggestions',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.normal,
-                color: Theme.of(context).colorScheme.tertiary,
-              ),
-            ),
+
+            // Meal Suggestions section
+            Text('Meal Suggestions',
+                style: TextStyle(fontSize: 18, color: theme.tertiary)),
             const SizedBox(height: 12),
             Expanded(
               child: ListView.builder(
@@ -171,92 +147,89 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 itemCount: mealSuggestions.length,
                 itemBuilder: (context, index) {
                   final meal = mealSuggestions[index];
-                  final mealName = meal['name'] as String;
+                  final name = meal['name'] as String;
                   final servings = meal['servings'] as int? ?? 1;
                   final lactoseFree = meal['lactoseFree'] as bool? ?? false;
                   final vegan = meal['vegan'] as bool? ?? false;
                   final vegetarian = meal['vegetarian'] as bool? ?? false;
 
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    child: Material(
-                      color: Theme.of(context).colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(8),
-                      clipBehavior: Clip
-                          .hardEdge, // so that the "press / hold" feedback is contained within the item, not outside
+                  return Dismissible(
+                    key: ValueKey(name),
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 20),
+                      decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(8)),
+                      child: const Icon(Icons.delete, color: Colors.white),
+                    ),
+                    direction: DismissDirection.endToStart,
+                    onDismissed: (direction) {
+                      final removed = mealSuggestions[index];
+                      notifier.removeSuggestion(index);
+                      ScaffoldMessenger.of(context)
+                        ..hideCurrentSnackBar()
+                        ..showSnackBar(
+                          CustomSnackbar.buildSnackBar(
+                            title: 'Removed',
+                            message: '$name removed',
+                            innerPadding:
+                                const EdgeInsets.symmetric(horizontal: 16),
+                            actionText: 'Undo',
+                            onAction: () {
+                              notifier.insertSuggestion(index, removed);
+                            },
+                          ),
+                        );
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                          color: theme.primaryContainer,
+                          borderRadius: BorderRadius.circular(8)),
                       child: InkWell(
-                        onTap: () {
-                          // navigate via meal provider the meal which matches this name.
-                        },
+                        onTap: () {},
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
                               vertical: 10, horizontal: 14),
                           child: Row(
                             children: [
-                              // Servings icon and number.
-                              Icon(
-                                servings > 1 ? Icons.people : Icons.person,
-                                size: 20,
-                                color: Theme.of(context).colorScheme.tertiary,
-                              ),
+                              Icon(servings > 1 ? Icons.people : Icons.person,
+                                  size: 20, color: theme.tertiary),
                               const SizedBox(width: 4),
-                              Text(
-                                '$servings',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: Theme.of(context).colorScheme.tertiary,
-                                ),
-                              ),
+                              Text('$servings',
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                      color: theme.tertiary)),
                               const SizedBox(width: 10),
-                              // Meal name and additional icons.
                               Expanded(
                                 child: Row(
                                   children: [
                                     Flexible(
-                                      child: Text(
-                                        mealName,
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .tertiary,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
+                                      child: Text(name,
+                                          style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                              color: theme.tertiary),
+                                          overflow: TextOverflow.ellipsis),
                                     ),
                                     if (lactoseFree || vegan || vegetarian)
                                       const SizedBox(width: 8),
                                     if (lactoseFree) ...[
-                                      Icon(
-                                        Icons.icecream,
-                                        size: 20,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .tertiary,
-                                      ),
-                                      const SizedBox(width: 4),
+                                      Icon(Icons.icecream,
+                                          size: 20, color: theme.tertiary),
+                                      const SizedBox(width: 4)
                                     ],
                                     if (vegan) ...[
-                                      Icon(
-                                        Icons.eco,
-                                        size: 20,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .tertiary,
-                                      ),
-                                      const SizedBox(width: 4),
+                                      Icon(Icons.eco,
+                                          size: 20, color: theme.tertiary),
+                                      const SizedBox(width: 4)
                                     ],
                                     if (vegetarian) ...[
-                                      Icon(
-                                        Icons.spa,
-                                        size: 20,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .tertiary,
-                                      ),
-                                      const SizedBox(width: 4),
+                                      Icon(Icons.spa,
+                                          size: 20, color: theme.tertiary),
+                                      const SizedBox(width: 4)
                                     ],
                                   ],
                                 ),

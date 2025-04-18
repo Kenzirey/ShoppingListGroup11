@@ -45,7 +45,17 @@ MealSuggestionsNotifier()
       state = updated;
     }
   }
+
+  void insertSuggestion(int index, Map<String, dynamic> suggestion) {
+  final updated = [...state];
+  if (index >= 0 && index <= updated.length) {
+    updated.insert(index, suggestion);
+    state = updated;
+  }
 }
+}
+
+
 
 /// the actual riverpod provider.
 final mealSuggestionsProvider =
