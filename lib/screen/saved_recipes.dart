@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shopping_list_g11/models/saved_recipe.dart';
 import 'package:shopping_list_g11/widget/user_feedback/regular_custom_snackbar.dart';
 import '../controllers/saved_recipe_controller.dart';
 import '../providers/recipe_provider.dart';
@@ -36,27 +37,19 @@ class _SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
 
   void _showDeleteSnackBar({
     required BuildContext context,
-    required dynamic user,
-    required dynamic removedRecipe,
+    required String profileId,
+    required SavedRecipe removedRecipe,
   }) {
-    final snackBar = SnackBar(
-      behavior: SnackBarBehavior.floating,
-      margin: EdgeInsets.zero, // edge-to edge here
-      padding: EdgeInsets.zero,
-      elevation: 0, // no shadow 😎
-      backgroundColor: Colors.transparent,
-      duration: const Duration(seconds: 4),
-      content: CustomSnackbar(
-        title: 'Deleted!',
-        message: 'The recipe has been removed.',
-        actionText: 'UNDO',
-        onAction: () {
-          ref
-              .read(savedRecipesControllerProvider)
-              .addRecipe(user.profileId!, removedRecipe.recipe);
-        },
-        innerPadding: const EdgeInsets.symmetric(horizontal: 16),
-      ),
+    final snackBar = CustomSnackbar.buildSnackBar(
+      title: 'Deleted!',
+      message: '${removedRecipe.recipe.name} has been removed.',
+      actionText: 'UNDO',
+      onAction: () {
+        ref
+            .read(savedRecipesControllerProvider)
+            .addRecipe(profileId, removedRecipe.recipe);
+      },
+      innerPadding: const EdgeInsets.symmetric(horizontal: 16),
     );
 
     ScaffoldMessenger.of(context)
@@ -119,21 +112,20 @@ class _SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
                     ),
                     onDismissed: (direction) {
                       final user = ref.read(currentUserProvider);
-                      if (user == null) return;
+                      if (user == null || user.profileId == null) return;
 
-                      final removedRecipe = savedRecipe;
-                      // Remove the recipe.
+                      final removed = savedRecipe;
                       ref
                           .read(savedRecipesControllerProvider)
-                          .removeRecipe(user.profileId!, removedRecipe);
+                          .removeRecipe(user.profileId!, removed);
 
-                      // Show the custom full‑width snackbar with inline UNDO.
                       _showDeleteSnackBar(
                         context: context,
-                        user: user,
-                        removedRecipe: removedRecipe,
+                        profileId: user.profileId!,
+                        removedRecipe: removed,
                       );
                     },
+
                     child: InkWell(
                       onTap: () {
                         final router = GoRouter.of(context);
@@ -188,21 +180,26 @@ class _SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
                               ),
                               onPressed: () {
                                 final user = ref.read(currentUserProvider);
-                                if (user == null) {
+                                if (user == null || user.profileId == null) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                          'You must be logged in to remove a recipe!'),
+                                    CustomSnackbar.buildSnackBar(
+                                      title: 'Error',
+                                      message:
+                                          'You must be logged in to remove a recipe.',
+                                      innerPadding: const EdgeInsets.symmetric(
+                                          horizontal: 16),
                                     ),
                                   );
                                   return;
                                 }
+
                                 ref
                                     .read(savedRecipesControllerProvider)
                                     .removeRecipe(user.profileId!, savedRecipe);
+
                                 _showDeleteSnackBar(
                                   context: context,
-                                  user: user,
+                                  profileId: user.profileId!,
                                   removedRecipe: savedRecipe,
                                 );
                               },
