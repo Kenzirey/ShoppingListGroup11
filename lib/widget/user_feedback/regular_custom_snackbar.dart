@@ -9,7 +9,7 @@ class CustomSnackbar extends StatelessWidget {
 
   final String? actionText; // such as undo
   final VoidCallback? onAction;
-  final double height;
+  final double? maxHeight;
   final EdgeInsetsGeometry innerPadding;
 
   const CustomSnackbar({
@@ -18,17 +18,48 @@ class CustomSnackbar extends StatelessWidget {
     required this.message,
     this.actionText,
     this.onAction,
-    this.height = 80.0,
+    this.maxHeight,
     this.innerPadding = EdgeInsets.zero,
   });
+
+  /// Build a SnackBar with our default styling
+  static SnackBar buildSnackBar({
+    required String title,
+    required String message,
+    String? actionText,
+    VoidCallback? onAction,
+    Duration duration = const Duration(seconds: 4),
+    double? maxHeight,
+    EdgeInsetsGeometry innerPadding = EdgeInsets.zero,
+  }) {
+    return SnackBar(
+      behavior: SnackBarBehavior.floating,
+      margin: EdgeInsets.zero,
+      padding: EdgeInsets.zero,
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      duration: duration,
+      content: CustomSnackbar(
+        title: title,
+        message: message,
+        actionText: actionText,
+        onAction: onAction,
+        maxHeight: maxHeight,
+        innerPadding: innerPadding,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
-      height: height,
-      padding: EdgeInsets.zero, // no padding as we want it to be edge to edge with the screen
+      constraints: BoxConstraints(
+        minHeight: 60.0,
+        maxHeight: maxHeight ?? double.infinity,
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
         color: theme.primaryContainer, // background color of the container of the snackbar
         borderRadius: BorderRadius.zero, // flush with screen edges, no padding on sides
@@ -39,6 +70,7 @@ class CustomSnackbar extends StatelessWidget {
             child: Padding(
               padding: innerPadding,
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
