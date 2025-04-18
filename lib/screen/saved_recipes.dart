@@ -112,7 +112,6 @@ class _SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
 
                   return Dismissible(
                     key: Key(recipe.name),
-                    // Swipe from right-to-left.
                     direction: DismissDirection.endToStart,
                     background: Container(
                       alignment: Alignment.centerRight,

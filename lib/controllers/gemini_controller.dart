@@ -34,6 +34,8 @@ class GeminiController {
     [Insert step-by-step instructions]
 
     Ensure that the recipe name is a distinct section, separate from the summary.
+    When writing the **Instructions**, always restate each ingredient with its exact amount as you listed it (e.g., “Combine 250 ml water and a pinch of salt with the oats”).
+    Do not assume the user knows any quantities beyond what you listed in the **Ingredients** section.
     """;
 
     try {
