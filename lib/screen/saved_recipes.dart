@@ -45,9 +45,19 @@ class _SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
       message: '${removedRecipe.recipe.name} has been removed.',
       actionText: 'UNDO',
       onAction: () {
+        // re‑add on undo
         ref
             .read(savedRecipesControllerProvider)
             .addRecipe(profileId, removedRecipe.recipe);
+        // immediately update the snackbar to a restored success message
+        final restoredSnack = CustomSnackbar.buildSnackBar(
+          title: 'Restored!',
+          message: 'Successfully re-added ${removedRecipe.recipe.name}.',
+          innerPadding: const EdgeInsets.symmetric(horizontal: 16),
+        );
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(restoredSnack);
       },
       innerPadding: const EdgeInsets.symmetric(horizontal: 16),
     );
@@ -195,7 +205,10 @@ class _SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
 
                                 ref
                                     .read(savedRecipesControllerProvider)
-                                    .removeRecipe(user.profileId!, savedRecipe);
+                                    .removeRecipe(
+                                      user.profileId!,
+                                      savedRecipe,
+                                    );
 
                                 _showDeleteSnackBar(
                                   context: context,
