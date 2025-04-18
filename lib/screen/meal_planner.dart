@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shopping_list_g11/providers/meal_planner_provider.dart';
 import 'package:shopping_list_g11/widget/meal_item_helper.dart';
 import 'package:shopping_list_g11/widget/search_bar.dart';
+import 'package:shopping_list_g11/widget/user_feedback/regular_custom_snackbar.dart';
 
 /// Allows user to keep track and manage meals for the week.
 class MealPlannerScreen extends ConsumerStatefulWidget {
@@ -14,34 +15,71 @@ class MealPlannerScreen extends ConsumerStatefulWidget {
 
 class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
   // Example placeholder for the current week number.
-  int currentWeek = 12;
+  late int currentWeek;
 
   // This represents the actual current week, we do need to use datetime or something instead.
-  final int actualCurrentWeek = 12;
+  late int actualCurrentWeek;
 
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    actualCurrentWeek = _calculateWeekNumber(now);
+    currentWeek = actualCurrentWeek;
+  }
+
+  /// Calculate ISO week number (week starting Monday) for a given date.
+  /// So that the week number is consistent with the current week, without hardcoding the specific week.
+  int _calculateWeekNumber(DateTime date) {
+    final firstThursday = DateTime(date.year, 1, 1).add(
+      Duration(days: (4 - DateTime(date.year, 1, 1).weekday + 7) % 7),
+    );
+    final week1Monday = firstThursday.subtract(
+      Duration(days: firstThursday.weekday - DateTime.monday),
+    );
+    return ((date.difference(week1Monday).inDays) / 7).floor() + 1;
+  }
+
+  /// Remove a meal from a specific day, with undo support.
   void _removeMeal(
-      BuildContext context, String day, Map<String, dynamic> meal) {
-    // so we can use the undo feature.
-    final removedIndex = ref.read(mealPlannerProvider)[day]!.indexOf(meal);
+    BuildContext context,
+    String day,
+    Map<String, dynamic> meal,
+  ) {
+    // capture index so we can undo removal
+    final planner = ref.read(mealPlannerProvider);
+    final removedIndex = planner[day]!.indexOf(meal);
 
     // Call the notifier's method to remove the meal
-    ref.read(mealPlannerProvider.notifier).removeMeal(day, meal);
+    final notifier = ref.read(mealPlannerProvider.notifier);
+    notifier.removeMeal(day, meal);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Removed "${meal['name']}"'),
-        action: SnackBarAction(
-          label: 'Undo',
-          textColor: Theme.of(context).colorScheme.error,
-          onPressed: () {
+    // Use the custom reu-sable snackbar with an undo to resto.
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        CustomSnackbar.buildSnackBar(
+          title: 'Removed',
+          message: '"${meal['name']}" removed',
+          innerPadding: const EdgeInsets.symmetric(horizontal: 16),
+          actionText: 'Undo',
+          onAction: () {
             // Use the insertMeal method to undo removal
-            ref
-                .read(mealPlannerProvider.notifier)
-                .insertMeal(day, removedIndex, meal);
+            notifier.insertMeal(day, removedIndex, meal);
+            // Confirm re-addition
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                CustomSnackbar.buildSnackBar(
+                  title: 'Restored',
+                  message:
+                      '"${meal['name']}" successfully restored to meal plan',
+                  innerPadding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+              );
           },
         ),
-      ),
-    );
+      );
   }
 
   @override
@@ -182,16 +220,21 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
                           return Dismissible(
                             key: ValueKey(meal),
                             direction: DismissDirection.endToStart,
-                            background: Container(
-                              alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.only(right: 16),
+                            background: Material(
                               color: Colors.red,
-                              child:
-                                  const Icon(Icons.delete, color: Colors.white),
+                              borderRadius: BorderRadius.circular(8),
+                              child: InkWell(
+                                onTap: () {}, // ripple effect only
+                                splashColor: Colors.white24,
+                                highlightColor: Colors.white24,
+                                child: Container(
+                                  alignment: Alignment.centerRight,
+                                  padding: const EdgeInsets.only(right: 16),
+                                  child: const Icon(Icons.delete,
+                                      color: Colors.white),
+                                ),
+                              ),
                             ),
-                            onDismissed: (direction) {
-                              _removeMeal(context, day, meal);
-                            },
                             child: MealItem(
                               mealName: meal['name'],
                               servings: meal['servings'] ?? 1,

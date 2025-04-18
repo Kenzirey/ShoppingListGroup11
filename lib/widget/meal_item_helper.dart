@@ -8,7 +8,7 @@ class MealItem extends StatelessWidget {
   final bool? vegan;
   final bool? vegetarian;
   final VoidCallback onDelete;
-//TODO: set this up to be used for saved_recipes as well, to remove code duplication
+
   const MealItem({
     super.key,
     required this.mealName,
@@ -46,9 +46,7 @@ class MealItem extends StatelessWidget {
               color: color,
             ),
           ),
-
           const SizedBox(width: 10),
-
           Expanded(
             child: Row(
               children: [
@@ -63,11 +61,8 @@ class MealItem extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-
-                // Only add spacing if at least one dietary icon is present, to keep things consistent
                 if (lactoseFree == true || vegan == true || vegetarian == true)
                   const SizedBox(width: 8),
-
                 if (lactoseFree == true) ...[
                   Icon(Icons.icecream, size: iconSize, color: color),
                   const SizedBox(width: 4),
@@ -83,15 +78,24 @@ class MealItem extends StatelessWidget {
               ],
             ),
           ),
-
-          // Delete icon at the far right
           const SizedBox(width: 10),
-          InkWell(
-            onTap: onDelete,
-            child: Icon(
-              Icons.delete,
-              size: iconSize,
-              color: color,
+          // Delete icon with red ripple on tap
+          Material(
+            color: Colors.transparent,
+            shape: const CircleBorder(),
+            clipBehavior: Clip.hardEdge,
+            child: InkWell(
+              onTap: onDelete,
+              customBorder: const CircleBorder(),
+              splashColor: Theme.of(context).colorScheme.error.withOpacity(0.5),
+              child: Padding(
+                padding: const EdgeInsets.all(4.0),
+                child: Icon(
+                  Icons.delete,
+                  size: iconSize,
+                  color: color,
+                ),
+              ),
             ),
           ),
         ],
