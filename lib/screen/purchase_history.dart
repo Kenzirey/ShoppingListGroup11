@@ -270,8 +270,9 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
                   },
                   dropdownColor: Theme.of(context).colorScheme.surface,
                   onChanged: (newMonth) {
-                    if (newMonth != null)
+                    if (newMonth != null) {
                       setState(() => selectedMonth = newMonth);
+                    }
                   },
                 ),
               ],

@@ -5,6 +5,7 @@ import 'package:flutter_gemini/flutter_gemini.dart';
 import 'package:shopping_list_g11/main.dart';
 import 'package:shopping_list_g11/models/recipe.dart';
 import 'package:shopping_list_g11/providers/chat_provider.dart';
+import 'package:shopping_list_g11/providers/chat_recipe_provider.dart';
 import 'package:shopping_list_g11/providers/recipe_provider.dart';
 
 /// Controller for handling user-interaction with the Gemini Api.
@@ -36,6 +37,7 @@ class GeminiController {
     Ensure that the recipe name is a distinct section, separate from the summary.
     When writing the **Instructions**, always restate each ingredient with its exact amount as you listed it (e.g., “Combine 250 ml water and a pinch of salt with the oats”).
     Do not assume the user knows any quantities beyond what you listed in the **Ingredients** section.
+    When grouping ingredients into sub sections, always prefix the subgroup with “For the [subgroup name]:” (including the colon), then list its ingredients with “* ” bullets.
     """;
 
     try {
@@ -86,6 +88,7 @@ class GeminiController {
         parsedRecipe.ingredients.isNotEmpty &&
         parsedRecipe.instructions.isNotEmpty) {
       ref.read(recipeProvider.notifier).state = parsedRecipe;
+      ref.read(chatRecipeProvider.notifier).update((_) => parsedRecipe);
       ref.read(chatProvider.notifier).updateLastBotMessage(geminiResponse);
     } else {
       debugPrint("Error: Recipe parsing failed.");

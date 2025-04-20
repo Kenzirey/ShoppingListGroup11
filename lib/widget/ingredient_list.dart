@@ -37,9 +37,13 @@ class _IngredientListState extends ConsumerState<IngredientList> {
     }
   }
 
-  bool _isGroupHeader(String ingredient) {
-    return ingredient.toLowerCase().startsWith('for the');
-  }
+bool _isGroupHeader(String ingredient) {
+  final trimmed = ingredient.trim();
+  // either “For the X:” or anything ending in “:”
+  return trimmed.toLowerCase().startsWith('for the') 
+      || trimmed.endsWith(':');
+}
+
 
   bool _isHidden(String ingredient) {
     final low = ingredient.toLowerCase();
@@ -147,7 +151,7 @@ class _IngredientListState extends ConsumerState<IngredientList> {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         // Purchaseable ingredients, so not salt or water.
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,

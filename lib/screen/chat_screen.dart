@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shopping_list_g11/controllers/gemini_controller.dart';
 import 'package:shopping_list_g11/providers/chat_provider.dart';
+import 'package:shopping_list_g11/providers/chat_recipe_provider.dart';
+import 'package:shopping_list_g11/providers/current_user_provider.dart';
+import 'package:shopping_list_g11/controllers/saved_recipe_controller.dart';
 import 'package:shopping_list_g11/providers/recipe_provider.dart';
-import 'package:go_router/go_router.dart';
+import 'package:shopping_list_g11/providers/saved_recipe_provider.dart';
 import 'package:shopping_list_g11/widget/styles/buttons/chat_button_styles.dart';
+import 'package:shopping_list_g11/widget/user_feedback/regular_custom_snackbar.dart';
 import '../controllers/recipe_controller.dart';
-import '../controllers/saved_recipe_controller.dart';
-import '../providers/current_user_provider.dart';
 
 /// Screen for asking AI for a specific recipe.
 /// Allows user to save a recipe for later, ask for a new one, or view recipe in recipe screen.
@@ -21,10 +24,18 @@ class ChatScreen extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // clear if there are no messages so we don't have alien buttons belonging to NOTHING
+      final msgs = ref.read(chatProvider).messages;
+      if (msgs.isEmpty) {
+        ref.read(chatRecipeProvider.notifier).update((_) => null);
+      }
+    });
   }
 
   @override
@@ -38,10 +49,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget build(BuildContext context) {
     final chatState = ref.watch(chatProvider);
     final messages = chatState.messages;
-    final recipe = ref.watch(recipeProvider);
-    final hasRecipe = recipe != null &&
+
+    final recipe = ref.watch(chatRecipeProvider);
+
+    final hasRecipe = messages.isNotEmpty &&
+        !messages.last.isUser &&
+        recipe != null &&
         recipe.name.isNotEmpty &&
         recipe.ingredients.isNotEmpty;
+
+    final savedRecipes = ref.watch(savedRecipesProvider);
+    final isSaved = recipe != null &&
+        savedRecipes.any((sr) => sr.recipe.name == recipe.name);
 
     return Scaffold(
       body: Padding(
@@ -68,7 +87,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            //temporary
                             'Ask chat for a recipe',
                             style: TextStyle(
                               fontSize: 20,
@@ -87,39 +105,35 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       reverse: true,
                       itemCount: messages.length,
                       itemBuilder: (context, index) {
-                        final message = messages[messages.length - 1 - index];
+                        final msg = messages[messages.length - 1 - index];
                         return Align(
-                          alignment: message.isUser
+                          alignment: msg.isUser
                               ? Alignment.centerRight
                               : Alignment.centerLeft,
                           child: Container(
                             padding: const EdgeInsets.all(10),
-                            margin: const EdgeInsets.symmetric(
-                              // doesn't need extra horizontal cuz it is already handled in main wrapper
-                                vertical: 5, horizontal: 0),
+                            margin: const EdgeInsets.symmetric(vertical: 5),
                             decoration: BoxDecoration(
-                              color: message.isUser
-                                  ? Theme.of(context)
-                                      .colorScheme
-                                      .secondary
+                              color: msg.isUser
+                                  ? Theme.of(context).colorScheme.secondary
                                   : Theme.of(context)
                                       .colorScheme
                                       .primaryContainer,
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: message.text == 'Thinking of recipe...'
+                            child: msg.text == 'Thinking of recipe...'
                                 ? Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
-                                        message.text,
+                                        msg.text,
                                         style: TextStyle(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .tertiary),
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .tertiary,
+                                        ),
                                       ),
                                       const SizedBox(width: 12),
-                                      // Circle is now actually round
                                       const SizedBox(
                                         width: 18,
                                         height: 18,
@@ -129,11 +143,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                     ],
                                   )
                                 : Text(
-                                    message.text,
+                                    msg.text,
                                     style: TextStyle(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .tertiary),
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .tertiary,
+                                    ),
                                   ),
                           ),
                         );
@@ -141,86 +156,119 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     ),
             ),
             const SizedBox(height: 8),
-
-            // Show recipe section, temporary setup.
             if (hasRecipe)
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () async {
-                        final currentRecipe = ref.read(recipeProvider);
-                        final currentUser = ref.read(currentUserProvider);
-                        final router = GoRouter.of(context);
-
-                        if (currentRecipe == null) return;
-
-                        if (currentUser == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('You must be logged in to save a recipe.'),
-                          ),
-                        );
-                        return; 
-                      }
-
-
-                      final savedRecipesController = ref.read(savedRecipesControllerProvider);
-                      await savedRecipesController.addRecipeByAuthId(currentUser.authId, currentRecipe);
-
-                      if (!mounted) return;
-                      router.goNamed('savedRecipes');
-                    },
+                      onPressed: (_isSaving || isSaved)
+                          ? null
+                          : () async {
+                              final curr = ref.read(chatRecipeProvider)!;
+                              final user = ref.read(currentUserProvider);
+                              if (user == null) {
+                                ScaffoldMessenger.of(context)
+                                  ..hideCurrentSnackBar()
+                                  ..showSnackBar(
+                                    CustomSnackbar.buildSnackBar(
+                                      title: 'Not Logged In',
+                                      message:
+                                          'You must be logged in to save a recipe.',
+                                    ),
+                                  );
+                                return;
+                              }
+                              setState(() => _isSaving = true);
+                              await ref
+                                  .read(savedRecipesControllerProvider)
+                                  .addRecipeByAuthId(user.authId, curr);
+                              if (!mounted) return;
+                              setState(() => _isSaving = false);
+                            },
                       style: ButtonStyles.addForLater(
-                          Theme.of(context).colorScheme.primaryContainer),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.add,
-                              size: 20,
-                              color: Theme.of(context).colorScheme.tertiary),
-                          const SizedBox(width: 8),
-                          Text(
-                            "Add for later",
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Theme.of(context).colorScheme.tertiary,
-                            ),
-                          ),
-                        ],
+                        Theme.of(context).colorScheme.primaryContainer,
                       ),
+                      child: _isSaving
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : isSaved
+                              ? Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.check,
+                                      size: 20,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .tertiary,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Saved',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .tertiary,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.add,
+                                      size: 20,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .tertiary,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Add for later',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .tertiary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                     ),
                   ),
-                  const SizedBox(
-                      width:
-                          16), // Space between the buttons above the textform
+                  const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
-                        // to not use context in async gap with unrelated mount check :).
-                        final router = GoRouter.of(context);
-                        final currentRecipe = ref.read(recipeProvider);
-                        if (currentRecipe != null) {
-                          await RecipeController(ref: ref)
-                              .addRecipe(currentRecipe);
-                        }
+                        final curr = ref.read(chatRecipeProvider)!;
+                        // need to populate the "global" recipe provider that the recipe screen uses here,
+                        // fun fact: before I was just reading whatever that it had last, ops.
+                        ref.read(recipeProvider.notifier).update((_) => curr);
+                        // add the recipe to the database. // or should this be moved to the prompt itself when it has a succcess? hm.
+                        await RecipeController(ref: ref).addRecipe(curr);
                         if (!mounted) return;
-                        router.goNamed('recipe');
+                        // PUUUSH
+                        GoRouter.of(context).pushNamed('recipe');
                       },
                       style: ButtonStyles.viewRecipe(
-                          Theme.of(context).colorScheme.primaryContainer),
+                        Theme.of(context).colorScheme.primaryContainer,
+                      ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.restaurant_menu,
-                              size: 20,
-                              color: Theme.of(context).colorScheme.tertiary),
+                          Icon(
+                            Icons.restaurant_menu,
+                            size: 20,
+                            color: Theme.of(context).colorScheme.tertiary,
+                          ),
                           const SizedBox(width: 8),
                           Text(
-                            "View Recipe",
+                            'View Recipe',
                             style: TextStyle(
                               fontSize: 18,
                               color: Theme.of(context).colorScheme.tertiary,
@@ -232,9 +280,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ),
                 ],
               ),
-
             const SizedBox(height: 12),
-
             Row(
               children: [
                 Expanded(
@@ -262,27 +308,28 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           width: 2,
                         ),
                       ),
-                      // Send button inside textfield
-                      // https://api.flutter.dev/flutter/material/InputDecoration/suffixIcon.html
                       suffixIcon: IconButton(
                         icon: const Icon(Icons.send),
                         color: Theme.of(context).colorScheme.tertiary,
-                        onPressed: () =>
-                            GeminiController(ref: ref, controller: _controller)
-                                .sendMessage(),
+                        onPressed: () {
+                          ref
+                              .read(chatRecipeProvider.notifier)
+                              .update((_) => null);
+                          GeminiController(ref: ref, controller: _controller)
+                              .sendMessage();
+                        },
                       ),
                     ),
-                    onSubmitted: (_) =>
-                        GeminiController(ref: ref, controller: _controller)
-                            .sendMessage(),
+                    onSubmitted: (_) {
+                      ref.read(chatRecipeProvider.notifier).update((_) => null);
+                      GeminiController(ref: ref, controller: _controller)
+                          .sendMessage();
+                    },
                   ),
                 ),
               ],
             ),
-            // adds distance between bottom nav bar and the text field.
-            const SizedBox(
-              height: 12,
-            ),
+            const SizedBox(height: 12),
           ],
         ),
       ),
