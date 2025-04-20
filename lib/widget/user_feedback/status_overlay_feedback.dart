@@ -41,9 +41,12 @@ class StatusOverlayFeedback {
                 children: [
                   SizedBox(
                     width: MediaQuery.of(context).size.width * 0.4,
+                    height: MediaQuery.of(context).size.width *
+                        0.4,
                     child: Lottie.asset(
                       lottieAsset,
                       repeat: false,
+                      fit: BoxFit.contain, // scale to box
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -147,8 +150,7 @@ class StatusOverlayFeedback {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
             child: Text(
               'Try Again',
