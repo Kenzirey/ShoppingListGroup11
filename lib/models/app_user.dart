@@ -11,7 +11,12 @@ class AppUser {
 
   String get name => userName;
 
-  bool get isGoogleUser => providers.contains('google');
+  /// True if the account only has Google as a provider.
+  bool get isGoogleOnly => providers.length == 1 && providers.first == 'google';
+
+  /// True if they signed up (or still have) an email/password identity.
+  bool get canUsePassword => providers.contains('email');
+
 
   AppUser(
       {required this.userName,

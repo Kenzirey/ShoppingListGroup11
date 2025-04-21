@@ -76,7 +76,7 @@ class _EditAccountDetailsScreenState extends ConsumerState<EditAccountDetailsScr
     super.dispose();
   }
 
- void _saveChanges(AppUser currentUser, bool isGoogleUser) {
+ void _saveChanges(AppUser currentUser) {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
 
@@ -263,7 +263,7 @@ class _EditAccountDetailsScreenState extends ConsumerState<EditAccountDetailsScr
     );
   }
 
-  Widget _buildSaveButton(AppUser currentUser, bool isGoogleUser) {
+  Widget _buildSaveButton(AppUser currentUser) {
     final theme = Theme.of(context);
     return Container(
       width: double.infinity,
@@ -287,7 +287,7 @@ class _EditAccountDetailsScreenState extends ConsumerState<EditAccountDetailsScr
         ],
       ),
       child: ElevatedButton(
-        onPressed: _isLoading ? null : () => _saveChanges(currentUser, isGoogleUser),
+        onPressed: _isLoading ? null : () => _saveChanges(currentUser),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
@@ -316,7 +316,7 @@ class _EditAccountDetailsScreenState extends ConsumerState<EditAccountDetailsScr
         body: const Center(child: Text('No user found.')),
       );
     }
-    final bool isGoogleUser = currentUser.isGoogleUser;
+    final bool canUsePassword = currentUser.canUsePassword;
     final theme = Theme.of(context);
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -388,7 +388,7 @@ class _EditAccountDetailsScreenState extends ConsumerState<EditAccountDetailsScr
                                 prefixIcon: Icons.person,
                               ),
                               const SizedBox(height: 24),
-                              if (!isGoogleUser) ...[
+                              if (canUsePassword) ...[
                                 Text(
                                   'Security',
                                   style: theme.textTheme.titleMedium?.copyWith(
@@ -480,7 +480,7 @@ class _EditAccountDetailsScreenState extends ConsumerState<EditAccountDetailsScr
                           ),
                         ),
                         const SizedBox(height: 32),
-                        _buildSaveButton(currentUser, isGoogleUser),
+                        _buildSaveButton(currentUser),
                       ],
                     ),
                   ),
@@ -492,5 +492,5 @@ class _EditAccountDetailsScreenState extends ConsumerState<EditAccountDetailsScr
       ),
     );
   }
-}
 
+}

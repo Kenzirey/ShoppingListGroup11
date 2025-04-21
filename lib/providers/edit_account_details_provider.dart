@@ -24,7 +24,7 @@ class EditAccountDetailsNotifier extends StateNotifier<AsyncValue<void>> {
     final authController = ref.read(authControllerProvider);
 
     // If not a Google account and password fields are provided validate and change password.
-    if (!currentUser.isGoogleUser &&
+    if (currentUser.canUsePassword &&
         currentPassword.isNotEmpty &&
         newPassword.isNotEmpty) {
       if (newPassword.length < 8) {

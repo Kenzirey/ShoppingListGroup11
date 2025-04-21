@@ -168,7 +168,7 @@ class _UpdateAvatarScreenState extends ConsumerState<UpdateAvatarScreen>
     }
 
     if (_originalGoogleAvatarUrl == null &&
-        currentUser.isGoogleUser &&
+        !currentUser.canUsePassword &&
         currentUser.googleAvatarUrl != null &&
         currentUser.googleAvatarUrl!.isNotEmpty) {
       _originalGoogleAvatarUrl = currentUser.googleAvatarUrl;

@@ -43,17 +43,17 @@ class ProfileHeader extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              currentUser.isGoogleUser
-                  ? Image.asset(
-                      'assets/images/google_logo.png',
-                      width: 18,
-                      height: 18,
-                    )
-                  : const Icon(
-                      Icons.email,
-                      size: 18,
-                      color: Colors.white70,
-                    ),
+              currentUser.canUsePassword
+              ? const Icon(
+                  Icons.email,
+                  size: 18,
+                  color: Colors.white70,
+                )
+              : Image.asset(
+                  'assets/images/google_logo.png',
+                  width: 18,
+                  height: 18,
+                ),
               const SizedBox(width: 8),
               Text(
                 currentUser.email,
