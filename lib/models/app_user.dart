@@ -5,13 +5,13 @@ class AppUser {
   final List<String> dietaryPreferences;
   final String? avatarUrl;
   final String authId;
-  final String provider;
+  final List<String> providers; 
   final String? googleAvatarUrl;
   final String? profileId;
 
   String get name => userName;
 
-  bool get isGoogleUser => provider.toLowerCase() == 'google';
+  bool get isGoogleUser => providers.contains('google');
 
   AppUser(
       {required this.userName,
@@ -19,7 +19,7 @@ class AppUser {
       required this.dietaryPreferences,
       this.avatarUrl,
       required this.authId,
-      required this.provider,
+      required this.providers,
       this.googleAvatarUrl,
       this.profileId,
 });
@@ -31,7 +31,7 @@ AppUser copyWith({
     List<String>? dietaryPreferences,
     String? avatarUrl,
     String? authId,
-    String? provider,
+    List<String>? providers, 
     String? googleAvatarUrl,
     String? profileId,
   }) {
@@ -41,14 +41,15 @@ AppUser copyWith({
       dietaryPreferences: dietaryPreferences ?? this.dietaryPreferences,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       authId: authId ?? this.authId,
-      provider: provider ?? this.provider,
+      providers: providers ?? this.providers,
       googleAvatarUrl: googleAvatarUrl ?? this.googleAvatarUrl,
       profileId: profileId ?? this.profileId,
     );
   }
   
 factory AppUser.fromMap(Map<String, dynamic> map, String email) {
-    final provider = map['provider']?.toString().toLowerCase() ?? 'email';
+    final raw = map['providers'] as List<dynamic>? ?? ['email'];
+    final provs = raw.map((e) => e.toString()).toList();
 
 
     return AppUser(
@@ -60,7 +61,7 @@ factory AppUser.fromMap(Map<String, dynamic> map, String email) {
           : List<String>.from(map['dietary_preferences']),
       avatarUrl: map['avatar_url'] ?? '',
       googleAvatarUrl: map['google_avatar_url'] ?? '',
-      provider: provider,
+      providers: provs, 
       profileId: map['id'],
     );
 }

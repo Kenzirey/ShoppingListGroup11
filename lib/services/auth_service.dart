@@ -5,6 +5,13 @@ import '../models/app_user.dart';
 class AuthService {
   final SupabaseClient _client = Supabase.instance.client;
 
+
+    final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId:       '235387261747-j5fhreodgr19sfb6hb18n4hv9o4u1mui.apps.googleusercontent.com',
+    serverClientId: '235387261747-4j0m8os04p7pdkcg9romdamosko3av1o.apps.googleusercontent.com',
+    scopes:         ['email', 'profile'],
+  );
+
   /// Creates a new user in Supabase and a profile in 'profiles'
   Future<AppUser> signUp(String email, String password, {String? userName}) async {
     try {
@@ -24,7 +31,7 @@ class AuthService {
             'auth_id': supabaseUser.id,
             'name': userName ?? '',
             'dietary_preferences': [],
-            'provider': 'email',
+            'providers': ['email'], 
             'email': supabaseUser.email,
 
           })
@@ -72,97 +79,88 @@ class AuthService {
     }
   }
 
-  /// Logs in (or creates) the user via Google using native flows.
+  /// Signs in (or up) via Google and appends 'google' to providers[] if not present
   Future<AppUser> signInWithGoogleNative() async {
-    final GoogleSignIn googleSignIn = GoogleSignIn(
-      clientId: '235387261747-j5fhreodgr19sfb6hb18n4hv9o4u1mui.apps.googleusercontent.com',
-      serverClientId: '235387261747-4j0m8os04p7pdkcg9romdamosko3av1o.apps.googleusercontent.com',
-      scopes: <String>['email', 'profile'],
-    );
 
-    final googleUser = await googleSignIn.signIn();
+    final googleUser = await _googleSignIn.signIn();
     if (googleUser == null) {
-      throw Exception('Google Sign-In canceled');
+      throw Exception('Google Sign‑In canceled');
     }
-
-    final googleAuth = await googleUser.authentication;
-    final idToken = googleAuth.idToken;
-    final accessToken = googleAuth.accessToken;
-
-    if (idToken == null || accessToken == null) {
-      throw Exception('No idToken or accessToken from Google');
+    final auth = await googleUser.authentication;
+    if (auth.idToken == null || auth.accessToken == null) {
+      throw Exception('Missing Google tokens');
     }
 
     await _client.auth.signInWithIdToken(
       provider: OAuthProvider.google,
-      idToken: idToken,
-      accessToken: accessToken,
+      idToken: auth.idToken!,
+      accessToken: auth.accessToken!,
     );
+    final supabaseUser = _client.auth.currentUser!;
+    
+    Map<String, dynamic>? profile = await _client
+        .from('profiles')
+        .select('*, providers')
+        .eq('auth_id', supabaseUser.id)
+        .maybeSingle();
 
-    final supabaseUser = _client.auth.currentUser;
-    if (supabaseUser == null) {
-      throw Exception('Supabase user is null after Google sign-in');
-    }
-
-    Map<String, dynamic>? profileData;
-    for (int i = 0; i < 3; i++) {
-      profileData = await _client
+    if (profile == null) {
+      profile = await _client
           .from('profiles')
+          .insert({
+            'auth_id': supabaseUser.id,
+            'email': supabaseUser.email,
+            'name': googleUser.displayName ?? '',
+            'providers': ['google'],
+            'avatar_url': googleUser.photoUrl,
+            'google_avatar_url': googleUser.photoUrl,
+            'dietary_preferences': <String>[],
+          })
           .select()
-          .eq('auth_id', supabaseUser.id)
-          .maybeSingle();
-      if (profileData != null) break;
-      await Future.delayed(const Duration(seconds: 2));
-    }
+          .single();
+    } else {
 
-    profileData ??= await _client.from('profiles').insert({
-      'auth_id': supabaseUser.id,
-      'name': googleUser.displayName ?? '',
-      'avatar_url': googleUser.photoUrl ?? '',
-      'google_avatar_url': googleUser.photoUrl ?? '',
-      'dietary_preferences': [],
-      'provider': 'google',
-      'email': googleUser.email,
-    }).select().single();
+      final List<dynamic> existing = profile['providers'] as List<dynamic>;
+      if (!existing.contains('google')) {
+        existing.add('google');
+        profile = await _client
+            .from('profiles')
+            .update({'providers': existing})
+            .eq('auth_id', supabaseUser.id)
+            .select()
+            .single();
+      }
 
-    if (profileData['provider'] == 'google') {
-      final needsAvatarUpdate =
-          (profileData['google_avatar_url'] == null || profileData['google_avatar_url'].toString().isEmpty) &&
-          googleUser.photoUrl != null &&
-          googleUser.photoUrl!.isNotEmpty;
-
-      if (needsAvatarUpdate) {
-        final updatedData = await _client
+      if ((profile['google_avatar_url'] as String?)?.isEmpty ?? true) {
+        profile = await _client
             .from('profiles')
             .update({'google_avatar_url': googleUser.photoUrl})
             .eq('auth_id', supabaseUser.id)
             .select()
             .single();
-        profileData = updatedData;
       }
     }
 
-    final loggedInUser = AppUser.fromMap(profileData, supabaseUser.email ?? '');
-    return loggedInUser;
+    return AppUser.fromMap(profile, supabaseUser.email!);
   }
 
-  /// Logs out the user (including Google if isGoogleUser = true)
-  Future<void> logout({bool isGoogleUser = false}) async {
+  /// Logs out
+  Future<void> logout() async {
+
     try {
-      if (isGoogleUser) {
-        final googleSignIn = GoogleSignIn(
-          clientId: '235387261747-j5fhreodgr19sfb6hb18n4hv9o4u1mui.apps.googleusercontent.com',
-          scopes: <String>['email', 'profile'],
-        );
-        if (await googleSignIn.isSignedIn()) {
-          await googleSignIn.disconnect();
-        }
+      if (await _googleSignIn.isSignedIn()) {
+        await _googleSignIn.disconnect();
       }
+    } catch (_) {
+    }
+
+    try {
       await _client.auth.signOut();
     } catch (e) {
-      throw Exception('Logout failed: $e');
+      throw Exception('Supabase signOut failed: $e');
     }
   }
+
 
   /// Updates profile fields that do not require password confirmation,
   /// such as user name, avatar URL, and dietary preferences.
@@ -210,16 +208,19 @@ class AuthService {
     // Fetch the profile to check if the user is a Google user
     final profileData = await _client
         .from('profiles')
-        .select()
+        .select('providers')
         .eq('auth_id', supabaseUser.id)
         .maybeSingle();
 
     if (profileData == null) {
       throw Exception('No profile found for this user.');
     }
-    if (profileData['provider']?.toString().toLowerCase() == 'google') {
-      throw Exception('Cannot change password for Google accounts.');
-    }
+    final List<String> provs = List<String>.from(
+      (profileData['providers'] as List<dynamic>?) ?? <String>[]
+      );
+      if (provs.contains('google')) {
+        throw Exception('Cannot change password for Google accounts.');
+      }
 
     // Update the users password
     await _client.auth.updateUser(
@@ -252,13 +253,18 @@ class AuthService {
 
   /// Checks whether a given email is associated with Google sign-in
   Future<bool> isGoogleUserByEmail(String email) async {
-    final response = await _client
-        .from('profiles')
-        .select('provider')
-        .eq('email', email)
-        .maybeSingle();
+  final response = await _client
+      .from('profiles')
+      .select('providers')
+      .eq('email', email)
+      .maybeSingle();
 
-    return response != null &&
-        response['provider'].toString().toLowerCase() == 'google';
+  if (response == null) return false;
+
+  final List<String> provs = List<String>.from(
+    (response['providers'] as List<dynamic>?) ?? <String>[]
+  );
+  return provs.contains('google');
+
   }
 }

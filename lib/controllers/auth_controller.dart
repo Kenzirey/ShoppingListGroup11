@@ -51,12 +51,10 @@ class AuthController {
     }
   }
 
-  /// Logges out the current logged in user
+  /// Logs out the current user (handles both email and Google)
   Future<void> logout() async {
-    final currentUser = ref.read(currentUserProvider);
-    final bool isGoogle = currentUser?.isGoogleUser ?? false;
     try {
-      await _authService.logout(isGoogleUser: isGoogle);
+      await _authService.logout();
       ref.read(currentUserProvider.notifier).state = null;
     } catch (e) {
       rethrow;
