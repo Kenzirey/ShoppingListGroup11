@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/shopping_item.dart';
+import 'package:shopping_list_g11/services/shopping_service.dart';
+import 'package:shopping_list_g11/controllers/shopping_list_controller.dart';
 
 class ShoppingItemsNotifier extends StateNotifier<List<ShoppingItem>> {
   ShoppingItemsNotifier() : super([]);
@@ -29,3 +31,14 @@ final shoppingItemsProvider =
     StateNotifierProvider<ShoppingItemsNotifier, List<ShoppingItem>>(
   (ref) => ShoppingItemsNotifier(),
 );
+
+
+final shoppingServiceProvider = Provider<ShoppingService>((ref) {
+  return ShoppingService();
+});
+
+final shoppingListControllerProvider =
+    Provider<ShoppingListController>((ref) {
+  final service = ref.watch(shoppingServiceProvider);
+  return ShoppingListController(ref: ref, service: service);
+});
