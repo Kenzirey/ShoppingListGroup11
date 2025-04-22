@@ -19,16 +19,20 @@ void main() async {
   );
 
   Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-    final event = data.event;
-    if (event == AuthChangeEvent.passwordRecovery) {
-      AppRouter.router.go('/reset-password');
-    }
-  });
-
+    if (data.event == AuthChangeEvent.passwordRecovery) {
+          final token = data.session?.accessToken  ?? '';
+          final email = data.session?.user?.email ?? '';
+          AppRouter.router.go(
+            '/reset-password'
+            '?token=${Uri.encodeComponent(token)}'
+            '&user_email=${Uri.encodeComponent(email)}',
+          );
+        }
+      });
   runApp(const ProviderScope(child: MyApp()));
 }
-final supabase = Supabase.instance.client;
 
+final supabase = Supabase.instance.client;
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 

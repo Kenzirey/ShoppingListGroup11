@@ -23,6 +23,8 @@ import 'package:shopping_list_g11/screen/information_screen.dart';
 import 'package:shopping_list_g11/screen/user_account/edit_account_details_screen.dart';
 import 'package:shopping_list_g11/screen/user_account/reset_password_screen.dart';
 import 'package:shopping_list_g11/screen/user_account/set_new_password_screen.dart';
+import 'auth_refresh.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Defines the app's routing and navigation logic using the GoRouter package.
 ///
@@ -36,6 +38,37 @@ class AppRouter {
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/',
+    refreshListenable: authRefreshListenable,
+
+    redirect: (BuildContext context, GoRouterState state) {
+      final session = Supabase.instance.client.auth.currentSession;
+      final loggedIn = session != null;
+      final path = state.uri.path;
+
+    // Routes that doesnt require login
+      final publicPaths = {
+        '/login',
+        '/sign-up',
+        '/forgot-password',
+        '/reset-password',
+      };
+       final isPublic = publicPaths.contains(path);
+
+      // 1) If not logged in and trying to visit a protected page - go to /login
+      if (!loggedIn && !isPublic) {
+        return '/login';
+      }
+
+      // 2) If already logged in but on an auth page go to home
+      if (loggedIn && isPublic) {
+        return '/';
+      }
+      if (loggedIn && isPublic) {
+        return '/';
+      }
+      // 3) no redirect
+      return null;
+    },
     routes: [
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
