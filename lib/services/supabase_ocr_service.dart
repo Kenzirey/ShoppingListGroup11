@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:shopping_list_g11/services/shelf_life.dart';
 import '../models/receipt_data.dart';
 
 /// Handles Supabase communication
@@ -48,10 +47,8 @@ class SupabaseService {
 
     for (final item in receiptData.items) {
       try {
-        final standardizedName = item.name.toLowerCase();
-        final shelfDays = ShelfLife.getShelfLife(standardizedName);
-        final parsedReceiptDate = _parseDateOrNow(receiptData.date);
-        final expirationDate = parsedReceiptDate.add(Duration(days: shelfDays));
+        final expirationDate = item.expirationDate ??
+            DateTime.now().add(const Duration(days: 10));
 
         await supabase.from('receipt_items').insert({
           'receipt_id': receiptId,
@@ -62,17 +59,22 @@ class SupabaseService {
           "unit": item.unit,
           'added_at': DateTime.now().toIso8601String(),
           'expiration_date': expirationDate.toIso8601String(),
+          'category': item.category,
         }).select().single();
+
+        await supabase.from('inventory').upsert({
+          'user_id': profileId,
+          'name': item.name,
+          'category': item.category,
+          'quantity': item.quantity.toString(),
+          'unit': item.unit,
+          'expiration_date': expirationDate.toIso8601String(),
+          'created_at': DateTime.now().toIso8601String(),
+        });
 
       } catch (e) {
         debugPrint('Error inserting item "${item.name}": $e');
       }
     }
-  }
-
-  /// Parse a date string or return the current date
-  DateTime _parseDateOrNow(String dateString) {
-    final dt = DateTime.tryParse(dateString);
-    return dt ?? DateTime.now();
   }
 }
