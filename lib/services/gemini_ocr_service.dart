@@ -32,7 +32,7 @@ You are an OCR system specialized in analyzing receipts. Extract the following i
 2) If you see something like "473ml" or "1l" in the product name, use that as the unit. Otherwise default to "pcs".
 3) Try to expiration date by guessing typical shelf life. Provide a date in YYYY-MM-DD format.
 4) If you see for example 2 x kr 25.90, count it as 2 quantities of the item. You generally see it the line under the product name. 
-5) Decide the category based on the product name. Use "Fridge" for perishable items, "Freezer" for frozen items, and "Dry Goods" for dry goods.
+5) Decide the category based on the product name. Use "Fridge" for perishable items, "Freezer" for frozen items, and "Dry Storage" for dry goods. Fridge is default.
 6) Return ONLY valid JSON with no additional text or code formatting
 
 Format as valid JSON:
@@ -99,7 +99,7 @@ Use reasonable defaults for missing information. Clean product names of promotio
             unit: item['unit'] ?? 'pcs',
             allergy: item['allergy'] ?? 'none',
             expirationDate: _parseDate(item['expirationDate']),
-            category: '${item['category'] ?? 'Unknown'}',
+            category: '${item['category'] ?? 'Fridge'}',
           ));
         }
       }
