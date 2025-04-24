@@ -1,25 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:shopping_list_g11/data/dummy_purchase_history_data.dart';
-import 'package:shopping_list_g11/utils/month_day_util.dart';
-import 'package:shopping_list_g11/widget/search_bar.dart';
+import '../providers/purchase_history_provider.dart';
 import '../models/product.dart';
 import '../data/measurement_type.dart';
+import '../utils/month_day_util.dart';
+import '../widget/search_bar.dart';
 
 /// Screen that shows the purchase history of the user.
 /// Allows user to add a new product with price, amount, date, and optional unit.
-class PurchaseHistoryScreen extends StatefulWidget {
+class PurchaseHistoryScreen extends ConsumerStatefulWidget {
   const PurchaseHistoryScreen({super.key});
 
   @override
-  State<PurchaseHistoryScreen> createState() => _PurchaseHistoryScreenState();
+  ConsumerState<PurchaseHistoryScreen> createState() =>
+      _PurchaseHistoryScreenState();
 }
 
-class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
-  // The full list from dummy data, sorted in descending order (latest first).
-  late List<Product> sortedProducts;
-  // The list currently displayed (page by page).
+class _PurchaseHistoryScreenState
+    extends ConsumerState<PurchaseHistoryScreen> {
+  List<Product> sortedProducts   = [];
   List<Product> displayedProducts = [];
+  
   // Lazy loading parameters.
   int _currentPage = 0;
   final int _pageSize = 10;
@@ -31,18 +33,11 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
   @override
   void initState() {
     super.initState();
-    // Set the selected month initially to the current month.
     selectedMonth = DateFormat('MMMM yyyy').format(DateTime.now());
-
-    // Create a sorted copy (descending by purchase date).
-    sortedProducts = List<Product>.from(dummyProducts)
-      ..sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate));
-    // Load the initial page.
-    _fetchMoreProducts();
   }
 
   // Fetch the next page of products from sortedProducts.
-  Future<void> _fetchMoreProducts() async {
+  void _fetchMoreProducts(List<Product> sortedProducts) async {
     if (_isLoading) return;
     if (_currentPage * _pageSize >= sortedProducts.length) return;
 
@@ -201,6 +196,25 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final historyAsync = ref.watch(purchaseHistoryProvider);
+    if (historyAsync.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (historyAsync.hasError) {
+      return Center(
+        child: Text('Failed to load history: ${historyAsync.error}'),
+      );
+    }
+
+    final allProducts = historyAsync.value ?? [];
+
+    if (sortedProducts.isEmpty) {
+      sortedProducts      = List<Product>.from(allProducts);
+      displayedProducts   = [];
+      _currentPage        = 0;
+      _fetchMoreProducts(sortedProducts);
+    }
+
     final monthProducts = MonthAndDayUtility.getProductsForSelectedMonth(
         displayedProducts, selectedMonth);
     final groupedByDay = MonthAndDayUtility.groupProductsByDay(monthProducts);
@@ -284,7 +298,7 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
                   if (!_isLoading &&
                       scrollInfo.metrics.pixels >=
                           scrollInfo.metrics.maxScrollExtent) {
-                    _fetchMoreProducts();
+                    _fetchMoreProducts(sortedProducts);
                   }
                   return false;
                 },
