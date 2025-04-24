@@ -104,18 +104,30 @@ class ProfileHeader extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-               currentUser.canUsePassword
-                ? const Icon(
-                    Icons.email,
-                    size: 18,
-                    color: Colors.white70,
-                  )
-                : Image.asset(
-                    'assets/images/google_logo.png',
-                    width: 18,
-                    height: 18,
-                  ),
-
+              ...currentUser.providers.map((prov) {
+                switch (prov) {
+                  case 'email':
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 4),
+                      child: Icon(
+                        Icons.email,
+                        size: 18,
+                        color: Colors.white70,
+                      ),
+                    );
+                  case 'google':
+                    return  Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 4),
+                      child: Image.asset(
+                        'assets/images/google_logo.png',
+                        width: 18,
+                        height: 18,
+                      ),
+                    );
+                  default:
+                    return const SizedBox.shrink();
+                }
+              }).toList(),
                 const SizedBox(width: 6),
                 Text(
                   currentUser.email,

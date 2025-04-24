@@ -361,7 +361,7 @@ class _EditAccountDetailsScreenState extends ConsumerState<EditAccountDetailsScr
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ProfileHeader(context: context, currentUser: currentUser),
+                        ProfileHeader(currentUser: currentUser),
                         const SizedBox(height: 32),
                         Container(
                           padding: const EdgeInsets.all(24),
