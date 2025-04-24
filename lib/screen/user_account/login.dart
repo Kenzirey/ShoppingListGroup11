@@ -208,11 +208,12 @@ class _LoginState extends ConsumerState<LoginScreen>
                               title: 'Login Failed',
                               message: getUserFriendlyErrorMessage(e),
                             );
-                          } finally {
-                            setState(() {
-                              _isLoading = false;
-                            });
-                          }
+                            } finally {
+                              if (!mounted) return;
+                              setState(() {
+                                _isLoading = false;
+                              });
+                            }
                         },
                         child: _isLoading
                             ? const SizedBox(
@@ -293,6 +294,7 @@ class _LoginState extends ConsumerState<LoginScreen>
                                     'Google login failed. Please try again.',
                               );
                             } finally {
+                              if (!mounted) return;
                               setState(() {
                                 _isLoading = false;
                               });
