@@ -73,8 +73,11 @@ class LogoutConfirmationDialog extends StatelessWidget {
                 await ref.read(authControllerProvider).logout();
                 if (context.mounted) {
                   // Then dismiss the dialog.
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!context.mounted) return;
                   Navigator.of(context).pop(true);
                   context.goNamed('loginPage');
+                });
                 }
               } catch (e) {
                 if (context.mounted) {
