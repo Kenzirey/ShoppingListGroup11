@@ -6,7 +6,6 @@ import 'package:shopping_list_g11/screen/receipts/view_scanned_receipt_screen.da
 import 'package:shopping_list_g11/services/image_processing.dart';
 import 'package:shopping_list_g11/services/kassal_service.dart';
 import 'package:shopping_list_g11/services/supabase_ocr_service.dart';
-import '../../services/expiration_service.dart';
 import '../../services/gemini_ocr_service.dart';
 
 /// Screen for scanning a receipt and extracting data
@@ -22,9 +21,8 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
   final KassalService _kassalService = KassalService();
   final SupabaseService _supabaseService = SupabaseService();
   final GeminiOcrService _geminiService = GeminiOcrService();
-  final ExpirationService _expirationService = ExpirationService();
 
-  ReceiptData? _receiptData;  // Add this
+  ReceiptData? _receiptData;
   bool _isProcessing = false;
   File? _image;
 
@@ -51,23 +49,6 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
           const SnackBar(content: Text('Failed to extract receipt data')),
         );
         return;
-      }
-
-      // Process each item with product normalizer through expiration service
-      for (final item in receiptData.items) {
-        // Get better expiration date prediction
-        if (item.expirationDate == null) {
-          final predictedDate = await _expirationService.predictExpirationDate(item.name);
-          item.expirationDate = predictedDate;
-        } else {
-          // If Gemini provided a date but we have a more accurate system, consider overriding
-          final shelfLifeDays = _expirationService.getShelfLifeDays(item.name);
-          // If shelf life is less than 100 days, we can assume it's a valid date
-          if (shelfLifeDays > 0 && shelfLifeDays < 100) {
-            final predictedDate = DateTime.now().add(Duration(days: shelfLifeDays));
-            item.expirationDate = predictedDate;
-          }
-        }
       }
 
       // Allergen lookup
