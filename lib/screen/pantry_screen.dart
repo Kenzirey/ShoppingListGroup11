@@ -154,8 +154,8 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
   }
 
   String _formatExpiration(DateTime? expiry) {
-    if (expiry == null) return '0';
+    if (expiry == null) return '—';
     final diff = expiry.difference(DateTime.now()).inDays;
-    return diff.toString();
+    return diff >= 0 ? '$diff d left' : '${-diff} d ago';
   }
 }
