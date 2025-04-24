@@ -72,6 +72,20 @@ class SupabaseService {
           'created_at': DateTime.now().toIso8601String(),
         });
 
+        await supabase
+            .from('purchase_history')
+            .upsert({
+          'user_id'       : profileId,
+          'item_name'     : item.name,
+          'category'      : item.category,
+          'purchase_count': item.quantity.toInt(),
+          'last_purchased': DateTime.now().toIso8601String(),
+        },
+            onConflict: 'user_id,item_name',
+            ignoreDuplicates: false)
+            .select()
+            .single();
+
       } catch (e) {
         debugPrint('Error inserting item "${item.name}": $e');
       }
