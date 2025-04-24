@@ -53,7 +53,7 @@ class SupabaseService {
         await supabase.from('receipt_items').insert({
           'receipt_id': receiptId,
           'name': item.name,
-          'quantity': item.quantity,
+          'quantity': item.quantity.round(),
           'price': item.price,
           "allergy": item.allergy,
           "unit": item.unit,
@@ -72,20 +72,15 @@ class SupabaseService {
           'created_at': DateTime.now().toIso8601String(),
         });
 
-        await supabase
-            .from('purchase_history')
-            .upsert({
-          'user_id'       : profileId,
-          'item_name'     : item.name,
-          'category'      : item.category,
-          'purchase_count': item.quantity.toInt(),
-          'last_purchased': DateTime.now().toIso8601String(),
-        },
-            onConflict: 'user_id,item_name',
-            ignoreDuplicates: false)
-            .select()
-            .single();
-
+        await supabase.from('purchase_history').insert({
+          'user_id'     : profileId,
+          'item_name'   : item.name,
+          'category'    : item.category,
+          'purchase_count': item.quantity.round(),
+          'unit'        : item.unit,
+          'price'       : item.price,
+          'purchased_at': DateTime.now().toIso8601String(),
+        }).select();
       } catch (e) {
         debugPrint('Error inserting item "${item.name}": $e');
       }
