@@ -6,6 +6,7 @@ class ReceiptItem {
   String? allergy;
   String unit;
   DateTime? expirationDate;
+  String category;
 
   ReceiptItem({
     required this.name,
@@ -13,7 +14,8 @@ class ReceiptItem {
     required this.price,
     this.allergy,
     this.unit = '',
-    this.expirationDate
+    this.expirationDate,
+    required this.category,
   });
 
   double get totalPrice => quantity * price;
