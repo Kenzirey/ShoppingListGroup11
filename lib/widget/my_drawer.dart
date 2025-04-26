@@ -9,7 +9,7 @@ class MyDrawer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentUser = ref.watch(currentUserProvider);
+    final currentUser = ref.watch(currentUserValueProvider);
     final router = GoRouter.of(context);
     return SizedBox(
       width: 240,

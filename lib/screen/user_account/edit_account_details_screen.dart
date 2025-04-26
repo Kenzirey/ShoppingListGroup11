@@ -48,7 +48,7 @@ class _EditAccountDetailsScreenState extends ConsumerState<EditAccountDetailsScr
   @override
   void initState() {
     super.initState();
-    final currentUser = ref.read(currentUserProvider);
+    final currentUser = ref.watch(currentUserValueProvider);
     _nameController = TextEditingController(text: currentUser?.name ?? '');
     _currentPasswordController = TextEditingController();
     _newPasswordController = TextEditingController();
@@ -309,7 +309,7 @@ class _EditAccountDetailsScreenState extends ConsumerState<EditAccountDetailsScr
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = ref.watch(currentUserProvider);
+    final currentUser = ref.watch(currentUserValueProvider);
     if (currentUser == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Edit Account Details')),

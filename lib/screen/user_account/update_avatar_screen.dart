@@ -157,7 +157,7 @@ class _UpdateAvatarScreenState extends ConsumerState<UpdateAvatarScreen>
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = ref.watch(currentUserProvider);
+    final currentUser = ref.watch(currentUserValueProvider);
     final theme = Theme.of(context);
 
     if (currentUser == null) {

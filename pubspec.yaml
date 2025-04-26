@@ -20,6 +20,7 @@ dependencies:
   supabase_flutter: ^2.8.3
   google_sign_in: ^6.2.2
   lottie: ^3.2.0
+  rxdart: ^0.27.7
 
   # For OCR
   image_picker: ^1.0.2

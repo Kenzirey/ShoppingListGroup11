@@ -26,7 +26,7 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final currentUser = ref.read(currentUserProvider);
+      final currentUser = ref.watch(currentUserValueProvider);
       if (currentUser != null && currentUser.profileId != null) {
         await ref
             .read(shoppingListControllerProvider)
@@ -136,7 +136,7 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
                                     if (lastDeletedItem != null &&
                                         lastDeletedIndex != null) {
                                       final currentUser =
-                                          ref.read(currentUserProvider);
+                                          ref.watch(currentUserValueProvider);
                                       if (currentUser != null &&
                                           currentUser.profileId != null) {
                                         await ref
@@ -190,7 +190,7 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
                     final amountValue = result['amount'] as int;
                     final unit = result['unit'] as String? ?? '';
                     final finalQuantity = '$amountValue $unit'.trim();
-                    final currentUser = ref.read(currentUserProvider);
+                    final currentUser = ref.watch(currentUserValueProvider);
                     if (currentUser != null && currentUser.profileId != null) {
                       await ref
                           .read(shoppingListControllerProvider)

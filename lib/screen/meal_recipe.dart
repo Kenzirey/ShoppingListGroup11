@@ -80,7 +80,7 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                   ),
                   onPressed: () async {
                     final currentRecipe = ref.read(recipeProvider);
-                    final currentUser = ref.read(currentUserProvider);
+                    final currentUser = ref.watch(currentUserValueProvider);
                     if (currentRecipe == null) return;
                     if (currentUser == null) {
                       ScaffoldMessenger.of(context)

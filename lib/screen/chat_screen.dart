@@ -165,7 +165,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           ? null
                           : () async {
                               final curr = ref.read(chatRecipeProvider)!;
-                              final user = ref.read(currentUserProvider);
+                              final user = ref.watch(currentUserValueProvider);
                               if (user == null) {
                                 ScaffoldMessenger.of(context)
                                   ..hideCurrentSnackBar()

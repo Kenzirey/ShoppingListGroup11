@@ -22,7 +22,6 @@ class AuthController {
     String? userName}) async {
     try {
       final user = await _authService.signUp(email, password, userName: userName);
-      ref.read(currentUserProvider.notifier).state = user;
       return user;
     } catch (e) {
       rethrow;
@@ -33,7 +32,6 @@ class AuthController {
   Future<AppUser> login(String email, String password) async {
     try {
       final user = await _authService.login(email, password);
-      ref.read(currentUserProvider.notifier).state = user;
       return user;
     } catch (e) {
       rethrow;
@@ -44,7 +42,6 @@ class AuthController {
   Future<AppUser> signInWithGoogle() async {
     try {
       final user = await _authService.signInWithGoogleNative();
-      ref.read(currentUserProvider.notifier).state = user;
       return user;
     } catch (e) {
       rethrow;
@@ -55,7 +52,6 @@ class AuthController {
   Future<void> logout() async {
     try {
       await _authService.logout();
-      ref.read(currentUserProvider.notifier).state = null;
     } catch (e) {
       rethrow;
     }
@@ -73,7 +69,6 @@ Future<AppUser> updateProfileWithoutPassword({
       avatarUrl: avatarUrl,
       dietaryPreferences: dietaryPreferences,
     );
-    ref.read(currentUserProvider.notifier).state = updatedUser;
     return updatedUser;
   } catch (e) {
     rethrow;

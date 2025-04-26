@@ -18,6 +18,16 @@ void main() async {
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InltcGt6dGV0aGp0ZWpoZGFqc29sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc2MjUzMTUsImV4cCI6MjA1MzIwMTMxNX0.GA21O-DEqkNCO1DbVEJ3KHh74fg5e0ZxejNnFrwhHto',
   );
 
+  //try to revive/clean any cached session
+  final supa = Supabase.instance.client;
+  if (supa.auth.currentSession != null) {
+    try {
+      await supa.auth.refreshSession();
+    } catch (_) {
+      await supa.auth.signOut();
+    }
+  }
+
   Supabase.instance.client.auth.onAuthStateChange.listen((data) {
     if (data.event == AuthChangeEvent.passwordRecovery) {
           final token = data.session?.accessToken  ?? '';

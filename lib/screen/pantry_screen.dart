@@ -19,7 +19,7 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final currentUser = ref.read(currentUserProvider);
+      final currentUser = ref.watch(currentUserValueProvider);
       if (currentUser != null && currentUser.profileId != null) {
         await ref.read(pantryControllerProvider).fetchPantryItems(currentUser.profileId!);
       }

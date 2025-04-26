@@ -50,7 +50,7 @@ class EditAccountDetailsNotifier extends StateNotifier<AsyncValue<void>> {
       avatarUrl: currentUser.avatarUrl,
       dietaryPreferences: selectedDiets,
     );
-    ref.read(currentUserProvider.notifier).state = updatedUser;
+    ref.invalidate(currentUserProvider);
   }
 
   state = const AsyncValue.data(null);

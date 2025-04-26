@@ -26,7 +26,7 @@ class _SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final currentUser = ref.read(currentUserProvider);
+      final currentUser = ref.watch(currentUserValueProvider);
       if (currentUser != null && currentUser.profileId != null) {
         await ref
             .read(savedRecipesControllerProvider)
@@ -120,7 +120,7 @@ class _SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
                       child: const Icon(Icons.delete, color: Colors.white),
                     ),
                     onDismissed: (direction) {
-                      final user = ref.read(currentUserProvider);
+                      final user = ref.watch(currentUserValueProvider);
                       if (user == null || user.profileId == null) return;
 
                       final removed = savedRecipe;
@@ -188,7 +188,7 @@ class _SavedRecipesState extends ConsumerState<SavedRecipesScreen> {
                                 color: Theme.of(context).colorScheme.tertiary,
                               ),
                               onPressed: () {
-                                final user = ref.read(currentUserProvider);
+                                final user = ref.watch(currentUserValueProvider);
                                 if (user == null || user.profileId == null) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     CustomSnackbar.buildSnackBar(

@@ -40,9 +40,21 @@ class AppRouter {
     initialLocation: '/',
     refreshListenable: authRefreshListenable,
 
-    redirect: (BuildContext context, GoRouterState state) {
-      final session = Supabase.instance.client.auth.currentSession;
-      final loggedIn = session != null;
+    redirect: (BuildContext context, GoRouterState state) async {
+      final supa = Supabase.instance.client; 
+      Session? s = supa.auth.currentSession;
+
+      // validate the cached session with the server
+      bool loggedIn = false;
+      if (s != null) {
+        final res = await supa.auth.getUser();          
+        loggedIn = res.user != null;                   
+        if (!loggedIn) {
+          await supa.auth.signOut();
+          s = null;
+        }
+      }
+
       final path = state.uri.path;
 
     // Routes that doesnt require login
@@ -63,10 +75,17 @@ class AppRouter {
       if (loggedIn && isPublic) {
         return '/';
       }
-      if (loggedIn && isPublic) {
-        return '/';
+      // 3) we have a cached session object but its already expired:
+      if (!loggedIn && s != null) {
+        try {
+          await supa.auth.refreshSession();
+          loggedIn = true;
+        } catch (_) {
+          await supa.auth.signOut();
+          return '/login';
+        }
       }
-      // 3) no redirect
+      // 4) no redirect
       return null;
     },
     routes: [

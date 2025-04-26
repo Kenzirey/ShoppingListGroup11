@@ -74,7 +74,7 @@ class _AccountPageScreenState extends ConsumerState<AccountPageScreen>
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = ref.watch(currentUserProvider);
+    final currentUser = ref.watch(currentUserValueProvider);
 
     if (currentUser == null) {
       return Scaffold(
