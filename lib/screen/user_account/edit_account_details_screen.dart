@@ -48,7 +48,7 @@ class _EditAccountDetailsScreenState extends ConsumerState<EditAccountDetailsScr
   @override
   void initState() {
     super.initState();
-    final currentUser = ref.watch(currentUserValueProvider);
+    final currentUser = ref.read(currentUserValueProvider);
     _nameController = TextEditingController(text: currentUser?.name ?? '');
     _currentPasswordController = TextEditingController();
     _newPasswordController = TextEditingController();
