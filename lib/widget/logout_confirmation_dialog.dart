@@ -71,14 +71,11 @@ class LogoutConfirmationDialog extends StatelessWidget {
               try {
                 // Perform logout first.
                 await ref.read(authControllerProvider).logout();
-                if (context.mounted) {
-                  // Then dismiss the dialog.
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (!context.mounted) return;
-                  Navigator.of(context).pop(true);
-                  context.goNamed('loginPage');
-                });
+                 if (!context.mounted) return;
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
                 }
+                context.goNamed('loginPage');  
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
