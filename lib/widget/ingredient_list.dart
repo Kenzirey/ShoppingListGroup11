@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shopping_list_g11/models/shopping_item.dart';
+import 'package:shopping_list_g11/providers/current_user_provider.dart';
+import 'package:shopping_list_g11/providers/shopping_items_provider.dart';
+import 'package:shopping_list_g11/utils/ingredient_parser.dart';
 
 /// IngredientList that allows to select individual or all ingredients,
 /// to add them to shopping list.
 class IngredientList extends ConsumerStatefulWidget {
   final List<String> ingredients;
-  final ValueChanged<List<String>>? onAddIngredients;
 
   const IngredientList({
     super.key,
     required this.ingredients,
-    this.onAddIngredients,
   });
 
   @override
@@ -106,11 +108,39 @@ bool _isGroupHeader(String ingredient) {
           children: [
             Expanded(
               child: InkWell(
-                onTap: () {
-                  if (widget.onAddIngredients != null) {
-                    widget.onAddIngredients!(getSelectedIngredients());
-                  }
-                },
+              onTap: () async {
+                final lines = getSelectedIngredients();
+                if (lines.isEmpty) return;
+
+                final user = ref.read(currentUserValueProvider);
+                if (user?.profileId == null) {
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(const SnackBar(content: Text('Please log in first')));
+                  return;
+                }
+
+                final ctrl = ref.read(shoppingListControllerProvider);
+
+                for (final raw in lines) {
+                  final p = IngredientParser.split(raw);
+                  final String? qtyStr = p.qty.isEmpty ? null : (p.unit.isEmpty ? p.qty : '${p.qty} ${p.unit}');
+                  debugPrint('📝  Inserting → name="${p.name}" qty="$qtyStr"');
+                  await ctrl.addShoppingItem(ShoppingItem(
+                    id: null,
+                    userId: user!.profileId!,
+                    itemName: p.name,
+                    quantity: qtyStr,
+                    category: p.unit.isEmpty ? null : p.unit,
+                  ));
+                }
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('✔️ Added ${lines.length} item${lines.length == 1 ? '' : 's'}')),
+                );
+
+                setState(() => _selected = List<bool>.filled(widget.ingredients.length, false));
+              },
+
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
