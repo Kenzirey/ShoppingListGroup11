@@ -71,8 +71,8 @@ class AppRouter {
         return '/login';
       }
 
-      // 2) If already logged in but on an auth page go to home
-      if (loggedIn && isPublic) {
+      // 2) If already logged in but on an auth page go to home, and allow logged in user to visit reset-password screen via deep link
+      if (loggedIn && isPublic && path != '/reset-password') {
         return '/';
       }
       // 3) we have a cached session object but its already expired:
