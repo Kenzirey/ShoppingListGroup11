@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shopping_list_g11/models/shopping_item.dart';
+import 'package:shopping_list_g11/providers/current_user_provider.dart';
+import 'package:shopping_list_g11/providers/shopping_items_provider.dart';
+import 'package:shopping_list_g11/utils/ingredient_parser.dart';
 
 /// IngredientList that allows to select individual or all ingredients,
 /// to add them to shopping list.
 class IngredientList extends ConsumerStatefulWidget {
   final List<String> ingredients;
-  final ValueChanged<List<String>>? onAddIngredients;
 
   const IngredientList({
     super.key,
     required this.ingredients,
-    this.onAddIngredients,
   });
 
   @override
@@ -37,23 +39,27 @@ class _IngredientListState extends ConsumerState<IngredientList> {
     }
   }
 
-bool _isGroupHeader(String ingredient) {
-  final trimmed = ingredient.trim();
-  // either “For the X:” or anything ending in “:”
-  return trimmed.toLowerCase().startsWith('for the') 
-      || trimmed.endsWith(':');
-}
-
+  bool _isGroupHeader(String ingredient) {
+    final trimmed = ingredient.trim();
+    // either “For the X:” or anything ending in “:”
+    return trimmed.toLowerCase().startsWith('for the') || trimmed.endsWith(':');
+  }
 
   bool _isHidden(String ingredient) {
     final low = ingredient.toLowerCase();
-    return _hiddenItems.any((h) => low.contains(h));
+    return _hiddenItems.any((h) {
+      // regex for matching whole words only, so for example "unsalted does not get picked up here.
+       final pattern = RegExp(r'\b' + RegExp.escape(h) + r'\b');
+      return pattern.hasMatch(low);
+    });
   }
 
   bool get _allSelected {
     for (int i = 0; i < widget.ingredients.length; i++) {
       final ing = widget.ingredients[i];
-      if (!_isGroupHeader(ing) && !_isHidden(ing) && !_selected[i]) return false;
+      if (!_isGroupHeader(ing) && !_isHidden(ing) && !_selected[i]) {
+        return false;
+      }
     }
     return true;
   }
@@ -106,13 +112,46 @@ bool _isGroupHeader(String ingredient) {
           children: [
             Expanded(
               child: InkWell(
-                onTap: () {
-                  if (widget.onAddIngredients != null) {
-                    widget.onAddIngredients!(getSelectedIngredients());
+                onTap: () async {
+                  final lines = getSelectedIngredients();
+                  if (lines.isEmpty) return;
+
+                  final user = ref.read(currentUserValueProvider);
+                  if (user?.profileId == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please log in first')));
+                    return;
                   }
+
+                  final ctrl = ref.read(shoppingListControllerProvider);
+                  final batch = lines.map((raw) {
+                    final p = IngredientParser.split(raw);
+                    final String? qtyStr = p.qty.isEmpty
+                        ? null
+                        : (p.unit.isEmpty ? p.qty : '${p.qty} ${p.unit}');
+                    return ShoppingItem(
+                      id: null,
+                      userId: user!.profileId!,
+                      itemName: p.name,
+                      quantity: qtyStr,
+                      category: p.unit.isEmpty ? null : p.unit,
+                    );
+                  }).toList();
+
+                  await ctrl.addShoppingItems(batch);
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text(
+                            '✔️ Added ${lines.length} item${lines.length == 1 ? '' : 's'}')),
+                  );
+
+                  setState(() => _selected =
+                      List<bool>.filled(widget.ingredients.length, false));
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: primaryContainer,
                     border: Border.all(color: primaryColor),
@@ -123,7 +162,8 @@ bool _isGroupHeader(String ingredient) {
                     children: [
                       Icon(Icons.add_shopping_cart, size: 20, color: tertiary),
                       const SizedBox(width: 8),
-                      Text('Shopping list', style: TextStyle(fontSize: 16, color: tertiary)),
+                      Text('Shopping list',
+                          style: TextStyle(fontSize: 16, color: tertiary)),
                     ],
                   ),
                 ),
@@ -134,16 +174,21 @@ bool _isGroupHeader(String ingredient) {
               child: InkWell(
                 onTap: () => _toggleSelectAll(!_allSelected),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: _allSelected ? selectedBackground : unselectedBackground,
+                    color: _allSelected
+                        ? selectedBackground
+                        : unselectedBackground,
                     border: Border.all(color: primaryColor),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Center(
                     child: Text(
                       'Select all',
-                      style: TextStyle(fontSize: 16, color: _allSelected ? Colors.white : tertiary),
+                      style: TextStyle(
+                          fontSize: 16,
+                          color: _allSelected ? Colors.white : tertiary),
                     ),
                   ),
                 ),
@@ -163,7 +208,10 @@ bool _isGroupHeader(String ingredient) {
                 padding: const EdgeInsets.only(top: 12, bottom: 6),
                 child: Text(
                   ingredient.replaceAll(':', ''),
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: tertiary),
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: tertiary),
                 ),
               );
             } else if (_isHidden(ingredient)) {
@@ -183,19 +231,26 @@ bool _isGroupHeader(String ingredient) {
                       });
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 12),
                       decoration: BoxDecoration(
-                        color: isSelected ? selectedBackground : unselectedBackground,
+                        color: isSelected
+                            ? selectedBackground
+                            : unselectedBackground,
                       ),
                       child: Row(
                         children: [
                           Icon(Icons.brightness_1, size: 8, color: tertiary),
                           const SizedBox(width: 8),
-                          Expanded(child: Text(ingredient, style: TextStyle(color: tertiary))),
+                          Expanded(
+                              child: Text(ingredient,
+                                  style: TextStyle(color: tertiary))),
                           const SizedBox(width: 4),
                           isSelected
-                              ? Icon(Icons.check_box_outlined, size: 20, color: primaryColor)
-                              : Icon(Icons.check_box_outline_blank, size: 20, color: tertiary),
+                              ? Icon(Icons.check_box_outlined,
+                                  size: 20, color: primaryColor)
+                              : Icon(Icons.check_box_outline_blank,
+                                  size: 20, color: tertiary),
                         ],
                       ),
                     ),
@@ -209,7 +264,9 @@ bool _isGroupHeader(String ingredient) {
         // Such as salt or water, since this is usually in the pantry / from the tap.
         if (otherItems.isNotEmpty) ...[
           const SizedBox(height: 12),
-          Text('Others', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: tertiary)),
+          Text('Others',
+              style: TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.bold, color: tertiary)),
           const SizedBox(height: 6),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,7 +278,8 @@ bool _isGroupHeader(String ingredient) {
                   child: Material(
                     color: Colors.transparent,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 12),
                       decoration: BoxDecoration(
                         color: unselectedBackground,
                       ),
@@ -229,7 +287,9 @@ bool _isGroupHeader(String ingredient) {
                         children: [
                           Icon(Icons.brightness_1, size: 8, color: tertiary),
                           const SizedBox(width: 8),
-                          Expanded(child: Text(ing, style: TextStyle(color: tertiary))),
+                          Expanded(
+                              child:
+                                  Text(ing, style: TextStyle(color: tertiary))),
                         ],
                       ),
                     ),

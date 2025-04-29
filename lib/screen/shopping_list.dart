@@ -5,9 +5,9 @@ import 'package:shopping_list_g11/widget/search_bar.dart';
 import 'package:shopping_list_g11/widget/shopping_list_item.dart';
 import 'package:shopping_list_g11/models/shopping_item.dart';
 import 'package:shopping_list_g11/providers/shopping_items_provider.dart';
-import 'package:shopping_list_g11/controllers/shopping_list_controller.dart';
 import 'package:shopping_list_g11/providers/current_user_provider.dart';
 import 'package:shopping_list_g11/utils/quantity_parser.dart';
+import 'package:shopping_list_g11/models/app_user.dart';
 
 /// A screen for showing what products the user wishes to buy
 /// on their next shopping trip.
@@ -25,20 +25,27 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final currentUser = ref.watch(currentUserValueProvider);
-      if (currentUser != null && currentUser.profileId != null) {
-        await ref
-            .read(shoppingListControllerProvider)
-            .fetchShoppingItems(currentUser.profileId!);
-      }
-    });
-  }
 
+    // 1) If we have a logged in user, fetch immediately
+    final user = ref.read(currentUserValueProvider);
+    if (user != null && user.profileId != null) {
+      ref
+        .read(shoppingListControllerProvider)
+        .fetchShoppingItems(user.profileId!);
+    }
+  }
   @override
   Widget build(BuildContext context) {
     final shoppingItems = ref.watch(shoppingItemsProvider);
     const horizontalPadding = 16.0;
+
+    ref.listen<AppUser?>(currentUserValueProvider, (prev, next) {
+    if (prev?.profileId == null && next != null && next.profileId != null) {
+      ref
+        .read(shoppingListControllerProvider)
+        .fetchShoppingItems(next.profileId!);
+    }
+  });
 
     return GestureDetector(
       onTap: () {
@@ -64,9 +71,9 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
                     hintText: 'Search products...',
                   ),
                   const SizedBox(height: 16.0),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
                       Text(
                         'Shopping List',
                         style: TextStyle(
@@ -75,18 +82,56 @@ class ShoppingListState extends ConsumerState<ShoppingListScreen> {
                           color: Theme.of(context).colorScheme.tertiary,
                         ),
                       ),
-                      IconButton(
-                        onPressed: () {
-                          // any logic for reordering/deleting etc.
-                          // latest added / oldest
-                        },
-                        icon: Icon(
-                          Icons.swap_vert,
-                          color: Theme.of(context).colorScheme.tertiary,
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.swap_vert,
+                                color: Theme.of(context).colorScheme.tertiary,
+                              ),
+                              onPressed: () {
+                                // reorder logic
+                              },
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.delete_sweep,
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                              tooltip: 'Clear all items',
+                              onPressed: () async {
+                              final user = ref.read(currentUserValueProvider);
+                              final items = ref.read(shoppingItemsProvider);
+                              final count = items.length;
+
+                              if (user == null || user.profileId == null || count == 0) return;
+                              final profileId = user!.profileId!;
+
+                              final backup = List<ShoppingItem>.from(items);
+                              await ref
+                                .read(shoppingListControllerProvider)
+                                .clearAll(profileId);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                        '🗑️ Cleared $count item${count == 1 ? '' : 's'}'),
+                                    action: SnackBarAction(
+                                      label: 'UNDO',
+                                      onPressed: () async {
+                                        await ref
+                                            .read(shoppingListControllerProvider)
+                                            .addShoppingItems(backup);
+                                      },
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+
                   Expanded(
                     child: ListView.builder(
                       physics: const BouncingScrollPhysics(),

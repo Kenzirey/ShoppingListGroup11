@@ -62,4 +62,17 @@ class ShoppingListController {
       rethrow;
     }
   }
+
+  /// add many
+  Future<void> addShoppingItems(List<ShoppingItem> items) async {
+    if (items.isEmpty) return;
+    final inserted = await _service.addItems(items);
+    ref.read(shoppingItemsProvider.notifier).addItems(inserted);
+  }
+
+  /// clear all for a user
+  Future<void> clearAll(String userId) async {
+    await _service.clearUserItems(userId);  
+    ref.read(shoppingItemsProvider.notifier).clear(); 
+  }
 }

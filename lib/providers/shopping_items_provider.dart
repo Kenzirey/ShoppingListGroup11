@@ -25,13 +25,21 @@ class ShoppingItemsNotifier extends StateNotifier<List<ShoppingItem>> {
   void removeItem(String itemId) {
     state = state.where((item) => item.id != itemId).toList();
   }
+
+  
+  /// append many items at once
+  void addItems(List<ShoppingItem> items) {
+    state = [...state, ...items];
+  }
+
+  /// wipe list (used by clear all button)
+  void clear() => state = [];
 }
 
 final shoppingItemsProvider =
     StateNotifierProvider<ShoppingItemsNotifier, List<ShoppingItem>>(
   (ref) => ShoppingItemsNotifier(),
 );
-
 
 final shoppingServiceProvider = Provider<ShoppingService>((ref) {
   return ShoppingService();
