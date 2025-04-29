@@ -28,6 +28,7 @@ class AppShell extends StatelessWidget {
       child: Scaffold(
         key: AppRouter.scaffoldKey,
         drawer: const MyDrawer(),
+        drawerEnableOpenDragGesture: false,
         body: child,
         bottomNavigationBar: BottomNavBar(
           selectedIndex: selectedIndex,
