@@ -46,4 +46,25 @@ class ShoppingService {
     if (list.isEmpty) return null;
     return ShoppingItem.fromMap(list.first as Map<String, dynamic>);
   }
+
+  /// Inserts a batch of items in a single call and returns the
+  /// rows as they came back from the database.
+  Future<List<ShoppingItem>> addItems(List<ShoppingItem> items) async {
+    if (items.isEmpty) return [];
+
+    final rows = items.map((e) => e.toMap()).toList();
+
+    final resp = await _db
+        .from('to_buy')
+        .insert(rows)
+        .select();
+
+    return (resp as List)
+        .map((m) => ShoppingItem.fromMap(m as Map<String, dynamic>))
+        .toList();
+  }
+  Future<void> clearUserItems(String userId) async {
+    await _db.from('to_buy').delete().eq('user_id', userId);
+  }
+
 }
