@@ -22,8 +22,8 @@ class GeminiController {
     Please structure your response as follows:
 
     **Recipe Name:** [Insert name here]  
-    **Dietary Classification:** [Vegetarian | Vegan | Non-vegetarian]  
     **Summary:** [Insert brief summary here]  
+    **Dietary Classification:** [Vegetarian | Vegan | Non-vegetarian]  
     **Yields:** [Insert servings]  
     **Prep Time:** [Insert the time used for all tasks before the cooking process begins (e.g., chopping, marinating, gathering ingredients)]  
     **Cook Time:** [Insert the time from when the dish starts cooking until it is fully done]  
