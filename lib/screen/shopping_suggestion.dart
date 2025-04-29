@@ -35,7 +35,7 @@ class _ShoppingSuggestionsScreenState
     });
 
     try {
-      final user = ref.watch(currentUserValueProvider);
+      final user = ref.read(currentUserValueProvider);
       if (user == null) {
         if (!mounted) return;
         setState(() {
