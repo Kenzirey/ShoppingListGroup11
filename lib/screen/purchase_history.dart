@@ -3,9 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../providers/purchase_history_provider.dart';
 import '../models/product.dart';
-import '../data/measurement_type.dart';
 import '../utils/month_day_util.dart';
-import '../widget/search_bar.dart';
 
 /// Screen that shows the purchase history of the user.
 /// Allows user to add a new product with price, amount, date, and optional unit.
@@ -54,145 +52,6 @@ class _PurchaseHistoryScreenState
     });
   }
 
-  /// Let the user pick a date, then prompt for price, amount, and optional unit, then create a new product.
-  Future<void> handleAddItem(String itemName) async {
-    final chosenDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
-    );
-    if (chosenDate == null) return;
-
-    final userInputs = await showDialog<Map<String, String>>(
-      context: context,
-      builder: (ctx) {
-        String enteredPrice = '';
-        String enteredAmount = '';
-        String? selectedUnit;
-        const unitOptions = ['kg', 'g', 'l', 'ml'];
-        return AlertDialog(
-          backgroundColor: Theme.of(ctx).colorScheme.surface,
-          title: Text(
-            'Enter Price, Amount & Unit',
-            style: TextStyle(
-              color: Theme.of(ctx).colorScheme.tertiary,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          content: StatefulBuilder(
-            builder: (ctx2, setMb) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    style: TextStyle(color: Theme.of(ctx).colorScheme.tertiary),
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Price (kr)',
-                      labelStyle:
-                          TextStyle(color: Theme.of(ctx).colorScheme.tertiary),
-                      hintText: 'e.g. 49.99',
-                      hintStyle: TextStyle(
-                          color: Theme.of(ctx)
-                              .colorScheme
-                              .tertiary
-                              .withOpacity(0.6)),
-                    ),
-                    onChanged: (val) => enteredPrice = val,
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    style: TextStyle(color: Theme.of(ctx).colorScheme.tertiary),
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Amount',
-                      labelStyle:
-                          TextStyle(color: Theme.of(ctx).colorScheme.tertiary),
-                      hintText: 'e.g. 2.5',
-                      hintStyle: TextStyle(
-                          color: Theme.of(ctx)
-                              .colorScheme
-                              .tertiary
-                              .withOpacity(0.6)),
-                    ),
-                    onChanged: (val) => enteredAmount = val,
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButton<String>(
-                    hint: Text('Unit',
-                        style: TextStyle(
-                            color: Theme.of(ctx).colorScheme.tertiary)),
-                    value: selectedUnit,
-                    items: unitOptions.map((unit) {
-                      return DropdownMenuItem<String>(
-                        value: unit,
-                        child: Text(unit,
-                            style: TextStyle(
-                                color: Theme.of(ctx).colorScheme.tertiary)),
-                      );
-                    }).toList(),
-                    selectedItemBuilder: (_) => unitOptions.map((unit) {
-                      return Container(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          unit,
-                          style: TextStyle(
-                              fontSize: 16,
-                              color: Theme.of(ctx).colorScheme.tertiary),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (val) => setMb(() => selectedUnit = val),
-                  ),
-                ],
-              );
-            },
-          ),
-          actions: [
-            TextButton(
-              style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(ctx).colorScheme.tertiary),
-              onPressed: () => Navigator.of(ctx).pop(null),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(ctx).colorScheme.tertiary),
-              onPressed: () => Navigator.of(ctx).pop({
-                'price': enteredPrice,
-                'amount': enteredAmount,
-                'unit': selectedUnit ?? '',
-              }),
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (userInputs == null) return;
-    final price = userInputs['price']!;
-    final amount = userInputs['amount']!;
-    final unit = userInputs['unit'] ?? '';
-    if (price.isEmpty || amount.isEmpty) return;
-
-    final amountText = unit.isEmpty ? amount : '$amount $unit';
-    final newProduct = Product.fromName(
-      name: itemName,
-      purchaseDate: chosenDate,
-      price: price,
-      amount: amountText,
-    );
-
-    setState(() {
-      sortedProducts.add(newProduct);
-      sortedProducts.sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate));
-      final int itemsToShow = _currentPage * _pageSize;
-      displayedProducts = sortedProducts.take(itemsToShow).toList();
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -223,7 +82,6 @@ class _PurchaseHistoryScreenState
           .parse(b)
           .compareTo(DateFormat('dd MMM, yyyy').parse(a)));
 
-    final mapSuggestions = groceryMapping.keys.toList()..sort();
     final months = MonthAndDayUtility.getMonthsUpToCurrent();
 
     return Scaffold(
@@ -232,12 +90,6 @@ class _PurchaseHistoryScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CustomSearchBarWidget(
-              suggestions: mapSuggestions,
-              onSuggestionSelected: handleAddItem,
-              hintText: 'Add product to purchase history...',
-            ),
-            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
