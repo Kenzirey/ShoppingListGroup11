@@ -8,6 +8,7 @@ class Recipe {
   final String totalTime; // In case we want to use it.
   final List<String> ingredients;
   final List<String> instructions;
+  final String? dietaryClassification;
 
   Recipe({
     required this.name,
@@ -18,6 +19,7 @@ class Recipe {
     required this.totalTime,
     required this.ingredients,
     required this.instructions,
+    this.dietaryClassification
   });
 
   /// Removes any ***...
@@ -106,6 +108,15 @@ class Recipe {
     final prepTimeStr = "$prepInt minutes";
     final cookTimeStr = "$cookInt minutes";
 
+// Extract dietary classification
+final dietMatch = RegExp(
+  r"\*\*Dietary Classification:\*\*\s*(.*?)\s*\*\*Summary:",
+  dotAll: true,
+).firstMatch(response);
+final dietaryClassification = cleanText(
+  dietMatch?.group(1) ?? "Unknown"
+);
+
     // Extract the ingredients here into a list (as there are multiple)
     final ingredientsMatch = RegExp(
       r"\*\*Ingredients:\*\*(.+?)\*\*Instructions:",
@@ -141,6 +152,7 @@ class Recipe {
       totalTime: totalTimeStr,
       ingredients: ingredients,
       instructions: instructions,
+      dietaryClassification: dietaryClassification,
     );
   }
 }
