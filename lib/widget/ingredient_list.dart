@@ -120,19 +120,21 @@ bool _isGroupHeader(String ingredient) {
                 }
 
                 final ctrl = ref.read(shoppingListControllerProvider);
-
-                for (final raw in lines) {
+                final batch = lines.map((raw) {
                   final p = IngredientParser.split(raw);
-                  final String? qtyStr = p.qty.isEmpty ? null : (p.unit.isEmpty ? p.qty : '${p.qty} ${p.unit}');
-                  debugPrint('📝  Inserting → name="${p.name}" qty="$qtyStr"');
-                  await ctrl.addShoppingItem(ShoppingItem(
+                  final String? qtyStr = p.qty.isEmpty
+                      ? null
+                      : (p.unit.isEmpty ? p.qty : '${p.qty} ${p.unit}');
+                  return ShoppingItem(
                     id: null,
                     userId: user!.profileId!,
                     itemName: p.name,
                     quantity: qtyStr,
                     category: p.unit.isEmpty ? null : p.unit,
-                  ));
-                }
+                  );
+                }).toList();
+
+                await ctrl.addShoppingItems(batch);
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('✔️ Added ${lines.length} item${lines.length == 1 ? '' : 's'}')),
