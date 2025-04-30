@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shopping_list_g11/widget/styles/pantry_icons.dart';
 import 'package:shopping_list_g11/widget/user_feedback/regular_custom_snackbar.dart';
 import 'package:shopping_list_g11/providers/meal_suggestions.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 /// Home screen for the app.
 /// Displays "Expiring Soon" items and "Meal Suggestions" upon the above items.
@@ -24,20 +24,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   // icon helper.
   //TODO: set up this as its own widget so it can be reused for other screens.
-  Widget _expiringIconFor(
-    String category, {
-    double size = 20,
-    Color? color,
-  }) {
-    return SvgPicture.asset(
-      'assets/icons/$category.svg',
-      width: size,
-      height: size,
-      colorFilter:
-          color != null ? ColorFilter.mode(color, BlendMode.srcIn) : null,
-      placeholderBuilder: (_) => SizedBox(width: size, height: size),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -131,11 +117,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Expanded(
                         child: Row(
                           children: [
-                            _expiringIconFor(
-                              category,
-                              size: 20,
-                              color: theme.tertiary,
-                            ),
+                            PantryIcons(category: category, size: 20, color: theme.tertiary),
                             const SizedBox(width: 10),
                             Flexible(
                               child: Text(
