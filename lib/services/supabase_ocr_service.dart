@@ -79,7 +79,9 @@ class SupabaseService {
           'purchase_count': item.quantity.round(),
           'unit'        : item.unit,
           'price'       : item.price,
-          'purchased_at': DateTime.now().toIso8601String(),
+          'purchased_at': receiptData.date is DateTime
+              ? (receiptData.date as DateTime).toIso8601String()
+              : receiptData.date.toString(),
         }).select();
       } catch (e) {
         debugPrint('Error inserting item "${item.name}": $e');
