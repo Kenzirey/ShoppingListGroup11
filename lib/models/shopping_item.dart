@@ -8,6 +8,7 @@ class ShoppingItem {
   final String? quantity;
   final String? category;
   final IconData? icon;
+  final DateTime? addedAt;
 
   ShoppingItem({
     this.id,
@@ -16,6 +17,7 @@ class ShoppingItem {
     this.quantity,
     this.category,
     this.icon,
+    this.addedAt
   });
 
   factory ShoppingItem.fromMap(Map<String, dynamic> map) {
@@ -25,6 +27,9 @@ class ShoppingItem {
       itemName: map['item_name'] as String,
       quantity: map['quantity'] as String?,
       category: map['category'] as String?,
+      addedAt:map['created_at'] != null
+          ? DateTime.parse(map['created_at'] as String)
+          : null,
     );
   }
 
@@ -35,6 +40,7 @@ class ShoppingItem {
       'quantity': quantity,
       'category': category,
       if (id != null && id!.isNotEmpty) 'id': id,
+      'created_at': addedAt?.toIso8601String(),
     };
   }
 }

@@ -44,6 +44,7 @@ class _ShoppingListItemState extends State<ShoppingListItem> {
     }
 
     return Container(
+      constraints: const BoxConstraints(maxHeight: 64), // as the items were slightly different depending on dropdown or not
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
       decoration: BoxDecoration(
