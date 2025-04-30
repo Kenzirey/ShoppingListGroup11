@@ -15,11 +15,10 @@ class PurchaseHistoryScreen extends ConsumerStatefulWidget {
       _PurchaseHistoryScreenState();
 }
 
-class _PurchaseHistoryScreenState
-    extends ConsumerState<PurchaseHistoryScreen> {
-  List<Product> sortedProducts   = [];
+class _PurchaseHistoryScreenState extends ConsumerState<PurchaseHistoryScreen> {
+  List<Product> sortedProducts = [];
   List<Product> displayedProducts = [];
-  
+
   // Lazy loading parameters.
   int _currentPage = 0;
   final int _pageSize = 10;
@@ -52,7 +51,6 @@ class _PurchaseHistoryScreenState
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
     final historyAsync = ref.watch(purchaseHistoryProvider);
@@ -68,9 +66,9 @@ class _PurchaseHistoryScreenState
     final allProducts = historyAsync.value ?? [];
 
     if (sortedProducts.isEmpty) {
-      sortedProducts      = List<Product>.from(allProducts);
-      displayedProducts   = [];
-      _currentPage        = 0;
+      sortedProducts = List<Product>.from(allProducts);
+      displayedProducts = [];
+      _currentPage = 0;
       _fetchMoreProducts(sortedProducts);
     }
 
@@ -101,46 +99,61 @@ class _PurchaseHistoryScreenState
                     color: Theme.of(context).colorScheme.tertiary,
                   ),
                 ),
-                DropdownButton<String>(
-                  value: selectedMonth,
-                  items: months.map((month) {
-                    final isCurrent = month == months.last;
-                    return DropdownMenuItem<String>(
-                      value: month,
-                      child: Text(
-                        month,
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: isCurrent
-                              ? Theme.of(context).colorScheme.primary
-                              : Theme.of(context).colorScheme.tertiary,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                  selectedItemBuilder: (BuildContext context) {
-                    return months.map((month) {
-                      return Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          month,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.tertiary,
-                          ),
-                        ),
-                      );
-                    }).toList();
-                  },
-                  dropdownColor: Theme.of(context).colorScheme.surface,
-                  onChanged: (newMonth) {
-                    if (newMonth != null) {
-                      setState(() => selectedMonth = newMonth);
-                    }
-                  },
+DropdownButton<String>(
+  value: selectedMonth,
+  items: months.map((month) {
+    final isCurrent = month == months.last;
+    final isSelected = month == selectedMonth;
+    final borderColor = isCurrent
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).colorScheme.tertiary;
+    return DropdownMenuItem<String>(
+      value: month,
+      child: Container(
+        padding: isSelected ? const EdgeInsets.only(bottom: 1) : EdgeInsets.zero,
+        decoration: isSelected
+            ? BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(width: 2, color: borderColor),
                 ),
+              )
+            : null,
+        child: Text(
+          month,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: isCurrent
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.tertiary,
+          ),
+        ),
+      ),
+    );
+  }).toList(),
+  selectedItemBuilder: (BuildContext context) {
+    return months.map((month) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          month,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.tertiary,
+          ),
+        ),
+      );
+    }).toList();
+  },
+  dropdownColor: Theme.of(context).colorScheme.surface,
+  onChanged: (newMonth) {
+    if (newMonth != null) {
+      setState(() => selectedMonth = newMonth);
+    }
+  },
+),
+
               ],
             ),
             const Divider(),
