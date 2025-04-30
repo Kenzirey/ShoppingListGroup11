@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shopping_list_g11/widget/pantry_tile.dart';
-import 'package:shopping_list_g11/controllers/pantry_controller.dart';
 import 'package:shopping_list_g11/providers/pantry_items_provider.dart';
 import 'package:shopping_list_g11/providers/current_user_provider.dart';
 
@@ -21,7 +20,9 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final currentUser = ref.watch(currentUserValueProvider);
       if (currentUser != null && currentUser.profileId != null) {
-        await ref.read(pantryControllerProvider).fetchPantryItems(currentUser.profileId!);
+        await ref
+            .read(pantryControllerProvider)
+            .fetchPantryItems(currentUser.profileId!);
       }
     });
   }
@@ -29,9 +30,12 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
   @override
   Widget build(BuildContext context) {
     final pantryItems = ref.watch(pantryItemsProvider);
-    final fridgeItems = pantryItems.where((p) => p.category == 'Fridge').toList();
-    final dryGoodsItems = pantryItems.where((p) => p.category == 'Freezer').toList();
-    final cannedFoodItems = pantryItems.where((p) => p.category == 'Dry Storage').toList();
+    final fridgeItems =
+        pantryItems.where((p) => p.category == 'Fridge').toList();
+    final dryGoodsItems =
+        pantryItems.where((p) => p.category == 'Freezer').toList();
+    final cannedFoodItems =
+        pantryItems.where((p) => p.category == 'Dry Storage').toList();
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -54,7 +58,6 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
             const SizedBox(height: 4),
             const Divider(),
             const SizedBox(height: 8),
-
             _buildSectionHeader('Fridge'),
             const SizedBox(height: 12),
             if (fridgeItems.isEmpty)
@@ -62,19 +65,21 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
             else
               ...fridgeItems.map((item) => Dismissible(
                     key: ValueKey(item.id),
-                    background: Container(color: Colors.redAccent, alignment: Alignment.centerRight, padding: const EdgeInsets.only(right: 16), child: const Icon(Icons.delete, color: Colors.white)),
+                    background: Container(
+                        color: Colors.redAccent,
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 16),
+                        child: const Icon(Icons.delete, color: Colors.white)),
                     direction: DismissDirection.endToStart,
                     onDismissed: (_) => _deleteItem(item.id!),
                     child: PantryItemTile(
-                      icon: Icons.kitchen,
+                      category: item.category, // String?
                       itemName: item.name,
                       expiration: _formatExpiration(item.expirationDate),
                       quantity: item.quantity ?? 'N/A',
                     ),
                   )),
-
             const SizedBox(height: 24),
-
             _buildSectionHeader('Freezer'),
             const SizedBox(height: 12),
             if (dryGoodsItems.isEmpty)
@@ -82,19 +87,21 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
             else
               ...dryGoodsItems.map((item) => Dismissible(
                     key: ValueKey(item.id),
-                    background: Container(color: Colors.redAccent, alignment: Alignment.centerRight, padding: const EdgeInsets.only(right: 16), child: const Icon(Icons.delete, color: Colors.white)),
+                    background: Container(
+                        color: Colors.redAccent,
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 16),
+                        child: const Icon(Icons.delete, color: Colors.white)),
                     direction: DismissDirection.endToStart,
                     onDismissed: (_) => _deleteItem(item.id!),
                     child: PantryItemTile(
-                      icon: Icons.store,
+                      category: item.category, // string key from supabase - matches the name of the svg.
                       itemName: item.name,
                       expiration: _formatExpiration(item.expirationDate),
                       quantity: item.quantity ?? 'N/A',
                     ),
                   )),
-
             const SizedBox(height: 24),
-
             _buildSectionHeader('Dry Storage'),
             const SizedBox(height: 12),
             if (cannedFoodItems.isEmpty)
@@ -102,11 +109,15 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
             else
               ...cannedFoodItems.map((item) => Dismissible(
                     key: ValueKey(item.id),
-                    background: Container(color: Colors.redAccent, alignment: Alignment.centerRight, padding: const EdgeInsets.only(right: 16), child: const Icon(Icons.delete, color: Colors.white)),
+                    background: Container(
+                        color: Colors.redAccent,
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 16),
+                        child: const Icon(Icons.delete, color: Colors.white)),
                     direction: DismissDirection.endToStart,
                     onDismissed: (_) => _deleteItem(item.id!),
                     child: PantryItemTile(
-                      icon: Icons.archive,
+                      category: item.category,
                       itemName: item.name,
                       expiration: _formatExpiration(item.expirationDate),
                       quantity: item.quantity ?? 'N/A',
@@ -114,12 +125,6 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
                   )),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Implement Logic here
-        },
-        child: const Icon(Icons.add),
       ),
     );
   }

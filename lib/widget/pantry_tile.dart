@@ -1,16 +1,19 @@
+// lib/widget/pantry_tile.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shopping_list_g11/widget/styles/pantry_icons.dart';
 import 'package:shopping_list_g11/widget/styles/buttons/lazy_dropdown.dart';
 
+/// Represents an item tile in the pantry list.
 class PantryItemTile extends ConsumerStatefulWidget {
-  final IconData icon;
+  final String? category;
   final String itemName;
   final String expiration;
   final String quantity;
 
   const PantryItemTile({
     super.key,
-    required this.icon,
+    required this.category,
     required this.itemName,
     required this.expiration,
     required this.quantity,
@@ -21,8 +24,8 @@ class PantryItemTile extends ConsumerStatefulWidget {
 }
 
 class _PantryItemTileState extends ConsumerState<PantryItemTile> {
-  String? _expiration;
-  String? _quantity;
+  late String _expiration;
+  late String _quantity;
 
   @override
   void initState() {
@@ -45,10 +48,9 @@ class _PantryItemTileState extends ConsumerState<PantryItemTile> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(
-            widget.icon,
+          PantryIcons(
+            category: widget.category,
             size: 20,
             color: color,
           ),
@@ -56,7 +58,6 @@ class _PantryItemTileState extends ConsumerState<PantryItemTile> {
           Expanded(
             child: IntrinsicHeight(
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(
                     child: Text(
@@ -66,19 +67,15 @@ class _PantryItemTileState extends ConsumerState<PantryItemTile> {
                         fontWeight: FontWeight.w500,
                         color: color,
                       ),
-                      softWrap: true,
                     ),
                   ),
                   const SizedBox(width: 8),
                   IntrinsicWidth(
                     child: CustomLazyDropdown(
-                      initialValue: _expiration ?? '0',
+                      initialValue: _expiration,
                       icon: Icons.access_time,
                       onChanged: (newValue) {
-                        setState(() {
-                          _expiration = newValue;
-                          debugPrint('Expiration changed to: $newValue');
-                        });
+                        setState(() => _expiration = newValue);
                       },
                     ),
                   ),
@@ -92,12 +89,9 @@ class _PantryItemTileState extends ConsumerState<PantryItemTile> {
             alignment: Alignment.centerRight,
             child: IntrinsicWidth(
               child: CustomLazyDropdown(
-                initialValue: _quantity ?? '1',
+                initialValue: _quantity,
                 onChanged: (newValue) {
-                  setState(() {
-                    _quantity = newValue;
-                    debugPrint('Quantity changed to: $newValue');
-                  });
+                  setState(() => _quantity = newValue);
                 },
               ),
             ),
