@@ -1,22 +1,25 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shopping_list_g11/models/receipt_data.dart';
+import 'package:shopping_list_g11/providers/purchase_history_provider.dart';
 import 'package:shopping_list_g11/screen/receipts/view_scanned_receipt_screen.dart';
 import 'package:shopping_list_g11/services/image_processing.dart';
 import 'package:shopping_list_g11/services/kassal_service.dart';
 import 'package:shopping_list_g11/services/supabase_ocr_service.dart';
+import 'package:shopping_list_g11/widget/user_feedback/regular_custom_snackbar.dart';
 import '../../services/gemini_ocr_service.dart';
 
 /// Screen for scanning a receipt and extracting data
-class ScanReceiptScreen extends StatefulWidget {
+class ScanReceiptScreen extends ConsumerStatefulWidget {
   const ScanReceiptScreen({super.key});
 
   @override
-  ScanReceiptScreenState createState() => ScanReceiptScreenState();
+  ConsumerState<ScanReceiptScreen> createState() => _ScanReceiptScreenState();
 }
 
-class ScanReceiptScreenState extends State<ScanReceiptScreen> {
+class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
   final ImageProcessingService _imageService = ImageProcessingService();
   final KassalService _kassalService = KassalService();
   final SupabaseService _supabaseService = SupabaseService();
@@ -38,7 +41,8 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
       });
 
       final processedImage = await _imageService.preprocessImage(_image!);
-      final receiptData = await _geminiService.extractReceiptData(processedImage);
+      final receiptData =
+          await _geminiService.extractReceiptData(processedImage);
 
       // Check if receiptData is null before proceeding
       if (receiptData == null) {
@@ -68,9 +72,9 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
           if (allergenList is List) {
             final relevantAllergens = allergenList
                 .where((a) =>
-            a is Map &&
-                a['contains'] != null &&
-                a['contains'].toString().toUpperCase() == 'YES')
+                    a is Map &&
+                    a['contains'] != null &&
+                    a['contains'].toString().toUpperCase() == 'YES')
                 .map((a) => a['display_name'])
                 .toList();
             final allergenString = relevantAllergens.join(', ');
@@ -81,6 +85,9 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
 
       // Save receipt and items to Supabase
       await _supabaseService.saveReceipt(receiptData);
+
+      // Reload purchase history after saving receipt
+      ref.read(purchaseHistoryProvider.notifier).loadPurchaseHistory();
 
       setState(() {
         _receiptData = receiptData;
@@ -100,6 +107,15 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
       setState(() {
         _isProcessing = false;
       });
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          CustomSnackbar.buildSnackBar(
+            title: 'Error',
+            message: 'Error scanning receipt: $e',
+            innerPadding: const EdgeInsets.symmetric(horizontal: 16),
+          ),
+        );
     }
   }
 
@@ -111,8 +127,7 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -150,8 +165,9 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
                               style: TextStyle(fontSize: 18),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.primaryContainer,
+                              backgroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .primaryContainer,
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 22, vertical: 18),
                               shape: RoundedRectangleBorder(
@@ -179,8 +195,9 @@ class ScanReceiptScreenState extends State<ScanReceiptScreen> {
                               style: TextStyle(fontSize: 18),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.primaryContainer,
+                              backgroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .primaryContainer,
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 22, vertical: 18),
                               shape: RoundedRectangleBorder(
