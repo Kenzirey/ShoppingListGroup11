@@ -7,6 +7,7 @@ class Product {
   final DateTime purchaseDate;
   final String? price;
   final String amount;
+  final String? category;
 
   const Product({
     required this.name,
@@ -14,6 +15,7 @@ class Product {
     required this.purchaseDate,
     this.price,
     required this.amount,
+    this.category,
   });
 
   /// Factory constructor with optional [measurementType].
@@ -24,6 +26,7 @@ class Product {
     String? price,
     required String amount,
     MeasurementType? measurementType,
+    String? category,
   }) {
     return Product(
       name: name,
@@ -31,6 +34,7 @@ class Product {
       purchaseDate: purchaseDate,
       price: price,
       amount: amount,
+      category: category,
     );
   }
 }
