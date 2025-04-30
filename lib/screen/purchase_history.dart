@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:shopping_list_g11/widget/styles/pantry_icons.dart';
 import '../providers/purchase_history_provider.dart';
 import '../models/product.dart';
 import '../utils/month_day_util.dart';
@@ -99,61 +100,63 @@ class _PurchaseHistoryScreenState extends ConsumerState<PurchaseHistoryScreen> {
                     color: Theme.of(context).colorScheme.tertiary,
                   ),
                 ),
-DropdownButton<String>(
-  value: selectedMonth,
-  items: months.map((month) {
-    final isCurrent = month == months.last;
-    final isSelected = month == selectedMonth;
-    final borderColor = isCurrent
-        ? Theme.of(context).colorScheme.primary
-        : Theme.of(context).colorScheme.tertiary;
-    return DropdownMenuItem<String>(
-      value: month,
-      child: Container(
-        padding: isSelected ? const EdgeInsets.only(bottom: 1) : EdgeInsets.zero,
-        decoration: isSelected
-            ? BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(width: 2, color: borderColor),
+                DropdownButton<String>(
+                  value: selectedMonth,
+                  items: months.map((month) {
+                    final isCurrent = month == months.last;
+                    final isSelected = month == selectedMonth;
+                    final borderColor = isCurrent
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.tertiary;
+                    return DropdownMenuItem<String>(
+                      value: month,
+                      child: Container(
+                        padding: isSelected
+                            ? const EdgeInsets.only(bottom: 1)
+                            : EdgeInsets.zero,
+                        decoration: isSelected
+                            ? BoxDecoration(
+                                border: Border(
+                                  bottom:
+                                      BorderSide(width: 2, color: borderColor),
+                                ),
+                              )
+                            : null,
+                        child: Text(
+                          month,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: isCurrent
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).colorScheme.tertiary,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  selectedItemBuilder: (BuildContext context) {
+                    return months.map((month) {
+                      return Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          month,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.tertiary,
+                          ),
+                        ),
+                      );
+                    }).toList();
+                  },
+                  dropdownColor: Theme.of(context).colorScheme.surface,
+                  onChanged: (newMonth) {
+                    if (newMonth != null) {
+                      setState(() => selectedMonth = newMonth);
+                    }
+                  },
                 ),
-              )
-            : null,
-        child: Text(
-          month,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: isCurrent
-                ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).colorScheme.tertiary,
-          ),
-        ),
-      ),
-    );
-  }).toList(),
-  selectedItemBuilder: (BuildContext context) {
-    return months.map((month) {
-      return Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          month,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.tertiary,
-          ),
-        ),
-      );
-    }).toList();
-  },
-  dropdownColor: Theme.of(context).colorScheme.surface,
-  onChanged: (newMonth) {
-    if (newMonth != null) {
-      setState(() => selectedMonth = newMonth);
-    }
-  },
-),
-
               ],
             ),
             const Divider(),
@@ -207,8 +210,9 @@ DropdownButton<String>(
                             ),
                             child: Row(
                               children: [
-                                Icon(
-                                  Icons.local_grocery_store,
+                                PantryIcons(
+                                  category:
+                                      product.category, // category and key of the svg needs to match
                                   size: 20,
                                   color: Theme.of(context).colorScheme.tertiary,
                                 ),
