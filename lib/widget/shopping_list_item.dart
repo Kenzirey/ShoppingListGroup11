@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:shopping_list_g11/utils/quantity_parser.dart';
 import 'package:shopping_list_g11/widget/styles/buttons/lazy_dropdown.dart';
 
-/// A ShoppingListItem shows the item name and, when count‑based (unitLabel is empty),
-/// displays a dropdown that lazy‑loads numeric options.
+/// A ShoppingListItem shows the item name and, when count-based (unitLabel is empty),
+/// displays a dropdown that lazy-loads numeric options.
 class ShoppingListItem extends StatefulWidget {
   final String item;
   final String quantityText;
-  // For count‑based items, unitLabel is empty; for measured items, it contains the unit (e.g. "kg").
   final String unitLabel;
   final ValueChanged<int> onQuantityChanged;
 
@@ -34,84 +33,111 @@ class _ShoppingListItemState extends State<ShoppingListItem> {
 
   @override
   Widget build(BuildContext context) {
-    final numericQuantity =
-        QuantityParser.parseLeadingNumber(widget.quantityText, defaultValue: 1);
-    final initialValue = numericQuantity.toString();
-    final useDropdown = widget.unitLabel.isEmpty;
+    final theme            = Theme.of(context);
+    final bg               = theme.colorScheme.primaryContainer;
+    final tertiary         = theme.colorScheme.tertiary;
+    final numericQuantity  = QuantityParser.parseLeadingNumber(
+      widget.quantityText, defaultValue: 1);
+    final initialValue     = numericQuantity.toString();
+    final useDropdown      = widget.unitLabel.isEmpty;
 
     if (!useDropdown && _controller == null) {
       _controller = TextEditingController(text: initialValue);
     }
 
     return Container(
-      constraints: const BoxConstraints(maxHeight: 64), // as the items were slightly different depending on dropdown or not
+      height: 56,
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primaryContainer,
+        color: bg,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
+          // item name
           Expanded(
             child: Text(
               widget.item,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.tertiary,
+                color: tertiary,
               ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          IntrinsicWidth(
-            child: useDropdown
-                ? CustomLazyDropdown(
-                    initialValue: initialValue,
-                    onChanged: (String value) {
-                      final parsed = int.tryParse(value);
-                      if (parsed != null && parsed > 0) {
-                        widget.onQuantityChanged(parsed);
-                      }
-                    },
-                  )
-                : TextField(
-                    controller: _controller,
-                    keyboardType: TextInputType.number,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+
+          if (useDropdown)
+            // ───── dropdown branch ─────
+            IntrinsicWidth(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // hide the built-in underline and center the trigger
+                  DropdownButtonHideUnderline(
+                    child: Center(
+                      child: 
+CustomLazyDropdown(
+  initialValue: initialValue,
+  onChanged: (value) {
+    final parsed = int.tryParse(value);
+    if (parsed != null && parsed > 0) {
+      widget.onQuantityChanged(parsed);
+    }
+  },
+),
+
                     ),
-                    decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(
-                          vertical: 8, horizontal: 4),
-                      isDense: true,
-                      border: const UnderlineInputBorder(),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(
-                            color: Theme.of(context).colorScheme.tertiary),
-                      ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(
-                            color: Theme.of(context).colorScheme.primary),
-                      ),
-                      suffixText: widget.unitLabel,
-                      suffixStyle: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Theme.of(context).colorScheme.tertiary,
-                      ),
-                    ),
-                    onChanged: (value) {
-                      final parsed = int.tryParse(value);
-                      if (parsed != null && parsed > 0) {
-                        widget.onQuantityChanged(parsed);
-                      }
-                    },
                   ),
-          ),
+                  // draw a 1px underline exactly under the trigger
+                  Container(
+                    height: 1,
+                    color: tertiary,
+                  ),
+                ],
+              ),
+            )
+          else
+            // ───── text-field branch (unchanged) ─────
+            IntrinsicWidth(
+              child: TextField(
+                controller: _controller,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                decoration: InputDecoration(
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 0, horizontal: 4),
+                  isDense: true,
+                  border: const UnderlineInputBorder(),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: tertiary),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide:
+                        BorderSide(color: theme.colorScheme.primary),
+                  ),
+                  suffixText: widget.unitLabel,
+                  suffixStyle: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: tertiary,
+                  ),
+                ),
+                onChanged: (value) {
+                  final parsed = int.tryParse(value);
+                  if (parsed != null && parsed > 0) {
+                    widget.onQuantityChanged(parsed);
+                  }
+                },
+              ),
+            ),
         ],
       ),
     );

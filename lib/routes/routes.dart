@@ -28,54 +28,55 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Defines the app's routing and navigation logic using the GoRouter package.
 ///
-/// Handles [ShellRoute] to separate bottom navigation bar and drawer-based screens.
+/// Handles [StatefulShellRoute] to separate bottom navigation bar and drawer-based screens.
 class AppRouter {
   static final GlobalKey<ScaffoldState> scaffoldKey =
       GlobalKey<ScaffoldState>();
-  static final _rootNavigatorKey = GlobalKey<NavigatorState>();
-  static final _shellNavigatorKey = GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> rootNavigatorKey =
+      GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> drawerBranchKey =
+      GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> shoppingListBranchKey =
+      GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> homeBranchKey =
+      GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> scanReceiptBranchKey =
+      GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> purchaseHistoryBranchKey =
+      GlobalKey<NavigatorState>();
 
   static final GoRouter router = GoRouter(
-    navigatorKey: _rootNavigatorKey,
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/',
     refreshListenable: authRefreshListenable,
-
     redirect: (BuildContext context, GoRouterState state) async {
-      final supa = Supabase.instance.client; 
+      final supa = Supabase.instance.client;
       Session? s = supa.auth.currentSession;
 
       // validate the cached session with the server
       bool loggedIn = false;
       if (s != null) {
-        final res = await supa.auth.getUser();          
-        loggedIn = res.user != null;                   
+        final res = await supa.auth.getUser();
+        loggedIn = res.user != null;
         if (!loggedIn) {
           await supa.auth.signOut();
           s = null;
         }
       }
-
       final path = state.uri.path;
 
     // Routes that doesnt require login
-      final publicPaths = {
+      const publicPaths = {
         '/login',
         '/sign-up',
         '/forgot-password',
         '/reset-password',
       };
-       final isPublic = publicPaths.contains(path);
-
+      final isPublic = publicPaths.contains(path);
       // 1) If not logged in and trying to visit a protected page - go to /login
-      if (!loggedIn && !isPublic) {
-        return '/login';
-      }
-
+      if (!loggedIn && !isPublic) return '/login';
       // 2) If already logged in but on an auth page go to home, and allow logged in user to visit reset-password screen via deep link
-      if (loggedIn && isPublic && path != '/reset-password') {
-        return '/';
-      }
-      // 3) we have a cached session object but its already expired:
+      if (loggedIn && isPublic && path != '/reset-password') return '/'; // or 3 we have a cached session object but its already expired.
       if (!loggedIn && s != null) {
         try {
           await supa.auth.refreshSession();
@@ -89,127 +90,129 @@ class AppRouter {
       return null;
     },
     routes: [
-      ShellRoute(
-        navigatorKey: _shellNavigatorKey,
-        pageBuilder: (context, state, child) => MaterialPage(
-          child: AppShell(child: child),
-        ),
-        routes: [
-          GoRoute(
-            path: '/',
-            name: 'home',
-            builder: (context, state) => const HomeScreen(),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            AppShell(nav: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            navigatorKey: drawerBranchKey,
+            routes: [
+              GoRoute(
+                  path: '/chat',
+                  name: 'chat',
+                  builder: (context, state) => const ChatScreen()),
+              GoRoute(
+                  path: '/recipe',
+                  name: 'recipe',
+                  builder: (context, state) => const MealRecipeScreen()),
+              GoRoute(
+                  path: '/shopping-suggestion',
+                  name: 'shoppingSuggestions',
+                  builder: (context, state) => const ShoppingSuggestionsScreen()),
+              GoRoute(
+                  path: '/meal-planner',
+                  name: 'mealPlanner',
+                  builder: (context, state) => const MealPlannerScreen()),
+              GoRoute(
+                  path: '/pantry',
+                  name: 'pantry',
+                  builder: (context, state) => const PantryListScreen()),
+              GoRoute(
+                  path: '/trending',
+                  name: 'trending',
+                  builder: (context, state) => const TrendingRecipeScreen()),
+              GoRoute(
+                  path: '/purchase-statistics',
+                  name: 'purchaseStatistics',
+                  builder: (context, state) => const PurchaseStatistics()),
+              GoRoute(
+                  path: '/account',
+                  name: 'accountPage',
+                  builder: (context, state) => const AccountPageScreen()),
+              GoRoute(
+                  path: '/savedRecipes',
+                  name: 'savedRecipes',
+                  builder: (context, state) => const SavedRecipesScreen()),
+              GoRoute(
+                  path: '/edit-account-details',
+                  name: 'editAccountDetails',
+                  builder: (context, state) => const EditAccountDetailsScreen()),
+              GoRoute(
+                  path: '/information',
+                  name: 'informationPage',
+                  builder: (context, state) => const InformationScreen()),
+              GoRoute(
+                  path: '/update_avatar_screen',
+                  name: 'updateAvatarScreen',
+                  builder: (context, state) => const UpdateAvatarScreen()),
+              GoRoute(
+                path: '/receipt-screen',
+                name: 'receiptScreen',
+                builder: (context, state) {
+                  final data = state.extra as ReceiptData;
+                  return ReceiptDisplayScreen(receiptData: data);
+                },
+              ),
+            ],
           ),
-          GoRoute(
-            path: '/shopping-list',
-            name: 'shoppingList',
-            builder: (context, state) => const ShoppingListScreen(),
+          StatefulShellBranch(
+            navigatorKey: shoppingListBranchKey,
+            routes: [
+              GoRoute(
+                  path: '/shopping-list',
+                  name: 'shoppingList',
+                  builder: (context, state) => const ShoppingListScreen()),
+            ],
           ),
-          GoRoute(
-            path: '/purchase-history',
-            name: 'purchaseHistory',
-            builder: (context, state) => const PurchaseHistoryScreen(),
+          StatefulShellBranch(
+            navigatorKey: homeBranchKey,
+            routes: [
+              GoRoute(
+                  path: '/',
+                  name: 'home',
+                  builder: (context, state) => const HomeScreen()),
+            ],
           ),
-          GoRoute(
-            path: '/scan-receipt',
-            name: 'scanReceipt',
-            builder: (context, state) => const ScanReceiptScreen(),
+          StatefulShellBranch(
+            navigatorKey: scanReceiptBranchKey,
+            routes: [
+              GoRoute(
+                  path: '/scan-receipt',
+                  name: 'scanReceipt',
+                  builder: (context, state) => const ScanReceiptScreen()),
+            ],
           ),
-
-          // Drawer pages inside ShellRoute ⏬
-          GoRoute(
-            path: '/chat',
-            name: 'chat',
-            builder: (context, state) => const ChatScreen(),
+          StatefulShellBranch(
+            navigatorKey: purchaseHistoryBranchKey,
+            routes: [
+              GoRoute(
+                  path: '/purchase-history',
+                  name: 'purchaseHistory',
+                  builder: (context, state) => const PurchaseHistoryScreen()),
+            ],
           ),
-          GoRoute(
-            path: '/recipe',
-            name: 'recipe',
-            builder: (context, state) => const MealRecipeScreen(),
-          ),
-          GoRoute(
-            path: '/shopping-suggestion',
-            name: 'shoppingSuggestions',
-            builder: (context, state) => const ShoppingSuggestionsScreen(),
-          ),
-          GoRoute(
-            path: '/meal-planner',
-            name: 'mealPlanner',
-            builder: (context, state) => const MealPlannerScreen(),
-          ),
-            GoRoute(
-            path: '/pantry',
-            name: 'pantry',
-            builder: (context, state) => const PantryListScreen(),
-          ),
-          GoRoute(
-            path: '/trending',
-            name: 'trending',
-            builder: (context, state) => const TrendingRecipeScreen(),
-          ),
-          GoRoute(
-            path: '/purchase-statistics',
-            name: 'purchaseStatistics',
-            builder: (context, state) => const PurchaseStatistics(),
-          ),
-          GoRoute(
-            path: '/account',
-            name: 'accountPage',
-            builder: (context, state) => const AccountPageScreen(),
-          ),
-          GoRoute(
-            path: '/savedRecipes',
-            name: 'savedRecipes',
-            builder: (context, state) => const SavedRecipesScreen(),
-          ),
-          GoRoute(
-            path: '/edit-account-details',
-            name: 'editAccountDetails',
-            builder: (context, state) => const EditAccountDetailsScreen(),
-          ),
-          GoRoute(
-            path: '/information',
-            name: 'informationPage',
-            builder: (context, state) => const InformationScreen(),
-          ),
-          GoRoute(
-            path: '/update_avatar_screen',
-            name: 'updateAvatarScreen',
-            builder: (context, state) => const UpdateAvatarScreen(),
-          ),
-        GoRoute(
-          path: '/receipt-screen',
-          name: 'receiptScreen',
-          builder: (context, state) {
-            // Directly cast extra; this assumes that you always push the route with a valid ReceiptData.
-            final receiptData = state.extra as ReceiptData;
-            return ReceiptDisplayScreen(receiptData: receiptData);
-          },
-        ),
-
         ],
       ),
-
       // Auth-related routes outside shell
       GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         path: '/login',
         name: 'loginPage',
         builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         path: '/sign-up',
         name: 'signUp',
         builder: (context, state) => const SignUpScreen(),
       ),
       GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         path: '/forgot-password',
         builder: (context, state) => const ResetPasswordScreen(),
       ),
       GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         path: '/reset-password',
         builder: (context, state) {
           final token = state.uri.queryParameters['token'] ?? '';
@@ -219,38 +222,4 @@ class AppRouter {
       ),
     ],
   );
-
-  /// Checks if a current route is from the drawer navigation.
-  ///
-  /// Returns true if [location] is one of the drawer routes.
-  static bool isDrawerRoute(String location) {
-    return location.startsWith('/chat') ||
-        location.startsWith('/recipe') ||
-        location.startsWith('/meal-planner') ||
-        location.startsWith('/trending') ||
-        location.startsWith('/account') ||
-        location.startsWith('/savedRecipes') ||
-        location.startsWith('/edit-account-details') ||
-        location.startsWith('/information') ||
-        location.startsWith('/purchase-statistics') ||
-        location.startsWith('/update_avatar_screen');
-  }
-
-  /// Maps a [location] to its corresponding bottom navigation index.
-  ///
-  /// Returns 0 for any drawer routes, -1 if not recognized.
-  static int getSelectedIndexForRoute(String location) {
-    switch (location) {
-      case '/shopping-list':
-        return 1;
-      case '/':
-        return 2;
-      case '/scan-receipt':
-        return 3;
-      case '/purchase-history':
-        return 4;
-      default:
-        return isDrawerRoute(location) ? 0 : -1;
-    }
-  }
 }

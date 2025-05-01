@@ -106,7 +106,7 @@ class MyDrawer extends ConsumerWidget {
                 onTap: () {
                   Navigator.of(context).pop();
                   true; // Mark navigation as from the drawer
-                  context.pushNamed('purchaseStatistics');
+                  context.goNamed('purchaseStatistics');
                 },
               ),
 
@@ -122,7 +122,7 @@ class MyDrawer extends ConsumerWidget {
                 onTap: () {
                   Navigator.of(context).pop();
                   true; // Mark navigation as from the drawer
-                  context.pushNamed('chat');
+                  context.goNamed('chat');
                 },
               ),
               // Trending recipe (weekly? Biweekly?)
@@ -138,7 +138,7 @@ class MyDrawer extends ConsumerWidget {
                   final target = router.namedLocation('trending');
                   if (GoRouterState.of(context).uri.toString() != target) {
                     Navigator.of(context).pop();
-                    context.pushNamed('trending');
+                    context.goNamed('trending');
                   }
                 },
               ),
@@ -154,7 +154,7 @@ class MyDrawer extends ConsumerWidget {
                   final target = router.namedLocation('mealPlanner');
                   if (GoRouterState.of(context).uri.toString() != target) {
                     Navigator.of(context).pop();
-                    context.pushNamed('mealPlanner');
+                    context.goNamed('mealPlanner');
                   }
                 },
               ),
@@ -171,7 +171,7 @@ class MyDrawer extends ConsumerWidget {
                   final target = router.namedLocation('shoppingSuggestions');
                   if (GoRouterState.of(context).uri.toString() != target) {
                     Navigator.of(context).pop();
-                    context.pushNamed('shoppingSuggestions');
+                    context.goNamed('shoppingSuggestions');
                   }
                 },
               ),
@@ -188,7 +188,7 @@ class MyDrawer extends ConsumerWidget {
                   final target = router.namedLocation('pantry');
                   if (GoRouterState.of(context).uri.toString() != target) {
                     Navigator.of(context).pop();
-                    context.pushNamed('pantry');
+                    context.goNamed('pantry');
                   }
                 },
               ),
@@ -206,7 +206,7 @@ class MyDrawer extends ConsumerWidget {
                   final target = router.namedLocation('savedRecipes');
                   if (GoRouterState.of(context).uri.toString() != target) {
                     Navigator.of(context).pop();
-                    context.pushNamed('savedRecipes');
+                    context.goNamed('savedRecipes');
                   }
                 },
               ),
