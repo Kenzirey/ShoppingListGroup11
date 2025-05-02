@@ -9,11 +9,15 @@ class ShoppingService {
       : _db = client ?? Supabase.instance.client;
 
   /// fetches all shopping items for [userId].
-  Future<List<ShoppingItem>> fetchItems(String userId) async {
+  Future<List<ShoppingItem>> fetchItems(
+    String userId , {
+    bool ascending = false,
+     }) async {
     final resp = await _db
         .from('to_buy')
         .select('*')
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .order('created_at', ascending: ascending);
     return (resp as List)
         .map((m) => ShoppingItem.fromMap(m as Map<String, dynamic>))
         .toList();

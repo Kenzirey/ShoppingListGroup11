@@ -40,7 +40,6 @@ class ShoppingItem {
       'quantity': quantity,
       'category': category,
       if (id != null && id!.isNotEmpty) 'id': id,
-      'created_at': addedAt?.toIso8601String(),
     };
   }
 }

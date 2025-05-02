@@ -26,17 +26,16 @@ class _ShoppingListState extends ConsumerState<ShoppingListScreen> {
   late Future<void> _initialFetch;
   ShoppingItem? lastDeletedItem;
   int? lastDeletedIndex;
-  bool _latestFirst = true;
+  bool _loading = false;
 
   @override
   void initState() {
     super.initState();
-    final user = ref.read(currentUserValueProvider);
-    _initialFetch = (user != null && user.profileId != null)
-        ? ref
-            .read(shoppingListControllerProvider)
-            .fetchShoppingItems(user.profileId!)
-        : Future.value();
+    final profileId = ref.read(currentUserValueProvider)?.profileId;
+    _initialFetch = profileId != null
+      ? ref.read(shoppingListControllerProvider)
+          .fetchShoppingItems(profileId)
+      : Future.value();
   }
 
   @override
@@ -59,14 +58,11 @@ class _ShoppingListState extends ConsumerState<ShoppingListScreen> {
           return const Center(child: Text('Error loading shopping list'));
         }
 
-        final shoppingItems = ref.watch(shoppingItemsProvider);
         const horizontalPadding = 16.0;
-        final sortedItems = [...shoppingItems]..sort((a, b) {
-            final aMs = a.addedAt?.millisecondsSinceEpoch ?? 0;
-            final bMs = b.addedAt?.millisecondsSinceEpoch ?? 0;
-            return _latestFirst ? bMs.compareTo(aMs) : aMs.compareTo(bMs);
-          });
-
+        final items = ref.watch(shoppingItemsProvider);
+        final ctrl   = ref.read(shoppingListControllerProvider);
+        final userId = ref.read(currentUserValueProvider)?.profileId;
+        
         return GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
           behavior: HitTestBehavior.opaque,
@@ -83,7 +79,7 @@ class _ShoppingListState extends ConsumerState<ShoppingListScreen> {
                     children: [
                       CustomSearchBarWidget(
                         suggestions:
-                            shoppingItems.map((e) => e.itemName).toList(),
+                            items.map((e) => e.itemName).toList(),
                         onSuggestionSelected: (suggestion) {
                           debugPrint("Selected: $suggestion");
                         },
@@ -103,21 +99,27 @@ class _ShoppingListState extends ConsumerState<ShoppingListScreen> {
                           ),
                           Row(
                             children: [
-                              TextButton.icon(
-                                onPressed: () => setState(
-                                    () => _latestFirst = !_latestFirst),
-                                icon: Icon(
-                                  Icons.swap_vert,
-                                  color: Theme.of(context).colorScheme.tertiary,
-                                ),
-                                label: Text(
-                                  _latestFirst ? 'Latest' : 'Oldest',
-                                  style: TextStyle(
-                                    color:
-                                        Theme.of(context).colorScheme.tertiary,
-                                  ),
-                                ),
-                              ),
+                        TextButton.icon(
+                          onPressed: () async {
+                            if (userId == null) return;
+                            setState(() => _loading = true);
+                            await ctrl.toggleSortOrder(userId);
+                            setState(() => _loading = false);
+                          },
+                          icon: Icon(
+                            Icons.swap_vert,
+                            color: Theme.of(context).colorScheme.tertiary,
+                          ),
+                          label: Text(
+                            // ascending==false newest first “Latest”
+                            // ascending==true oldest first “Oldest”
+                            ctrl.isAscending ? 'Oldest' : 'Latest',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.tertiary,
+                            ),
+                          ),
+                        ),
+
                               TextButton.icon(
                                 onPressed: () async {
                                   final user =
@@ -173,9 +175,9 @@ class _ShoppingListState extends ConsumerState<ShoppingListScreen> {
                         child: ListView.builder(
                           physics: const BouncingScrollPhysics(),
                           padding: const EdgeInsets.only(bottom: 120.0),
-                          itemCount: sortedItems.length,
+                          itemCount: items.length,
                           itemBuilder: (context, index) {
-                            final itemObj = sortedItems[index];
+                            final itemObj = items[index];
                             final itemName = itemObj.itemName;
                             final quantityText = itemObj.quantity ?? '';
                             final String parsedUnit =
