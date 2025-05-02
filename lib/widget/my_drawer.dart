@@ -30,7 +30,7 @@ class MyDrawer extends ConsumerWidget {
                       final target = router.namedLocation('loginPage');
                       if (GoRouterState.of(context).uri.toString() != target) {
                                               Navigator.of(context).pop();
-                        context.pushNamed('loginPage');
+                        context.goNamed('loginPage');
                       }
                     },
                     child: Row(
@@ -59,7 +59,7 @@ class MyDrawer extends ConsumerWidget {
                   child: InkWell(
                     onTap: () {
                       Navigator.of(context).pop();
-                      context.pushNamed('accountPage');
+                      context.goNamed('accountPage');
                     },
                     child: Row(
                       children: [
