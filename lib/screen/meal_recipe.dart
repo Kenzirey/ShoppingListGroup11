@@ -70,6 +70,39 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
     );
     return ((date.difference(week1Monday).inDays) / 7).floor() + 1;
   }
+ void _removeMeal(
+  BuildContext context,
+  int week,
+  MealPlanEntry entry,
+) {
+  final notifier = ref.read(mealPlannerProvider.notifier);
+  final currentList = ref.read(mealPlannerProvider)[week]!;
+  final removedIndex = currentList.indexWhere((e) => e.id == entry.id);
+
+  notifier.remove(week, entry.id);
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      CustomSnackbar.buildSnackBar(
+        title: 'Removed',
+        message: '"${entry.name}" removed',
+        innerPadding: const EdgeInsets.symmetric(horizontal: 16),
+        actionText: 'Undo',
+        onAction: () {
+          notifier.insert(week, entry);
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              CustomSnackbar.buildSnackBar(
+                title: 'Restored',
+                message: '"${entry.name}" restored to meal plan',
+                innerPadding: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+            );
+        },
+      ),
+    );
+}
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).colorScheme;
@@ -311,10 +344,10 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                 ),
                 initiallyExpanded: true,
                 onExpansionChanged: (exp) => setState(() => _isExpanded = exp),
-                children: const [
+                children: [
                   SizedBox(height: 8),
-                  IngredientList(
-                      ingredients: []),
+                 IngredientList(ingredients: recipe.ingredients),
+
                   SizedBox(height: 16),
                 ],
               ),
