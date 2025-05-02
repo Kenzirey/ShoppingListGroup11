@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shopping_list_g11/models/meal_plan_entry.dart';
 import 'package:shopping_list_g11/providers/meal_planner_provider.dart';
+import 'package:shopping_list_g11/providers/current_user_provider.dart';
 import 'package:shopping_list_g11/widget/meal_item_helper.dart';
 import 'package:shopping_list_g11/widget/search_bar.dart';
-import 'package:shopping_list_g11/widget/user_feedback/regular_custom_snackbar.dart';
 
 /// Allows user to keep track and manage meals for the week.
 class MealPlannerScreen extends ConsumerStatefulWidget {
@@ -14,10 +15,7 @@ class MealPlannerScreen extends ConsumerStatefulWidget {
 }
 
 class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
-  // Example placeholder for the current week number.
   late int currentWeek;
-
-  // This represents the actual current week, we do need to use datetime or something instead.
   late int actualCurrentWeek;
 
   @override
@@ -26,10 +24,15 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
     final now = DateTime.now();
     actualCurrentWeek = _calculateWeekNumber(now);
     currentWeek = actualCurrentWeek;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userId = ref.read(currentUserValueProvider)?.profileId;
+      if (userId != null) {
+        ref.read(mealPlannerControllerProvider).fetchPlans(userId, currentWeek);
+      }
+    });
   }
 
-  /// Calculate ISO week number (week starting Monday) for a given date.
-  /// So that the week number is consistent with the current week, without hardcoding the specific week.
   int _calculateWeekNumber(DateTime date) {
     final firstThursday = DateTime(date.year, 1, 1).add(
       Duration(days: (4 - DateTime(date.year, 1, 1).weekday + 7) % 7),
@@ -40,55 +43,28 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
     return ((date.difference(week1Monday).inDays) / 7).floor() + 1;
   }
 
-  /// Remove a meal from a specific day, with undo support.
-  void _removeMeal(
-    BuildContext context,
-    String day,
-    Map<String, dynamic> meal,
-  ) {
-    // capture index so we can undo removal
-    final planner = ref.read(mealPlannerProvider);
-    final removedIndex = planner[day]!.indexOf(meal);
-
-    // Call the notifier's method to remove the meal
-    final notifier = ref.read(mealPlannerProvider.notifier);
-    notifier.removeMeal(day, meal);
-
-    // Use the custom reu-sable snackbar with an undo to resto.
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        CustomSnackbar.buildSnackBar(
-          title: 'Removed',
-          message: '"${meal['name']}" removed',
-          innerPadding: const EdgeInsets.symmetric(horizontal: 16),
-          actionText: 'Undo',
-          onAction: () {
-            // Use the insertMeal method to undo removal
-            notifier.insertMeal(day, removedIndex, meal);
-            // Confirm re-addition
-            ScaffoldMessenger.of(context)
-              ..hideCurrentSnackBar()
-              ..showSnackBar(
-                CustomSnackbar.buildSnackBar(
-                  title: 'Restored',
-                  message:
-                      '"${meal['name']}" successfully restored to meal plan',
-                  innerPadding: const EdgeInsets.symmetric(horizontal: 16),
-                ),
-              );
-          },
-        ),
-      );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final mealPlan = ref.watch(mealPlannerProvider);
+    final userId = ref.watch(currentUserValueProvider)?.profileId;
+    final controller = ref.read(mealPlannerControllerProvider);
+    final plansByWeek = ref.watch(mealPlannerProvider);
+    final entries = plansByWeek[currentWeek] ?? <MealPlanEntry>[];
 
-    // Gather all meal names for the search bar suggestions, temporary setup.
+    const weekDays = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday'
+    ];
+    final mealPlan = {
+      for (var d in weekDays) d: entries.where((e) => e.day == d).toList()
+    };
+
     final allMeals = mealPlan.values
-        .expand((dayList) => dayList.map((meal) => meal['name'].toString()))
+        .expand((dayList) => dayList.map((entry) => entry.name))
         .toList();
 
     return Scaffold(
@@ -100,13 +76,11 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
             CustomSearchBarWidget(
               suggestions: allMeals,
               hintText: 'Search meals...',
-              onSuggestionSelected: (selectedMeal) {
-                debugPrint('Selected meal: $selectedMeal');
-              },
+              onSuggestionSelected: (meal) => debugPrint('Picked: $meal'),
             ),
+
             const SizedBox(height: 16),
 
-            // title row and the week/time picker.
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -124,63 +98,59 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
                     fontSize: 16,
                   ),
                   dropdownColor: Theme.of(context).colorScheme.surface,
-                  items: List.generate(52, (index) {
-                    final week = index + 1;
-                    final bool isCurrentWeek = week == actualCurrentWeek;
-                    return DropdownMenuItem<int>(
+                  items: List.generate(52, (i) {
+                    final week = i + 1;
+                    final isCurrent = week == actualCurrentWeek;
+                    return DropdownMenuItem(
                       value: week,
                       child: Text(
-                        isCurrentWeek ? 'Current Week $week' : 'Week $week',
+                        isCurrent ? 'Current Week $week' : 'Week $week',
                         style: TextStyle(
-                          color: isCurrentWeek
+                          color: isCurrent
                               ? Theme.of(context).colorScheme.secondary
                               : Theme.of(context).colorScheme.tertiary,
-                          fontWeight: isCurrentWeek
-                              ? FontWeight.bold
-                              : FontWeight.normal,
+                          fontWeight:
+                              isCurrent ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
                     );
                   }),
-                  // the days + meals section below
-                  selectedItemBuilder: (BuildContext context) {
-                    return List.generate(52, (index) {
-                      final week = index + 1;
-                      return Container(
-                        alignment: Alignment.center,
-                        child: Text(
-                          week == actualCurrentWeek
-                              ? 'Current Week $week'
-                              : 'Week $week',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.tertiary,
-                            fontSize: 16,
-                          ),
+                  selectedItemBuilder: (_) => List.generate(52, (i) {
+                    final week = i + 1;
+                    return Center(
+                      child: Text(
+                        week == actualCurrentWeek
+                            ? 'Current Week $week'
+                            : 'Week $week',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.tertiary,
+                          fontSize: 16,
                         ),
-                      );
-                    });
-                  },
+                      ),
+                    );
+                  }),
                   onChanged: (newWeek) {
                     if (newWeek != null) {
-                      setState(() {
-                        currentWeek = newWeek;
-                      });
+                      setState(() => currentWeek = newWeek);
+                      if (userId != null) {
+                        controller.fetchPlans(userId, newWeek);
+                      }
                     }
                   },
                 ),
               ],
             ),
+
             const Divider(),
             const SizedBox(height: 8),
 
-            // The days + meals section below.
             Expanded(
               child: ListView.builder(
                 physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.only(bottom: 64.0),
-                itemCount: mealPlan.keys.length,
-                itemBuilder: (context, index) {
-                  final day = mealPlan.keys.elementAt(index);
+                itemCount: weekDays.length,
+                itemBuilder: (context, idx) {
+                  final day = weekDays[idx];
                   final meals = mealPlan[day]!;
 
                   return Column(
@@ -199,9 +169,7 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
                         Container(
                           margin: const EdgeInsets.only(bottom: 12),
                           padding: const EdgeInsets.symmetric(
-                            vertical: 10,
-                            horizontal: 14,
-                          ),
+                              vertical: 10, horizontal: 14),
                           decoration: BoxDecoration(
                             color:
                                 Theme.of(context).colorScheme.primaryContainer,
@@ -216,33 +184,49 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
                           ),
                         )
                       else
-                        ...meals.map((meal) {
+                        ...meals.map((entry) {
                           return Dismissible(
-                            key: ValueKey(meal),
+                            key: ValueKey(entry.id),
                             direction: DismissDirection.endToStart,
-                            background: Material(
-                              color: Colors.red,
-                              borderRadius: BorderRadius.circular(8),
-                              child: InkWell(
-                                onTap: () {}, // ripple effect only
-                                splashColor: Colors.white24,
-                                highlightColor: Colors.white24,
-                                child: Container(
-                                  alignment: Alignment.centerRight,
-                                  padding: const EdgeInsets.only(right: 16),
-                                  child: const Icon(Icons.delete,
-                                      color: Colors.white),
-                                ),
+                            background: Container(
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 16),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(8),
                               ),
+                              child:
+                                  const Icon(Icons.delete, color: Colors.white),
                             ),
+                            onDismissed: (_) async {
+                              // delete on server
+                              await controller.removePlan(
+                                  entry.id, currentWeek);
+                              // re-fetch locally
+                              if (userId != null) {
+                                await controller.fetchPlans(
+                                    userId, currentWeek);
+                              }
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content:
+                                      Text('"${entry.name}" removed from $day'),
+                                ),
+                              );
+                            },
                             child: MealItem(
-                              mealName: meal['name'],
-                              servings: meal['servings'] ?? 1,
-                              lactoseFree: meal['lactoseFree'] ?? false,
-                              vegan: meal['vegan'] ?? false,
-                              vegetarian: meal['vegetarian'] ?? false,
-                              onDelete: () {
-                                _removeMeal(context, day, meal);
+                              mealName: entry.name,
+                              servings: entry.servings,
+                              lactoseFree: entry.lactoseFree,
+                              vegan: entry.vegan,
+                              vegetarian: entry.vegetarian,
+                              onDelete: () async {
+                                await controller.removePlan(
+                                    entry.id, currentWeek);
+                                if (userId != null) {
+                                  await controller.fetchPlans(
+                                      userId, currentWeek);
+                                }
                               },
                             ),
                           );

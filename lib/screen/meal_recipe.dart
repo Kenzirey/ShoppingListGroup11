@@ -1,4 +1,5 @@
 // lib/screens/meal_recipe_screen.dart
+
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -11,10 +12,12 @@ import '../controllers/recipe_controller.dart';
 import '../controllers/saved_recipe_controller.dart';
 import '../providers/current_user_provider.dart';
 import '../providers/saved_recipe_provider.dart';
+import 'package:shopping_list_g11/models/meal_plan_entry.dart';
+import 'package:shopping_list_g11/providers/meal_planner_provider.dart';
+import 'package:shopping_list_g11/utils/parse_servings.dart';
 
 /// Screen showing a recipe with ingredients and instructions.
 /// Allows user to save recipe to their profile, as well as add it to a weekly meal planner.
-/// And allows for selecting individual ingredients to add to shopping list.
 class MealRecipeScreen extends ConsumerStatefulWidget {
   const MealRecipeScreen({super.key});
 
@@ -24,6 +27,8 @@ class MealRecipeScreen extends ConsumerStatefulWidget {
 
 class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
   bool _isExpanded = true;
+  late int currentWeek;
+  late int actualCurrentWeek;
 
   // Generate weekdays for planner hint
   final List<String> weekDays = List.generate(
@@ -31,17 +36,40 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
     (i) =>
         DateFormat('EEEE').format(DateTime(2025, 1, 4).add(Duration(days: i))),
   );
-  final List<String> _selectedDays = [];
 
   @override
   void initState() {
     super.initState();
+
+    // Calculate current ISO week number
+    final now = DateTime.now();
+    actualCurrentWeek = _calculateWeekNumber(now);
+    currentWeek = actualCurrentWeek;
+
+    // Fetch any existing meal plans for this user/week
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final uid = ref.read(currentUserValueProvider)?.profileId;
+      if (uid != null) {
+        ref.read(mealPlannerControllerProvider).fetchPlans(uid, currentWeek);
+      }
+    });
+
+    // Load recipe details
     final recipe = ref.read(recipeProvider);
     if (recipe != null) {
       RecipeController(ref: ref).fetchRecipeByName(recipe.name);
     }
   }
 
+  int _calculateWeekNumber(DateTime date) {
+    final firstThursday = DateTime(date.year, 1, 1).add(
+      Duration(days: (4 - DateTime(date.year, 1, 1).weekday + 7) % 7),
+    );
+    final week1Monday = firstThursday.subtract(
+      Duration(days: firstThursday.weekday - DateTime.monday),
+    );
+    return ((date.difference(week1Monday).inDays) / 7).floor() + 1;
+  }
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).colorScheme;
@@ -54,6 +82,16 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
 
     final savedRecipes = ref.watch(savedRecipesProvider);
     final isSaved = savedRecipes.any((sr) => sr.recipe.name == recipe.name);
+
+    // All plans for this week from Supabase/local state
+    final plansThisWeek =
+        ref.watch(mealPlannerProvider)[currentWeek] ?? <MealPlanEntry>[];
+
+    // Days where this recipe is already planned
+    final selectedDays = plansThisWeek
+        .where((e) => e.name == recipe.name)
+        .map((e) => e.day)
+        .toSet();
 
     return Scaffold(
       body: SingleChildScrollView(
@@ -95,22 +133,18 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                         );
                       return;
                     }
-                    final savedRecipesController =
-                        ref.read(savedRecipesControllerProvider);
+                    final ctrl = ref.read(savedRecipesControllerProvider);
                     if (isSaved) {
-                      SavedRecipe? savedRecipe;
+                      SavedRecipe? sr;
                       try {
-                        savedRecipe = savedRecipes.firstWhere(
-                          (sr) => sr.recipe.name == currentRecipe.name,
+                        sr = savedRecipes.firstWhere(
+                          (e) => e.recipe.name == currentRecipe.name,
                         );
                       } catch (_) {
-                        savedRecipe = null;
+                        sr = null;
                       }
-                      if (savedRecipe != null) {
-                        await savedRecipesController.removeRecipeByAuthId(
-                          currentUser.authId,
-                          savedRecipe,
-                        );
+                      if (sr != null) {
+                        await ctrl.removeRecipeByAuthId(currentUser.authId, sr);
                         ScaffoldMessenger.of(context)
                           ..hideCurrentSnackBar()
                           ..showSnackBar(
@@ -124,10 +158,8 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                           );
                       }
                     } else {
-                      await savedRecipesController.addRecipeByAuthId(
-                        currentUser.authId,
-                        currentRecipe,
-                      );
+                      await ctrl.addRecipeByAuthId(
+                          currentUser.authId, currentRecipe);
                       ScaffoldMessenger.of(context)
                         ..hideCurrentSnackBar()
                         ..showSnackBar(
@@ -182,70 +214,65 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                   'Add to weekly meal planner',
                   style: TextStyle(fontSize: 16, color: theme.tertiary),
                 ),
-                value: _selectedDays.isEmpty ? null : _selectedDays.last,
-                onChanged: (_) {},
-                selectedItemBuilder: (_) => weekDays
-                    .map((e) => Container(
-                          alignment: AlignmentDirectional.centerStart,
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                value: null,
+
+                items: weekDays.map((day) {
+                  final isSelected = selectedDays.contains(day);
+                  return DropdownMenuItem<String>(
+                    value: day,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_today, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
                           child: Text(
-                            'Add to weekly meal planner',
-                            style:
-                                TextStyle(fontSize: 16, color: theme.tertiary),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            day,
+                            style: TextStyle(color: theme.tertiary),
                           ),
-                        ))
-                    .toList(),
-                items: weekDays
-                    .map(
-                      (day) => DropdownMenuItem<String>(
-                        value: day,
-                        enabled: false,
-                        child: StatefulBuilder(
-                          builder: (ctx, setMb) {
-                            final sel = _selectedDays.contains(day);
-                            return InkWell(
-                              onTap: () {
-                                if (sel) {
-                                  _selectedDays.remove(day);
-                                } else {
-                                  _selectedDays.add(day);
-                                }
-                                setState(() {});
-                                setMb(() {});
-                              },
-                              child: Container(
-                                height: double.infinity,
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 12),
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.calendar_today,
-                                        size: 20, color: theme.tertiary),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(day,
-                                          style: TextStyle(
-                                              fontSize: 16,
-                                              color: theme.tertiary)),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    sel
-                                        ? Icon(Icons.check_box_outlined,
-                                            color: theme.primary)
-                                        : const Icon(
-                                            Icons.check_box_outline_blank,
-                                            color: Colors.white),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
                         ),
-                      ),
-                    )
-                    .toList(),
+                        const SizedBox(width: 16),
+                        Icon(
+                          isSelected
+                              ? Icons.check_box
+                              : Icons.check_box_outline_blank,
+                          color: isSelected ? theme.primary : Colors.white,
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+
+                onChanged: (day) async {
+                  if (day == null) return;
+                  final uid = ref.read(currentUserValueProvider)!.profileId!;
+                  final ctrl = ref.read(mealPlannerControllerProvider);
+
+                  MealPlanEntry? existing;
+                  try {
+                    existing = plansThisWeek.firstWhere(
+                      (e) => e.day == day && e.name == recipe.name,
+                    );
+                  } catch (_) {
+                    existing = null;
+                  }
+                  if (existing != null) {
+                    await ctrl.removePlan(existing.id, currentWeek);
+                  } else {
+                    await ctrl.addPlan(MealPlanEntry(
+                      id: '',
+                      userId: uid,
+                      week: currentWeek,
+                      day: day,
+                      name: recipe.name,
+                      description: recipe.summary,
+                      servings: parse_servings(recipe.yields),
+                      lactoseFree: recipe.lactoseFree,
+                      vegan: recipe.vegan,
+                      vegetarian: recipe.vegetarian,
+                      createdAt: DateTime.now(),
+                    ));
+                  }
+                },
                 buttonStyleData: ButtonStyleData(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -283,46 +310,34 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 initiallyExpanded: true,
-                onExpansionChanged: (exp) {
-                  setState(() {
-                    _isExpanded = exp;
-                  });
-                },
-                children: [
-                  const SizedBox(height: 8),
-                  IngredientList(ingredients: recipe.ingredients),
-                  const SizedBox(height: 16),
+                onExpansionChanged: (exp) => setState(() => _isExpanded = exp),
+                children: const [
+                  SizedBox(height: 8),
+                  IngredientList(
+                      ingredients: []),
+                  SizedBox(height: 16),
                 ],
               ),
             ),
             Visibility(
               visible: !_isExpanded,
-              child: Divider(
-                color: theme.tertiary,
-                thickness: 1,
-              ),
+              child: Divider(color: theme.tertiary, thickness: 1),
             ),
+
             const SizedBox(height: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Instructions',
-                  style: TextStyle(
+
+            // Instructions
+            Text('Instructions',
+                style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: theme.tertiary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ...recipe.instructions.map((step) => Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Text(
-                        step,
-                        style: TextStyle(color: theme.tertiary),
-                      ),
-                    )),
-              ],
+                    color: theme.tertiary)),
+            const SizedBox(height: 8),
+            ...recipe.instructions.map(
+              (step) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(step, style: TextStyle(color: theme.tertiary)),
+              ),
             ),
           ],
         ),

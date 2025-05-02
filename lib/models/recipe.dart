@@ -21,6 +21,25 @@ class Recipe {
       required this.instructions,
       this.dietaryClassification});
 
+
+  bool get lactoseFree =>
+    dietaryClassification
+      ?.toLowerCase()
+      .contains('lactose-free') ??
+    false;
+
+  bool get vegan =>
+    dietaryClassification
+      ?.toLowerCase()
+      .contains('vegan') ??
+    false;
+
+  bool get vegetarian =>
+    dietaryClassification
+      ?.toLowerCase()
+      .contains('vegetarian') ??
+    false;
+
   /// Removes any ***...
   static String cleanText(String text) {
     return text

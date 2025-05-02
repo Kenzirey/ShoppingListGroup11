@@ -1,62 +1,32 @@
+// lib/providers/meal_planner_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shopping_list_g11/models/meal_plan_entry.dart';
+import 'package:shopping_list_g11/services/meal_planner_service.dart';
+import 'package:shopping_list_g11/controllers/meal_planner_controller.dart';
 
-/// A StateNotifier that manages the meal plan for each day.
-class MealPlannerNotifier extends StateNotifier<Map<String, List<Map<String, dynamic>>>> {
-  MealPlannerNotifier()
-      : super({
-          'Monday': [
-            {
-              'name': 'Pasta Carbonara',
-              'lactoseFree': false,
-              'vegan': false,
-              'servings': 3,
-              'vegetarian': false,
-            },
-          ],
-          'Tuesday': [],
-          'Wednesday': [
-            {
-              'name': 'Roasted Pork',
-              'lactoseFree': true,
-              'vegan': false,
-              'vegetarian': false,
-            },
-            {
-              'name': 'Mashed Potato',
-              'lactoseFree': true,
-              'servings': 1,
-              'vegan': false,
-              'vegetarian': true,
-            },
-          ],
-          'Thursday': [],
-          'Friday': [],
-          'Saturday': [],
-          'Sunday': [],
-        });
+class MealPlannerNotifier extends StateNotifier<Map<int, List<MealPlanEntry>>> {
+  MealPlannerNotifier() : super({});
 
-  /// Removes a meal from the specified [day].
-  /// Temporary.
-  void removeMeal(String day, Map<String, dynamic> meal) {
-    final updated = {...state};
-    final mealsForDay = [...?updated[day]];
-    mealsForDay.remove(meal);
-    updated[day] = mealsForDay;
-    state = updated;
+  void setPlans(int week, List<MealPlanEntry> plans) {
+    state = {...state, week: plans};
   }
 
-  /// Inserts a meal at [index] for the specified [day].
-  /// Temporary
-  void insertMeal(String day, int index, Map<String, dynamic> meal) {
-    final updated = {...state};
-    final mealsForDay = [...?updated[day]];
-    mealsForDay.insert(index, meal);
-    updated[day] = mealsForDay;
-    state = updated;
+  void insert(int week, MealPlanEntry plan) {
+    final list = [...?state[week], plan];
+    state = {...state, week: list};
+  }
+
+  void remove(int week, String id) {
+    final list = state[week]!.where((p) => p.id != id).toList();
+    state = {...state, week: list};
   }
 }
 
 final mealPlannerProvider =
-    StateNotifierProvider<MealPlannerNotifier, Map<String, List<Map<String, dynamic>>>>(
-  (ref) => MealPlannerNotifier(),
-);
+    StateNotifierProvider<MealPlannerNotifier, Map<int, List<MealPlanEntry>>>(
+        (ref) => MealPlannerNotifier());
+
+final mealPlannerServiceProvider = Provider((ref) => MealPlannerService());
+final mealPlannerControllerProvider = Provider((ref) {
+  return MealPlannerController(ref, ref.watch(mealPlannerServiceProvider));
+});

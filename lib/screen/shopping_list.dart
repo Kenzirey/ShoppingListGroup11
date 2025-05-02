@@ -33,9 +33,8 @@ class _ShoppingListState extends ConsumerState<ShoppingListScreen> {
     super.initState();
     final profileId = ref.read(currentUserValueProvider)?.profileId;
     _initialFetch = profileId != null
-      ? ref.read(shoppingListControllerProvider)
-          .fetchShoppingItems(profileId)
-      : Future.value();
+        ? ref.read(shoppingListControllerProvider).fetchShoppingItems(profileId)
+        : Future.value();
   }
 
   @override
@@ -60,9 +59,9 @@ class _ShoppingListState extends ConsumerState<ShoppingListScreen> {
 
         const horizontalPadding = 16.0;
         final items = ref.watch(shoppingItemsProvider);
-        final ctrl   = ref.read(shoppingListControllerProvider);
+        final ctrl = ref.read(shoppingListControllerProvider);
         final userId = ref.read(currentUserValueProvider)?.profileId;
-        
+
         return GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
           behavior: HitTestBehavior.opaque,
@@ -78,8 +77,7 @@ class _ShoppingListState extends ConsumerState<ShoppingListScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       CustomSearchBarWidget(
-                        suggestions:
-                            items.map((e) => e.itemName).toList(),
+                        suggestions: items.map((e) => e.itemName).toList(),
                         onSuggestionSelected: (suggestion) {
                           debugPrint("Selected: $suggestion");
                         },
@@ -99,27 +97,27 @@ class _ShoppingListState extends ConsumerState<ShoppingListScreen> {
                           ),
                           Row(
                             children: [
-                        TextButton.icon(
-                          onPressed: () async {
-                            if (userId == null) return;
-                            setState(() => _loading = true);
-                            await ctrl.toggleSortOrder(userId);
-                            setState(() => _loading = false);
-                          },
-                          icon: Icon(
-                            Icons.swap_vert,
-                            color: Theme.of(context).colorScheme.tertiary,
-                          ),
-                          label: Text(
-                            // ascending==false newest first “Latest”
-                            // ascending==true oldest first “Oldest”
-                            ctrl.isAscending ? 'Oldest' : 'Latest',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.tertiary,
-                            ),
-                          ),
-                        ),
-
+                              TextButton.icon(
+                                onPressed: () async {
+                                  if (userId == null) return;
+                                  setState(() => _loading = true);
+                                  await ctrl.toggleSortOrder(userId);
+                                  setState(() => _loading = false);
+                                },
+                                icon: Icon(
+                                  Icons.swap_vert,
+                                  color: Theme.of(context).colorScheme.tertiary,
+                                ),
+                                label: Text(
+                                  // ascending==false newest first “Latest”
+                                  // ascending==true oldest first “Oldest”
+                                  ctrl.isAscending ? 'Oldest' : 'Latest',
+                                  style: TextStyle(
+                                    color:
+                                        Theme.of(context).colorScheme.tertiary,
+                                  ),
+                                ),
+                              ),
                               TextButton.icon(
                                 onPressed: () async {
                                   final user =
