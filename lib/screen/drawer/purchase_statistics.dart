@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shopping_list_g11/widget/charts/legend_piechart.dart';
-import 'package:shopping_list_g11/widget/charts/spending_line_chart.dart';
 import 'package:shopping_list_g11/widget/charts/spending_piechart.dart';
 
 /// Screen for displaying the purchase habits / statistics of a user.
-/// From monthly spent per category, to yearly spending on groceries.
 class PurchaseStatistics extends ConsumerStatefulWidget {
   const PurchaseStatistics({super.key});
 
@@ -36,29 +33,6 @@ class _PurchaseStatisticsState extends ConsumerState<PurchaseStatistics> {
     DateTime.now().year - 2020 + 1,
     (index) => 2020 + index,
   );
-
-  // Colors for the line chart.
-  final Color mainLineColor = Colors.blue;
-  final Color belowLineColor = Colors.green;
-  final Color aboveLineColor = Colors.purple.withOpacity(0.7);
-
-  // first one is the year (Jan-dec), second will be the TOTAL money spent for that entire month.
-  final List<FlSpot> spendingSpots = const [
-    FlSpot(0, 10),
-    FlSpot(1, 8),
-    FlSpot(2, 15),
-    FlSpot(3, 12),
-    FlSpot(4, 17),
-    FlSpot(5, 20),
-    FlSpot(6, 18),
-    FlSpot(7, 22),
-    FlSpot(8, 19),
-    FlSpot(9, 23),
-    FlSpot(10, 21),
-    FlSpot(11, 25),
-  ];
-
-  double? _touchedValue;
 
   @override
   Widget build(BuildContext context) {
@@ -116,56 +90,6 @@ class _PurchaseStatisticsState extends ConsumerState<PurchaseStatistics> {
                 textColor: tertiaryColor,
               ),
               const SizedBox(height: 20),
-              Text(
-                'Money spent on groceries',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: tertiaryColor,
-                ),
-              ),
-              const Divider(),
-              const SizedBox(height: 8),
-              // Year dropdown.
-              DropdownButton<int>(
-                isExpanded: true,
-                value: selectedYear,
-                style: TextStyle(color: tertiaryColor, fontSize: 16),
-                items: years
-                    .map((year) => DropdownMenuItem<int>(
-                          value: year,
-                          child: Text(year.toString()),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      selectedYear = value;
-                    });
-                  }
-                },
-              ),
-              // Display the value matching the touched point on the line.
-              if (_touchedValue != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text(
-                    'Value: ${_touchedValue!.toStringAsFixed(1)}k',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: mainLineColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              // Line chart here.
-              SpendingHabitLineChart(
-                spendingSpots: spendingSpots,
-                mainLineColor: mainLineColor,
-                belowLineColor: belowLineColor,
-                aboveLineColor: aboveLineColor,
-                selectedYear: selectedYear,
-              ),
             ],
           ),
         ),
