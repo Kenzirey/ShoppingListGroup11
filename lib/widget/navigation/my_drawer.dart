@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shopping_list_g11/providers/current_user_provider.dart';
+import 'package:shopping_list_g11/widget/styles/pantry_icons.dart';
 
 /// Left-side drawer widget for the app.
 class MyDrawer extends ConsumerWidget {
@@ -29,7 +30,7 @@ class MyDrawer extends ConsumerWidget {
                     onTap: () {
                       final target = router.namedLocation('loginPage');
                       if (GoRouterState.of(context).uri.toString() != target) {
-                                              Navigator.of(context).pop();
+                        Navigator.of(context).pop();
                         context.goNamed('loginPage');
                       }
                     },
@@ -96,8 +97,12 @@ class MyDrawer extends ConsumerWidget {
 
               // Filter
               ListTile(
-                leading: Icon(Icons.filter_list,
-                    color: Theme.of(context).colorScheme.tertiary),
+                leading: PantryIcons(
+                  category:
+                      'statistics',
+                  size: 24,
+                  color: Theme.of(context).colorScheme.tertiary,
+                ),
                 title: Text(
                   'Purchase Statistics',
                   style:
@@ -109,28 +114,16 @@ class MyDrawer extends ConsumerWidget {
                   context.goNamed('purchaseStatistics');
                 },
               ),
-
-              // Chat
-              ListTile(
-                leading: Icon(Icons.chat,
-                    color: Theme.of(context).colorScheme.tertiary),
-                title: Text(
-                  'Chat',
-                  style:
-                      TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                ),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  true; // Mark navigation as from the drawer
-                  context.goNamed('chat');
-                },
-              ),
               // Trending recipe (weekly? Biweekly?)
               ListTile(
-                leading: Icon(Icons.restaurant,
-                    color: Theme.of(context).colorScheme.tertiary),
+                leading: PantryIcons(
+                  category:
+                      'trending',
+                  size: 24,
+                  color: Theme.of(context).colorScheme.tertiary,
+                ),
                 title: Text(
-                  'Trending Recipe',
+                  'Trending Recipes',
                   style:
                       TextStyle(color: Theme.of(context).colorScheme.tertiary),
                 ),
@@ -143,8 +136,12 @@ class MyDrawer extends ConsumerWidget {
                 },
               ),
               ListTile(
-                leading: Icon(Icons.calendar_today,
-                    color: Theme.of(context).colorScheme.tertiary),
+                leading: PantryIcons(
+                  category:
+                      'meal_planner',
+                  size: 24,
+                  color: Theme.of(context).colorScheme.tertiary,
+                ),
                 title: Text(
                   'Meal Planner',
                   style:
@@ -158,10 +155,14 @@ class MyDrawer extends ConsumerWidget {
                   }
                 },
               ),
-              // Meal planner for the week (Mon-Sun).
+              // Shopping suggestions (based on user purchase habits)
               ListTile(
-                leading: Icon(Icons.calendar_today,
-                    color: Theme.of(context).colorScheme.tertiary),
+                leading: PantryIcons(
+                  category:
+                      'shopping',
+                  size: 24,
+                  color: Theme.of(context).colorScheme.tertiary,
+                ),
                 title: Text(
                   'Shopping Suggestions',
                   style:
@@ -177,8 +178,12 @@ class MyDrawer extends ConsumerWidget {
               ),
               // Current stock of pantry items
               ListTile(
-                leading: Icon(Icons.calendar_today,
-                    color: Theme.of(context).colorScheme.tertiary),
+                leading: PantryIcons(
+                  category:
+                      'pantry',
+                  size: 24,
+                  color: Theme.of(context).colorScheme.tertiary,
+                ),
                 title: Text(
                   'Pantry',
                   style:
@@ -195,8 +200,12 @@ class MyDrawer extends ConsumerWidget {
 
               // Saved recipes
               ListTile(
-                leading: Icon(Icons.bookmarks,
-                    color: Theme.of(context).colorScheme.tertiary),
+                leading: PantryIcons(
+                  category:
+                      'recipes',
+                  size: 24,
+                  color: Theme.of(context).colorScheme.tertiary,
+                ),
                 title: Text(
                   'Saved Recipes',
                   style:
@@ -208,6 +217,22 @@ class MyDrawer extends ConsumerWidget {
                     Navigator.of(context).pop();
                     context.goNamed('savedRecipes');
                   }
+                },
+              ),
+
+              // Chat
+              ListTile(
+                leading: Icon(Icons.chat,
+                    color: Theme.of(context).colorScheme.tertiary),
+                title: Text(
+                  'Chat',
+                  style:
+                      TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                ),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  true; // Mark navigation as from the drawer
+                  context.goNamed('chat');
                 },
               ),
             ],
