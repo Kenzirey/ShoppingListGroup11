@@ -72,8 +72,10 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
                         child: const Icon(Icons.delete, color: Colors.white)),
                     direction: DismissDirection.endToStart,
                     onDismissed: (_) => _deleteItem(item.id!),
-                    child: PantryItemTile(
-                      category: item.category, // String?
+
+                    child: // For all items, use the same parameter set
+                    PantryItemTile(
+                      category: item.category,
                       itemName: item.name,
                       expiration: _formatExpiration(item.expirationDate),
                       quantity: item.quantity ?? 'N/A',
@@ -134,13 +136,35 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
   }
 
   Widget _buildSectionHeader(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.normal,
-        color: Theme.of(context).colorScheme.tertiary,
-      ),
+    return Row(
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.normal,
+            color: Theme.of(context).colorScheme.tertiary,
+          ),
+        ),
+        const Spacer(),
+        Text(
+          'Quantity',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w300,
+            color: Theme.of(context).colorScheme.tertiary.withOpacity(0.7),
+          ),
+        ),
+        const SizedBox(width: 80),
+        Text(
+          'Expires',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w300,
+            color: Theme.of(context).colorScheme.tertiary.withOpacity(0.7),
+          ),
+        ),
+      ],
     );
   }
 
