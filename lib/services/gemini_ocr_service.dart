@@ -28,11 +28,16 @@ You are an OCR system specialized in analyzing receipts. Extract the following i
   - expirationDate (YYYY-MM-DD)
   
   Important:
-1) Ignore any line that contains 'pant'.
+1) When you see a line containing 'pant', add its value to the price of the previous beverage item. Do not create a separate item for 'pant'.
 2) If you see something like "473ml" or "1l" in the product name, use that as the unit. Otherwise default to "pcs".
 3) Try to expiration date by guessing typical shelf life. Provide a date in YYYY-MM-DD format.
-4) If you see for example 2 x kr 25.90, count it as 2 quantities of the item. You generally see it the line under the product name. 
-5) Decide the category based on the product name. Use "Fridge" for perishable items, "Freezer" for frozen items, and "Dry Storage" for dry goods. Fridge is default.
+   - For energy drinks (Monster, Red Bull, etc.), use 12 months shelf life
+   - For other beverages, use 6 months
+   - For dairy, use 2 weeks
+   - For bread, use 1 week
+   - For other items, use 3 months
+4) If you see for example 2 x kr 25.90, count it as 2 quantities of the item. You generally see it the line under the product name.
+5) Decide the category based on the product name. Use "Fridge" for perishable items, "Freezer" for frozen items, and "Dry Storage" for dry goods. Energy drinks should be "Dry Storage".
 6) Return ONLY valid JSON with no additional text or code formatting
 
 Format as valid JSON:
