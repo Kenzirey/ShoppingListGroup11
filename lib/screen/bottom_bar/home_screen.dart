@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shopping_list_g11/providers/meal_suggestions.dart';
+import 'package:shopping_list_g11/providers/recipe_provider.dart';
 import 'package:shopping_list_g11/widget/styles/pantry_icons.dart';
 import 'package:shopping_list_g11/widget/user_feedback/regular_custom_snackbar.dart';
-import '../providers/home_screen_provider.dart';
+import '../../providers/home_screen_provider.dart';
 
 /// Home screen for the app.
 /// Displays "Expiring Soon" items and "Meal Suggestions" upon the above items.
@@ -15,8 +17,17 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  // icon helper.
-  //TODO: set up this as its own widget so it can be reused for other screens.
+  @override
+  void initState() {
+    super.initState();
+
+    // Trigger a refresh once when the screen is created (so we can get the suggestions)
+    Future.microtask(() async {
+      final service = ref.read(mealSuggestionServiceProvider);
+      final suggestions = await service.suggestionsBasedOnExpiring();
+      ref.read(mealSuggestionsProvider.notifier).setSuggestions(suggestions);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,9 +35,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // get meal changes:
     final mealSuggestions = ref.watch(mealSuggestionsProvider);
     // Get access to controller methods (add, remove etc)
-    final notifier = ref.read(mealSuggestionsProvider.notifier);
+    final mealNotifier = ref.read(mealSuggestionsProvider.notifier);
     // Get access to the pantry items
     final pantryItemsAsync = ref.watch(homeScreenProvider);
+    int servingsFromYield(String yields) {
+      final m = RegExp(r'\d+').firstMatch(yields);
+      return m != null ? int.parse(m.group(0)!) : 1;
+    }
 
     return pantryItemsAsync.when(
         loading: () => Scaffold(
@@ -90,8 +105,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         alignment: Alignment.centerRight,
                         padding: const EdgeInsets.only(right: 20),
                         decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.red.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(
+                              8), // match tile border type
                         ),
                         child: const Icon(Icons.delete, color: Colors.white),
                       ),
@@ -108,10 +124,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   const EdgeInsets.symmetric(horizontal: 16),
                               actionText: 'Undo',
                               onAction: () {
-                                // restore item
                                 setState(
                                     () => expiringItems.insert(index, removed));
-                                // show restored snackbar
                                 ScaffoldMessenger.of(context)
                                   ..hideCurrentSnackBar()
                                   ..showSnackBar(
@@ -127,11 +141,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           );
                       },
                       child: Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 10, horizontal: 14),
+                        height: 56, // ⬅️ consistent tile height
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primaryContainer,
+                          color: theme.primaryContainer,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -140,9 +153,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               child: Row(
                                 children: [
                                   PantryIcons(
-                                      category: category,
-                                      size: 20,
-                                      color: theme.tertiary),
+                                    category: category,
+                                    size: 20,
+                                    color: theme.tertiary,
+                                  ),
                                   const SizedBox(width: 10),
                                   Flexible(
                                     child: Text(
@@ -186,81 +200,100 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Text('Meal Suggestions',
                       style: TextStyle(fontSize: 18, color: theme.tertiary)),
                   const SizedBox(height: 12),
-
-                  // Meal Suggestions (unchanged)
-                  ...mealSuggestions.asMap().entries.map((entry) {
-                    final idx = entry.key;
-                    final meal = entry.value;
-                    final name = meal['name'] as String;
-                    final servings = meal['servings'] as int? ?? 1;
-                    final lactoseFree = meal['lactoseFree'] as bool? ?? false;
-                    final vegan = meal['vegan'] as bool? ?? false;
-                    final vegetarian = meal['vegetarian'] as bool? ?? false;
-
-                    return Dismissible(
-                      key: ValueKey(name),
-                      background: Container(
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 20),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(8),
+                  // Fallback if no meal suggestions are available (no expiring items) etc
+                  if (mealSuggestions.isEmpty) ...[
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        child: Text(
+                          'No meal suggestions available, no expiring items within 7 days to use!',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: theme.onSurfaceVariant,
+                          ),
                         ),
-                        child: const Icon(Icons.delete, color: Colors.white),
                       ),
-                      direction: DismissDirection.endToStart,
-                      onDismissed: (_) {
-                        final removed = mealSuggestions[idx];
-                        notifier.removeSuggestion(idx);
-                        ScaffoldMessenger.of(context)
-                          ..hideCurrentSnackBar()
-                          ..showSnackBar(
-                            CustomSnackbar.buildSnackBar(
-                              title: 'Removed',
-                              message: '$name removed',
-                              innerPadding:
-                                  const EdgeInsets.symmetric(horizontal: 16),
-                              actionText: 'Undo',
-                              onAction: () {
-                                notifier.insertSuggestion(idx, removed);
-                              },
+                    ),
+                  ] else ...[
+                    ...mealSuggestions.asMap().entries.map(
+                      (entry) {
+                        final idx = entry.key;
+                        final recipe = entry.value;
+                        final servings = servingsFromYield(recipe.yields);
+
+                        return Dismissible(
+                          key: ValueKey(recipe.name),
+                          background: Container(
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.only(right: 20),
+                            decoration: BoxDecoration(
+                              color: Colors.red, // what color should we use?
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                          );
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: theme.primaryContainer,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: InkWell(
-                          onTap: () {},
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 14),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  servings > 1 ? Icons.people : Icons.person,
-                                  size: 20,
-                                  color: theme.tertiary,
+                            child:
+                                const Icon(Icons.delete, color: Colors.white),
+                          ),
+                          direction: DismissDirection.endToStart,
+                          onDismissed: (_) {
+                            final removed = recipe;
+                            mealNotifier.removeAt(idx);
+                            ScaffoldMessenger.of(context)
+                              ..hideCurrentSnackBar()
+                              ..showSnackBar(
+                                CustomSnackbar.buildSnackBar(
+                                  title: 'Removed',
+                                  message: '${recipe.name} removed',
+                                  innerPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16),
+                                  actionText: 'Undo',
+                                  onAction: () =>
+                                      mealNotifier.insertAt(idx, removed),
                                 ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '$servings',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    color: theme.tertiary,
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
+                              );
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            height: 56,
+                            child: Material(
+                              color: theme.primaryContainer,
+                              borderRadius: BorderRadius.circular(8),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(8),
+                                onTap: () {
+                                  ref
+                                      .read(recipeProvider.notifier)
+                                      .update((_) => recipe);
+                                  context.goNamed('recipe');
+                                },
+                                child: Container(
+                                  height: 56,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14),
                                   child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
                                     children: [
-                                      Flexible(
+                                      Icon(
+                                        servings > 1
+                                            ? Icons.people
+                                            : Icons.person,
+                                        size: 20,
+                                        color: theme.tertiary,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '$servings',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          color: theme.tertiary,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
                                         child: Text(
-                                          name,
+                                          recipe.name,
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w500,
@@ -269,31 +302,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
-                                      if (lactoseFree) ...[
-                                        const SizedBox(width: 8),
-                                        Icon(Icons.icecream,
-                                            size: 20, color: theme.tertiary),
-                                      ],
-                                      if (vegan) ...[
-                                        const SizedBox(width: 8),
-                                        Icon(Icons.eco,
-                                            size: 20, color: theme.tertiary),
-                                      ],
-                                      if (vegetarian) ...[
-                                        const SizedBox(width: 8),
-                                        Icon(Icons.spa,
-                                            size: 20, color: theme.tertiary),
-                                      ],
                                     ],
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                    );
-                  }),
+                        );
+                      },
+                    ),
+                  ],
                 ],
               ),
             ),

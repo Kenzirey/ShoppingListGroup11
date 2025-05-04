@@ -1,64 +1,39 @@
+import 'package:flutter_gemini/flutter_gemini.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shopping_list_g11/main.dart';
+import 'package:shopping_list_g11/models/recipe.dart';
+import 'package:shopping_list_g11/services/meal_suggestion_service.dart';
 
-/// A StateNotifier that manages a list of meal suggestions.
-class MealSuggestionsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
-MealSuggestionsNotifier()
-      : super([
-          {
-            'name': 'Pasta with tomato sauce',
-            'servings': 2,
-            'lactoseFree': false,
-            'vegan': false,
-            'vegetarian': true,
-          },
-          {
-            'name': 'Grilled cheese sandwich',
-            'servings': 1,
-            'lactoseFree': false,
-            'vegan': false,
-            'vegetarian': true,
-          },
-          {
-            'name': 'Vegetable stir-fry',
-            'servings': 3,
-            'lactoseFree': true,
-            'vegan': true,
-            'vegetarian': true,
-          },
-        ]);
+class MealSuggestionsNotifier extends StateNotifier<List<Recipe>> {
+  MealSuggestionsNotifier() : super(const []);
 
-  /// temporary
-  void addSuggestion(String name, int servings) {
-    final updated = [...state];
-    updated.add({
-      'name': name,
-      'servings': servings,
-    });
-    state = updated;
-  }
+  /// Replace the entire list
+  void setSuggestions(List<Recipe> list) => state = list;
 
-  /// temporary
-  void removeSuggestion(int index) {
-    final updated = [...state];
-    if (index >= 0 && index < updated.length) {
-      updated.removeAt(index);
-      state = updated;
+  /// Add a recipe to the end
+  void addSuggestion(Recipe r) => state = [...state, r];
+
+  /// Remove by index
+  void removeAt(int index) {
+    if (index >= 0 && index < state.length) {
+      state = [...state]..removeAt(index);
     }
   }
 
-  void insertSuggestion(int index, Map<String, dynamic> suggestion) {
-  final updated = [...state];
-  if (index >= 0 && index <= updated.length) {
-    updated.insert(index, suggestion);
-    state = updated;
+  /// Insert at a specific position
+  void insertAt(int index, Recipe r) {
+    final clamped = index.clamp(0, state.length);
+    state = [...state]..insert(clamped, r);
   }
 }
-}
 
-
-
-/// the actual riverpod provider.
 final mealSuggestionsProvider =
-    StateNotifierProvider<MealSuggestionsNotifier, List<Map<String, dynamic>>>(
+    StateNotifierProvider<MealSuggestionsNotifier, List<Recipe>>(
   (ref) => MealSuggestionsNotifier(),
 );
+final mealSuggestionServiceProvider = Provider<MealSuggestionService>((ref) {
+  return MealSuggestionService(
+    supabase: supabase,
+    gemini  : Gemini.instance,
+  );
+});
