@@ -20,6 +20,16 @@ class MealPlannerNotifier extends StateNotifier<Map<int, List<MealPlanEntry>>> {
     final list = state[week]!.where((p) => p.id != id).toList();
     state = {...state, week: list};
   }
+
+  void insertAt(int week, int index, MealPlanEntry plan) {
+    final list = [...?state[week]];
+    if (index < 0 || index > list.length) {
+      list.add(plan);
+    } else {
+      list.insert(index, plan);
+    }
+    state = {...state, week: list};
+  }
 }
 
 final mealPlannerProvider =
