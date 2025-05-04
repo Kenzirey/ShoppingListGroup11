@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shopping_list_g11/models/shopping_item.dart';
 import '../providers/current_user_provider.dart';
 import '../providers/recommendation_service_provider.dart';
+import 'package:shopping_list_g11/widget/user_feedback/regular_custom_snackbar.dart';
+import '../providers/shopping_items_provider.dart';
 
+/// Screen that displays shopping suggestions based on user preferences.
 class ShoppingSuggestionsScreen extends ConsumerStatefulWidget {
   const ShoppingSuggestionsScreen({super.key});
 
@@ -98,11 +101,51 @@ class _ShoppingSuggestionsScreenState
     });
   }
 
+  /// Function to handle the "Add" button press
   void _onAddPressed() {
-    final selected =
-    shoppingItems.where((item) => selectedItems.contains(item.id)).toList();
-    debugPrint(
-        "Add pressed. Selected items: ${selected.map((i) => i.itemName).toList()}");
+    final selected = shoppingItems.where((item) => selectedItems.contains(item.id)).toList();
+
+    if (selected.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No items selected')),
+      );
+      return;
+    }
+
+    final user = ref.read(currentUserValueProvider);
+    if (user == null || user.profileId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not logged in')),
+      );
+      return;
+    }
+
+    // Add selected items to shopping list
+    for (final item in selected) {
+      ref.read(shoppingListControllerProvider).addShoppingItem(
+        ShoppingItem(
+          userId: user.profileId!,
+          itemName: item.itemName,
+          quantity: item.quantity ?? '1 unit',
+          category: item.category,
+          icon: item.icon,
+        ),
+      );
+    }
+
+    // Show success message
+    ScaffoldMessenger.of(context).showSnackBar(
+      CustomSnackbar.buildSnackBar(
+        title: 'Added to Shopping List',
+        message: '${selected.length} item${selected.length == 1 ? '' : 's'} added',
+        innerPadding: const EdgeInsets.symmetric(horizontal: 16),
+      ),
+    );
+
+    // Clear selected items
+    setState(() {
+      selectedItems.clear();
+    });
   }
 
   @override
