@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shopping_list_g11/widget/styles/pantry_icons.dart';
-import '../providers/purchase_history_provider.dart';
-import '../models/product.dart';
-import '../utils/month_day_util.dart';
+import '../../providers/purchase_history_provider.dart';
+import '../../models/product.dart';
+import '../../utils/month_day_util.dart';
 
 /// Screen that shows the purchase history of the user.
 /// Allows user to add a new product with price, amount, date, and optional unit.

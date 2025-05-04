@@ -6,8 +6,8 @@ import 'package:shopping_list_g11/widget/charts/legend_piechart.dart';
 import 'package:shopping_list_g11/widget/charts/spending_line_chart.dart';
 import 'package:shopping_list_g11/widget/charts/spending_piechart.dart';
 
-import '../models/purchase_statistics.dart';
-import '../providers/purchase_statistics_provider.dart';
+import '../../models/purchase_statistics.dart';
+import '../../providers/purchase_statistics_provider.dart';
 
 /// Screen for displaying the purchase habits / statistics of a user.
 /// From monthly spent per category, to yearly spending on groceries.

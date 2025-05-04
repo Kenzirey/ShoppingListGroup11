@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shopping_list_g11/widget/my_drawer.dart';
-import 'package:shopping_list_g11/widget/bottom_nav_bar.dart';
+import 'package:shopping_list_g11/widget/navigation/my_drawer.dart';
+import 'package:shopping_list_g11/widget/navigation/bottom_nav_bar.dart';
 import 'package:shopping_list_g11/routes/routes.dart';
 
 /// Wrapper widget used inside the Shellroute to set how the main layout should be.

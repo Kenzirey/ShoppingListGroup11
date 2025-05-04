@@ -4,12 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shopping_list_g11/models/receipt_data.dart';
 import 'package:shopping_list_g11/providers/purchase_history_provider.dart';
-import 'package:shopping_list_g11/screen/receipts/view_scanned_receipt_screen.dart';
+import 'package:shopping_list_g11/screen/bottom_bar/receipts/view_scanned_receipt_screen.dart';
 import 'package:shopping_list_g11/services/image_processing.dart';
 import 'package:shopping_list_g11/services/kassal_service.dart';
 import 'package:shopping_list_g11/services/supabase_ocr_service.dart';
 import 'package:shopping_list_g11/widget/user_feedback/regular_custom_snackbar.dart';
-import '../../services/gemini_ocr_service.dart';
+import '../../../services/gemini_ocr_service.dart';
 
 /// Screen for scanning a receipt and extracting data
 class ScanReceiptScreen extends ConsumerStatefulWidget {

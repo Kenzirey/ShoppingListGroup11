@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shopping_list_g11/providers/current_user_provider.dart';
 import 'package:shopping_list_g11/widget/actions/account_action.dart';
 import 'package:shopping_list_g11/widget/dietary_preference.dart';
-import 'package:shopping_list_g11/widget/logout_confirmation_dialog.dart';
+import 'package:shopping_list_g11/widget/user_feedback/logout_confirmation_dialog.dart';
 import 'package:shopping_list_g11/widget/profile_menu_item.dart';
 import 'package:shopping_list_g11/widget/styles/profile_header.dart';
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shopping_list_g11/widget/add_product_dialog.dart';
-import 'package:shopping_list_g11/widget/search_bar.dart';
+import 'package:shopping_list_g11/widget/styles/dialog/add_product_dialog.dart';
+import 'package:shopping_list_g11/widget/navigation/search_bar.dart';
 import 'package:shopping_list_g11/widget/shopping_list_item.dart';
 import 'package:shopping_list_g11/models/shopping_item.dart';
 import 'package:shopping_list_g11/providers/shopping_items_provider.dart';
@@ -26,7 +26,7 @@ class _ShoppingListState extends ConsumerState<ShoppingListScreen> {
   late Future<void> _initialFetch;
   ShoppingItem? lastDeletedItem;
   int? lastDeletedIndex;
-  bool _loading = false;
+  bool _loading = false; // this is false, it is actually being used..
 
   @override
   void initState() {

@@ -10,7 +10,7 @@ import 'package:shopping_list_g11/providers/recipe_provider.dart';
 import 'package:shopping_list_g11/providers/saved_recipe_provider.dart';
 import 'package:shopping_list_g11/widget/styles/buttons/chat_button_styles.dart';
 import 'package:shopping_list_g11/widget/user_feedback/regular_custom_snackbar.dart';
-import '../controllers/recipe_controller.dart';
+import '../../controllers/recipe_controller.dart';
 
 /// Screen for asking AI for a specific recipe.
 /// Allows user to save a recipe for later, ask for a new one, or view recipe in recipe screen.
