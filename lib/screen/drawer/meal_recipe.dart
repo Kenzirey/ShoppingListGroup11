@@ -275,7 +275,7 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
                                         day: day,
                                         name: recipe.name,
                                         description: recipe.summary,
-                                        servings: parse_servings(recipe.yields),
+                                        servings: parseServings(recipe.yields),
                                         lactoseFree: recipe.lactoseFree,
                                         vegan: recipe.vegan,
                                         vegetarian: recipe.vegetarian,

@@ -11,7 +11,6 @@ class PurchaseStatisticsService {
   Future<MonthlySpending> getMonthlySpending(int year, int month) async {
     // Get raw purchase data from Supabase through the controller
     final purchases = await statisticsController.getPurchasesByMonth(year, month);
-    print('Processing ${purchases.length} purchases for monthly spending');
     final Map<String, double> categoryAmounts = {};
 
     for (final purchase in purchases) {
@@ -54,9 +53,9 @@ class PurchaseStatisticsService {
     );
   }
 
+  /// Fetches yearly spending data of a user for a specific year.
   Future<YearlySpending> getYearlySpending(int year) async {
     final purchases = await statisticsController.getPurchasesByYear(year);
-    print('Processing ${purchases.length} purchases for yearly spending');
 
     // Initialize monthly amounts to zero
     final List<double> monthlyAmounts = List.filled(12, 0.0);
