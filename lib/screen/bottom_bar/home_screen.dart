@@ -5,7 +5,9 @@ import 'package:shopping_list_g11/providers/meal_suggestions.dart';
 import 'package:shopping_list_g11/providers/recipe_provider.dart';
 import 'package:shopping_list_g11/widget/styles/pantry_icons.dart';
 import 'package:shopping_list_g11/widget/user_feedback/regular_custom_snackbar.dart';
+import '../../providers/current_user_provider.dart';
 import '../../providers/home_screen_provider.dart';
+import '../../providers/pantry_items_provider.dart';
 
 /// Home screen for the app.
 /// Displays "Expiring Soon" items and "Meal Suggestions" upon the above items.
@@ -21,8 +23,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
 
-    // Trigger a refresh once when the screen is created (so we can get the suggestions)
+    // Fetch pantry items when the screen is opened
     Future.microtask(() async {
+      final currentUser = ref.read(currentUserValueProvider);
+      if (currentUser != null && currentUser.profileId != null) {
+        await ref
+            .read(pantryControllerProvider)
+            .fetchPantryItems(currentUser.profileId!);
+      }
+
       final service = ref.read(mealSuggestionServiceProvider);
       final suggestions = await service.suggestionsBasedOnExpiring();
       ref.read(mealSuggestionsProvider.notifier).setSuggestions(suggestions);
@@ -37,35 +46,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Get access to controller methods (add, remove etc)
     final mealNotifier = ref.read(mealSuggestionsProvider.notifier);
     // Get access to the pantry items
+    final pantryController = ref.read(pantryControllerProvider);
+
     final pantryItemsAsync = ref.watch(homeScreenProvider);
+
     int servingsFromYield(String yields) {
       final m = RegExp(r'\d+').firstMatch(yields);
       return m != null ? int.parse(m.group(0)!) : 1;
     }
 
     return pantryItemsAsync.when(
-        loading: () => Scaffold(
-              backgroundColor: theme.surface,
-              body: const Center(child: CircularProgressIndicator()),
-            ),
-        error: (error, stack) => Scaffold(
-              backgroundColor: theme.surface,
-              body: Center(child: Text('Error loading items: $error')),
-            ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, st) => Center(child: Text('Error loading pantry: $err')),
         data: (pantryItems) {
           final expiringItems = pantryItems.where((item) {
             if (item.expirationDate == null) return false;
             final diff = item.expirationDate!.difference(DateTime.now()).inDays;
-            return diff >= -4 &&
-                diff <= 7; // 7 days before and 4 days after expiration
-          }).map((item) {
-            final diff = item.expirationDate!.difference(DateTime.now()).inDays;
-            return {
-              'name': item.name,
-              'days': diff.toString(),
-              'category': item.category?.toLowerCase(),
-              'id': item.id ?? '',
-            };
+            return diff >= -4 && diff <= 7;
           }).toList();
 
           return Scaffold(
@@ -91,109 +88,120 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Text('Expiring Soon',
                       style: TextStyle(fontSize: 18, color: theme.tertiary)),
                   const SizedBox(height: 12),
-                  ...expiringItems.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final rec = entry.value;
-                    final name = rec['name']!;
-                    final days = rec['days']!;
-                    final category = rec['category']!;
 
-                    return Dismissible(
-                      key: ValueKey(name),
-                      direction: DismissDirection.endToStart,
-                      background: Container(
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 20),
-                        decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(
-                              8), // match tile border type
-                        ),
-                        child: const Icon(Icons.delete, color: Colors.white),
+                  if (expiringItems.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        'No expiring items within 7 days.',
+                        style: TextStyle(color: theme.onSurfaceVariant),
                       ),
-                      onDismissed: (_) {
-                        final removed = expiringItems[index];
-                        setState(() => expiringItems.removeAt(index));
-                        ScaffoldMessenger.of(context)
-                          ..hideCurrentSnackBar()
-                          ..showSnackBar(
-                            CustomSnackbar.buildSnackBar(
-                              title: 'Removed',
-                              message: '$name removed',
-                              innerPadding:
-                                  const EdgeInsets.symmetric(horizontal: 16),
-                              actionText: 'Undo',
-                              onAction: () {
-                                setState(
-                                    () => expiringItems.insert(index, removed));
-                                ScaffoldMessenger.of(context)
-                                  ..hideCurrentSnackBar()
-                                  ..showSnackBar(
-                                    CustomSnackbar.buildSnackBar(
-                                      title: 'Restored',
-                                      message: '$name restored successfully',
-                                      innerPadding: const EdgeInsets.symmetric(
-                                          horizontal: 16),
-                                    ),
-                                  );
-                              },
-                            ),
-                          );
-                      },
-                      child: Container(
-                        height: 56,
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        decoration: BoxDecoration(
-                          color: theme.primaryContainer,
-                          borderRadius: BorderRadius.circular(8),
+                    )
+                  else
+                    ...expiringItems.map((item) {
+                      final diff = item.expirationDate!
+                          .difference(DateTime.now())
+                          .inDays;
+                      final days = diff.toString();
+                      final category = item.category?.toLowerCase() ?? '';
+
+                      return Dismissible(
+                        key: ValueKey(item.id),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 20),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(
+                                8), // match tile border type
+                          ),
+                          child: const Icon(Icons.delete, color: Colors.white),
                         ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  PantryIcons(
-                                    category: category,
-                                    size: 20,
-                                    color: theme.tertiary,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Flexible(
-                                    child: Text(
-                                      name,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                        color: theme.tertiary,
+                        onDismissed: (_) {
+                          final removedItem = item;
+                          pantryController.removePantryItem(item.id!);
+                          ScaffoldMessenger.of(context)
+                            ..hideCurrentSnackBar()
+                            ..showSnackBar(
+                              CustomSnackbar.buildSnackBar(
+                                title: 'Removed',
+                                message: '${item.name} removed',
+                                innerPadding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
+                                actionText: 'Undo',
+                                onAction: () {
+                                  pantryController.addPantryItem(removedItem);
+                                  ScaffoldMessenger.of(context)
+                                    ..hideCurrentSnackBar()
+                                    ..showSnackBar(
+                                      CustomSnackbar.buildSnackBar(
+                                        title: 'Restored',
+                                        message:
+                                            '${item.name} restored successfully',
+                                        innerPadding:
+                                            const EdgeInsets.symmetric(
+                                                horizontal: 16),
                                       ),
-                                      overflow: TextOverflow.ellipsis,
+                                    );
+                                },
+                              ),
+                            );
+                        },
+                        child: Container(
+                          height: 56,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          decoration: BoxDecoration(
+                            color: theme.primaryContainer,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    PantryIcons(
+                                      category: category,
+                                      size: 20,
+                                      color: theme.tertiary,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Flexible(
+                                      child: Text(
+                                        item.name,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          color: theme.tertiary,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  Icon(Icons.access_time,
+                                      size: 20,
+                                      color: theme.tertiary.withOpacity(0.7)),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    days,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.tertiary.withOpacity(0.7),
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                            Row(
-                              children: [
-                                Icon(Icons.access_time,
-                                    size: 20,
-                                    color: theme.tertiary.withOpacity(0.7)),
-                                const SizedBox(width: 4),
-                                Text(
-                                  days,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: theme.tertiary.withOpacity(0.7),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  }),
+                      );
+                    }),
 
                   const SizedBox(height: 16),
 
