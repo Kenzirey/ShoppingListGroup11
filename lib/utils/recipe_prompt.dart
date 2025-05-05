@@ -1,4 +1,5 @@
-import 'package:flutter_gemini/flutter_gemini.dart';
+import '../services/gemini_service.dart';
+import 'recipe_prompt.dart'; 
 
 // Now reusable!
 const kRecipeSystemPrompt = '''
@@ -33,12 +34,12 @@ When grouping ingredients into subâ€‘sections, always prefix the subgroup with â
 /// Helper for generating a recipe using Gemini.
 /// Returns Gemini's answer already trimmed.
 Future<String> generateRecipeWithPrompt(String userRequest) async {
-  try {
-    final res = await Gemini.instance.prompt(parts: [
-      Part.text('$kRecipeSystemPrompt\n\nUser request: $userRequest')
-    ]);
-    return (res?.output ?? '').trim();
-  } catch (e) {
-    return '';
-  }
+  final raw = await geminiRaw(
+    prompt: kRecipeSystemPrompt,
+    query: userRequest,
+  );
+
+  final text = raw['candidates']?[0]?['content']?['parts']?[0]?['text'];
+  return (text ?? '').trim();
 }
+

@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_gemini/flutter_gemini.dart';
 import 'package:shopping_list_g11/main.dart';
 import 'package:shopping_list_g11/models/recipe.dart';
 import 'package:shopping_list_g11/providers/chat_provider.dart';
 import 'package:shopping_list_g11/providers/chat_recipe_provider.dart';
 import 'package:shopping_list_g11/providers/recipe_provider.dart';
 import 'package:shopping_list_g11/utils/recipe_prompt.dart';
+import '../services/gemini_service.dart';
 
 /// Controller for handling user-interaction with the Gemini Api.
 class GeminiController {
@@ -102,9 +102,8 @@ class GeminiController {
 
       debugPrint("Gemini Prompt: $prompt");
 
-      final result = await Gemini.instance.prompt(parts: [Part.text(prompt)]);
-      String? text = result?.output;
-
+      final raw = await geminiRaw(prompt: prompt, query: '');
+      String? text = raw['candidates']?[0]?['content']?['parts']?[0]?['text'];
       debugPrint("Gemini Response Text: $text");
 
       if (text != null) {
