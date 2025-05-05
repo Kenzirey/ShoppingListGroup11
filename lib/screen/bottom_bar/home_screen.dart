@@ -141,7 +141,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           );
                       },
                       child: Container(
-                        height: 56, // ⬅️ consistent tile height
+                        height: 56,
+                        margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.symmetric(horizontal: 14),
                         decoration: BoxDecoration(
                           color: theme.primaryContainer,
