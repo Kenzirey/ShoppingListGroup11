@@ -10,7 +10,7 @@ import 'package:shopping_list_g11/screen/drawer/purchase_statistics.dart';
 import 'package:shopping_list_g11/screen/drawer/shopping_suggestion.dart';
 import 'package:shopping_list_g11/screen/user_account/login.dart';
 import 'package:shopping_list_g11/screen/drawer/meal_planner.dart';
-import 'package:shopping_list_g11/screen/bottom_bar/meal_recipe.dart';
+import 'package:shopping_list_g11/screen/drawer/meal_recipe.dart';
 import 'package:shopping_list_g11/screen/drawer/saved_recipes.dart';
 import 'package:shopping_list_g11/screen/bottom_bar/shopping_list.dart';
 import 'package:shopping_list_g11/screen/bottom_bar/purchase_history.dart';
