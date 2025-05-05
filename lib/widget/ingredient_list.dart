@@ -162,7 +162,7 @@ class _IngredientListState extends ConsumerState<IngredientList> {
                     children: [
                       Icon(Icons.add_shopping_cart, size: 20, color: tertiary),
                       const SizedBox(width: 8),
-                      Text('Shopping list',
+                      Text('Add selected',
                           style: TextStyle(fontSize: 16, color: tertiary)),
                     ],
                   ),

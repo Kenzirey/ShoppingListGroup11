@@ -88,7 +88,7 @@ class _ShoppingListState extends ConsumerState<ShoppingListScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Add selected',
+                            'Shopping List',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.normal,
