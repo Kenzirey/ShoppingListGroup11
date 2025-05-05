@@ -44,13 +44,29 @@ class PantryController {
 
   /// Update an existing pantry item.
   Future<void> updatePantryItem(String itemId,
-      {required String name, required double amount, required String unit}) async {
+      {required String name,
+        String? category,
+        String? quantity,
+        DateTime? expirationDate,
+      }) async {
     try {
-      final updated = await _service.updateItem(itemId, {
+      final changes = {
         'name': name,
-        'amount': amount,
-        'unit': unit,
-      });
+      };
+
+      if (category != null) {
+        changes['category'] = category;
+      }
+
+      if (quantity != null) {
+        changes['quantity'] = quantity;
+      }
+
+      if (expirationDate != null) {
+        changes['expiration_date'] = expirationDate.toIso8601String();
+      }
+
+      final updated = await _service.updateItem(itemId, changes);
       if (updated != null) {
         ref.read(pantryItemsProvider.notifier).updateItem(updated);
       }
