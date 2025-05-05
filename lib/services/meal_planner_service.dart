@@ -1,6 +1,5 @@
 // lib/services/meal_planner_service.dart
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:postgrest/postgrest.dart';
 import '../models/meal_plan_entry.dart';
 
 class MealPlannerService {

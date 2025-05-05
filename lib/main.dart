@@ -28,7 +28,7 @@ void main() async {
   Supabase.instance.client.auth.onAuthStateChange.listen((data) {
     if (data.event == AuthChangeEvent.passwordRecovery) {
           final token = data.session?.accessToken  ?? '';
-          final email = data.session?.user?.email ?? '';
+          final email = data.session?.user.email ?? '';
           AppRouter.router.go(
             '/reset-password'
             '?token=${Uri.encodeComponent(token)}'

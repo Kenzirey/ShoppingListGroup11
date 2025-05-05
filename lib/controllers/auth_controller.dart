@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/auth_service.dart';
 import '../models/app_user.dart';
-import '../providers/current_user_provider.dart';
 
 /// A provider that exposes a single AuthController instance.
 final authControllerProvider = Provider<AuthController>((ref) {
@@ -28,7 +27,7 @@ class AuthController {
     }
   }
 
-  /// logges in existing user with email/password
+  /// Logs in existing user with email/password
   Future<AppUser> login(String email, String password) async {
     try {
       final user = await _authService.login(email, password);
@@ -38,7 +37,7 @@ class AuthController {
     }
   }
 
-  /// Logges in user via Google (or creates a profile if it doesnt exist)
+  /// Logs in user via Google (or creates a profile if it doesn't exist)
   Future<AppUser> signInWithGoogle() async {
     try {
       final user = await _authService.signInWithGoogleNative();
@@ -94,7 +93,7 @@ Future<void> updatePassword(String newPassword) async {
     }
   }
 
-  /// Confirms password reset from superbase url (new password)
+  /// Confirms password reset from supabase url (new password)
   Future<void> verifyPasswordReset(String token, String newPassword) async {
     try {
       await _authService.verifyPasswordReset(token, newPassword);

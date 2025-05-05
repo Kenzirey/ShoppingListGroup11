@@ -1,5 +1,4 @@
 import '../services/gemini_service.dart';
-import 'recipe_prompt.dart'; 
 
 // Now reusable!
 const kRecipeSystemPrompt = '''
