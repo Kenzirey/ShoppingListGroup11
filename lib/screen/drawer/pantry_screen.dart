@@ -27,6 +27,16 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
     });
   }
 
+  void _updateExpiryDate(String itemId, DateTime newDate) {
+    ref.read(pantryControllerProvider).updatePantryItem(
+      itemId,
+      name: ref.read(pantryItemsProvider)
+          .firstWhere((item) => item.id == itemId)
+          .name,
+      expirationDate: newDate,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final pantryItems = ref.watch(pantryItemsProvider);
@@ -79,6 +89,9 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
                       itemName: item.name,
                       expiration: _formatExpiration(item.expirationDate),
                       quantity: item.quantity ?? 'N/A',
+                      expiryDate: item.expirationDate,
+                      itemId: item.id!,
+                      onExpiryChanged: _updateExpiryDate,
                     ),
                   )),
             const SizedBox(height: 24),
@@ -97,10 +110,13 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
                     direction: DismissDirection.endToStart,
                     onDismissed: (_) => _deleteItem(item.id!),
                     child: PantryItemTile(
-                      category: item.category, // string key from supabase - matches the name of the svg.
+                      category: item.category,
                       itemName: item.name,
                       expiration: _formatExpiration(item.expirationDate),
                       quantity: item.quantity ?? 'N/A',
+                      expiryDate: item.expirationDate,
+                      itemId: item.id!,
+                      onExpiryChanged: _updateExpiryDate,
                     ),
                   )),
             const SizedBox(height: 24),
@@ -123,6 +139,9 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
                       itemName: item.name,
                       expiration: _formatExpiration(item.expirationDate),
                       quantity: item.quantity ?? 'N/A',
+                      expiryDate: item.expirationDate,
+                      itemId: item.id!,
+                      onExpiryChanged: _updateExpiryDate,
                     ),
                   )),
           ],
