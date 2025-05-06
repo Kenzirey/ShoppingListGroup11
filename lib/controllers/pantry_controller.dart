@@ -47,6 +47,7 @@ class PantryController {
       {required String name,
         String? category,
         String? quantity,
+        String? unit,
         DateTime? expirationDate,
       }) async {
     try {
@@ -60,6 +61,10 @@ class PantryController {
 
       if (quantity != null) {
         changes['quantity'] = quantity;
+      }
+      
+      if (unit != null) {
+        changes['unit'] = unit;
       }
 
       if (expirationDate != null) {

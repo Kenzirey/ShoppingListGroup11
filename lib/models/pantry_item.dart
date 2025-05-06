@@ -5,6 +5,7 @@ class PantryItem {
   final String name;
   final String? category;
   final String? quantity;
+  final String? unit;
   final DateTime? expirationDate;
 
   PantryItem({
@@ -13,6 +14,7 @@ class PantryItem {
     required this.name,
     this.category,
     this.quantity,
+    this.unit,
     this.expirationDate,
   });
 
@@ -23,6 +25,7 @@ class PantryItem {
       name: map['name'] as String,
       category: map['category'] as String?,
       quantity: map['quantity'] as String?,
+      unit: map['unit'] as String?,
       expirationDate: map['expiration_date'] != null
           ? DateTime.parse(map['expiration_date'] as String)
           : null,
@@ -35,6 +38,7 @@ class PantryItem {
       'name': name,
       'category': category,
       'quantity': quantity,
+      'unit': unit,
       'expiration_date': expirationDate?.toIso8601String(),
     };
 

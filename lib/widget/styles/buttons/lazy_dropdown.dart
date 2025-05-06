@@ -8,9 +8,8 @@ class CustomLazyDropdown extends ConsumerStatefulWidget {
   final String initialValue; // text from the database
   final ValueChanged<String> onChanged;
   final IconData? icon;
-
   final double dropdownWidth;
-  final int maxValue; // don't think you need to pick up more than 100 items at a store, who knows.
+  final int maxValue;
 
   const CustomLazyDropdown({
     super.key,
@@ -18,7 +17,7 @@ class CustomLazyDropdown extends ConsumerStatefulWidget {
     required this.onChanged,
     this.icon,
     this.dropdownWidth = 48,
-    this.maxValue = 100,
+    this.maxValue = 999,
   });
 
   @override
@@ -26,18 +25,15 @@ class CustomLazyDropdown extends ConsumerStatefulWidget {
 }
 
 class _CustomLazyDropdownState extends ConsumerState<CustomLazyDropdown> {
-
   static const double _rowH = 40;
-  static const int _chunk = 15; // rows added top/bottom to start the loading with.
+  static const int _chunk =
+      15; // rows added top/bottom to start the loading with.
   static const int _vis = 5; // rows onscreen, subject to change
 
-  int _toInt(String s) {
-    final m = RegExp(r'^(\d+)').firstMatch(s.trim());
-    return (m != null) ? int.parse(m.group(1)!) : 1;
-  }
-
+  String _displayLabel = '1';
   int _selected = 1; // just a dummy value to initialize it with.
-  int _start = 1; // first row value, we won't go below it as you can't shop negative items, is that called donating? hm
+  int _start =
+      1; // first row value, we won't go below it as you can't shop negative items, is that called donating? hm
   int _count = _chunk * 2 + 1; // rows built at the moment
 
   OverlayEntry? _overlay;
@@ -47,11 +43,12 @@ class _CustomLazyDropdownState extends ConsumerState<CustomLazyDropdown> {
   @override
   void initState() {
     super.initState();
-
-    _selected = _toInt(widget.initialValue);
+    // parse numeric part only
+    final match = RegExp(r'^(\d+)').firstMatch(widget.initialValue.trim());
+    _selected = match != null ? int.parse(match.group(1)!) : 1;
+    _displayLabel = _selected.toString();
     _start = (_selected - _chunk).clamp(1, widget.maxValue);
-    _count = _chunk * 2 + 1; // 15 below + selected + 15 above
-
+    _count = _chunk * 2 + 1;
     _scroll.addListener(_onScroll);
   }
 
@@ -59,10 +56,12 @@ class _CustomLazyDropdownState extends ConsumerState<CustomLazyDropdown> {
   void didUpdateWidget(covariant CustomLazyDropdown old) {
     super.didUpdateWidget(old);
     if (old.initialValue != widget.initialValue) {
-      setState(() {
-        _selected = _toInt(widget.initialValue);
-        _start = (_selected - _chunk).clamp(1, widget.maxValue);
-      });
+      final match = RegExp(r'^(\d+)').firstMatch(widget.initialValue.trim());
+      _selected = match != null ? int.parse(match.group(1)!) : 1;
+      _displayLabel = _selected.toString();
+      _start = (_selected - _chunk).clamp(1, widget.maxValue);
+      _count = _chunk * 2 + 1;
+      _overlay?.markNeedsBuild();
     }
   }
 
@@ -74,31 +73,33 @@ class _CustomLazyDropdownState extends ConsumerState<CustomLazyDropdown> {
     super.dispose();
   }
 
-  // expand "lazily"
   void _onScroll() {
-    // bottom 🔽
     if (_scroll.position.extentAfter < _rowH &&
         _start + _count - 1 < widget.maxValue) {
       setState(() =>
           _count = (_count + _chunk).clamp(0, widget.maxValue - _start + 1));
       _overlay?.markNeedsBuild();
     }
-    // top 🔝
     if (_scroll.position.extentBefore < _rowH && _start > 1) {
       final oldPixels = _scroll.position.pixels;
+      final add = _chunk.clamp(0, _start - 1);
       setState(() {
-        final add = _chunk.clamp(0, _start - 1);
         _start -= add;
         _count += add;
       });
       _overlay?.markNeedsBuild();
-      WidgetsBinding.instance.addPostFrameCallback(
-          (_) => _scroll.jumpTo(oldPixels + _rowH * _chunk));
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _scroll.jumpTo(oldPixels + _rowH * add));
     }
   }
 
-  // open sesame
-  void _toggle() => _overlay == null ? _show() : _hide();
+  void _toggle() {
+    if (_overlay == null)
+      _show();
+    else
+      _hide();
+  }
+
   void _hide() {
     _overlay?.remove();
     _overlay = null;
@@ -106,7 +107,7 @@ class _CustomLazyDropdownState extends ConsumerState<CustomLazyDropdown> {
 
   void _show() {
     _overlay = _buildOverlay();
-    Overlay.of(context).insert(_overlay!);
+    Overlay.of(context)?.insert(_overlay!);
     WidgetsBinding.instance.addPostFrameCallback((_) => _centerOnSelected());
   }
 
@@ -121,14 +122,12 @@ class _CustomLazyDropdownState extends ConsumerState<CustomLazyDropdown> {
     return OverlayEntry(
       builder: (_) => Stack(
         children: [
-          // so that we can actually tap out to close it
           Positioned.fill(
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
               onTap: _hide,
             ),
           ),
-          // dropdown 😎
           Positioned(
             width: widget.dropdownWidth,
             child: CompositedTransformFollower(
@@ -149,11 +148,7 @@ class _CustomLazyDropdownState extends ConsumerState<CustomLazyDropdown> {
                       final isSel = value == _selected;
                       final cs = Theme.of(context).colorScheme;
                       return InkWell(
-                        onTap: () {
-                          setState(() => _selected = value);
-                          widget.onChanged(value.toString());
-                          _hide();
-                        },
+                        onTap: () => _onItemTap(value),
                         child: Center(
                           child: Text(
                             value.toString(),
@@ -177,7 +172,15 @@ class _CustomLazyDropdownState extends ConsumerState<CustomLazyDropdown> {
     );
   }
 
-  // Action area below
+  void _onItemTap(int value) {
+    setState(() {
+      _selected = value;
+      _displayLabel = value.toString();
+    });
+    widget.onChanged(_displayLabel);
+    _hide();
+  }
+
   @override
   Widget build(BuildContext context) {
     return CompositedTransformTarget(
@@ -186,29 +189,32 @@ class _CustomLazyDropdownState extends ConsumerState<CustomLazyDropdown> {
         behavior: HitTestBehavior.opaque,
         onTap: _toggle,
         child: Container(
+          alignment: Alignment.center,
           width: widget.dropdownWidth,
           height: _rowH,
+          padding: const EdgeInsets.symmetric(horizontal: 2),
           decoration: const BoxDecoration(
             border: Border(bottom: BorderSide(color: Colors.grey)),
           ),
-          child: Stack(
-            alignment: Alignment.center,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // "number" just a bit to the left so that it looks a bit better with the chevron to the right.
-              Padding(
-                padding: const EdgeInsets.only(right: 3),
-                child: Text(
-                  _selected.toString(),
-                  style: TextStyle(
-                      fontSize: 16,
-                      color: Theme.of(context).colorScheme.tertiary),
+              if (widget.icon != null) ...[
+                Icon(widget.icon, size: 16, color: Colors.grey),
+                const SizedBox(width: 1),
+              ],
+              const SizedBox(width: 2),
+              Text(
+                _displayLabel,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Theme.of(context).colorScheme.tertiary,
                 ),
               ),
-              // dropdown chevron on the right (putting it slightly more to the right so it doesn't kiss the contents 👄)
-              const Positioned(
-                right: -3,
-                child: Icon(Icons.arrow_drop_down, color: Colors.grey),
-              ),
+              const SizedBox(width: 1),
+              const Icon(Icons.arrow_drop_down, color: Colors.grey),
             ],
           ),
         ),

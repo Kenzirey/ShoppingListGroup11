@@ -29,12 +29,13 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
 
   void _updateExpiryDate(String itemId, DateTime newDate) {
     ref.read(pantryControllerProvider).updatePantryItem(
-      itemId,
-      name: ref.read(pantryItemsProvider)
-          .firstWhere((item) => item.id == itemId)
-          .name,
-      expirationDate: newDate,
-    );
+          itemId,
+          name: ref
+              .read(pantryItemsProvider)
+              .firstWhere((item) => item.id == itemId)
+              .name,
+          expirationDate: newDate,
+        );
   }
 
   @override
@@ -42,9 +43,9 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
     final pantryItems = ref.watch(pantryItemsProvider);
     final fridgeItems =
         pantryItems.where((p) => p.category == 'Fridge').toList();
-    final dryGoodsItems =
+    final freezerItems =
         pantryItems.where((p) => p.category == 'Freezer').toList();
-    final cannedFoodItems =
+    final dryStorageItems =
         pantryItems.where((p) => p.category == 'Dry Storage').toList();
 
     return Scaffold(
@@ -68,7 +69,9 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
             const SizedBox(height: 4),
             const Divider(),
             const SizedBox(height: 8),
-            _buildSectionHeader('Fridge'),
+
+            // Fridge
+            _buildSectionHeader('Fridge', showColumnLabels: true),
             const SizedBox(height: 12),
             if (fridgeItems.isEmpty)
               _noItemsPlaceholder()
@@ -82,25 +85,27 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
                         child: const Icon(Icons.delete, color: Colors.white)),
                     direction: DismissDirection.endToStart,
                     onDismissed: (_) => _deleteItem(item.id!),
-
-                    child: // For all items, use the same parameter set
-                    PantryItemTile(
+                    child: PantryItemTile(
                       category: item.category,
                       itemName: item.name,
                       expiration: _formatExpiration(item.expirationDate),
-                      quantity: item.quantity ?? 'N/A',
+                      quantity: item.quantity?.toString() ?? 'N/A',
                       expiryDate: item.expirationDate,
                       itemId: item.id!,
+                      unit: item.unit!,
                       onExpiryChanged: _updateExpiryDate,
                     ),
                   )),
+
             const SizedBox(height: 24),
+
+            // Freezer
             _buildSectionHeader('Freezer'),
             const SizedBox(height: 12),
-            if (dryGoodsItems.isEmpty)
+            if (freezerItems.isEmpty)
               _noItemsPlaceholder()
             else
-              ...dryGoodsItems.map((item) => Dismissible(
+              ...freezerItems.map((item) => Dismissible(
                     key: ValueKey(item.id),
                     background: Container(
                         color: Colors.redAccent,
@@ -113,19 +118,23 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
                       category: item.category,
                       itemName: item.name,
                       expiration: _formatExpiration(item.expirationDate),
-                      quantity: item.quantity ?? 'N/A',
+                      quantity: item.quantity?.toString() ?? 'N/A',
                       expiryDate: item.expirationDate,
                       itemId: item.id!,
+                      unit: item.unit!,
                       onExpiryChanged: _updateExpiryDate,
                     ),
                   )),
+
             const SizedBox(height: 24),
+
+            // Dry Storage
             _buildSectionHeader('Dry Storage'),
             const SizedBox(height: 12),
-            if (cannedFoodItems.isEmpty)
+            if (dryStorageItems.isEmpty)
               _noItemsPlaceholder()
             else
-              ...cannedFoodItems.map((item) => Dismissible(
+              ...dryStorageItems.map((item) => Dismissible(
                     key: ValueKey(item.id),
                     background: Container(
                         color: Colors.redAccent,
@@ -138,9 +147,10 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
                       category: item.category,
                       itemName: item.name,
                       expiration: _formatExpiration(item.expirationDate),
-                      quantity: item.quantity ?? 'N/A',
+                      quantity: item.quantity?.toString() ?? 'N/A',
                       expiryDate: item.expirationDate,
                       itemId: item.id!,
+                      unit: item.unit!,
                       onExpiryChanged: _updateExpiryDate,
                     ),
                   )),
@@ -154,9 +164,10 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
     ref.read(pantryControllerProvider).removePantryItem(itemId);
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(String title, {bool showColumnLabels = false}) {
     return Row(
       children: [
+        // 1) Your section title
         Text(
           title,
           style: TextStyle(
@@ -165,24 +176,43 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
             color: Theme.of(context).colorScheme.tertiary,
           ),
         ),
+
+        // 2) Push labels all the way to the right edge of the name column
         const Spacer(),
-        Text(
-          'Quantity',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w300,
-            color: Theme.of(context).colorScheme.tertiary.withOpacity(0.7),
+
+        if (showColumnLabels) ...[
+          // 3) Quantity label over the 60px dropdown slot
+          SizedBox(
+            width: 50,
+            child: Text(
+              'Quantity',
+              textAlign: TextAlign.left,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).colorScheme.tertiary.withOpacity(0.7),
+              ),
+            ),
           ),
-        ),
-        const SizedBox(width: 80),
-        Text(
-          'Expires',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w300,
-            color: Theme.of(context).colorScheme.tertiary.withOpacity(0.7),
+
+          // 4) Space between the two dropdown columns
+          const SizedBox(width: 12),
+
+          // 5) Days left label over the 80px dropdown slot
+          SizedBox(
+            width: 90,
+            child: Text(
+              'Days left',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).colorScheme.tertiary.withOpacity(0.7),
+              ),
+            ),
           ),
-        ),
+          const SizedBox(width: 8),
+        ],
       ],
     );
   }
@@ -204,6 +234,6 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
   String _formatExpiration(DateTime? expiry) {
     if (expiry == null) return '—';
     final diff = expiry.difference(DateTime.now()).inDays;
-    return diff >= 0 ? '$diff d left' : '${-diff} d ago';
+    return diff >= 0 ? '$diff d left' : '${-diff} d ago';
   }
 }
