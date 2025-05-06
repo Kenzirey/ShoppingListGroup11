@@ -171,4 +171,5 @@ class Recipe {
       dietaryClassification: dietaryClassification,
     );
   }
+  
 }

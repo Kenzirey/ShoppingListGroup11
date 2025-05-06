@@ -1,9 +1,9 @@
-import 'package:flutter_gemini/flutter_gemini.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shopping_list_g11/main.dart';
 import 'package:shopping_list_g11/models/recipe.dart';
 import 'package:shopping_list_g11/services/meal_suggestion_service.dart';
 
+/// Riverpod provider for managing the state of the meal suggestions.
 class MealSuggestionsNotifier extends StateNotifier<List<Recipe>> {
   MealSuggestionsNotifier() : super(const []);
 
@@ -34,6 +34,5 @@ final mealSuggestionsProvider =
 final mealSuggestionServiceProvider = Provider<MealSuggestionService>((ref) {
   return MealSuggestionService(
     supabase: supabase,
-    gemini  : Gemini.instance,
   );
 });
