@@ -14,13 +14,14 @@ class BottomNavBar extends StatelessWidget {
     required this.scaffoldKey,
   });
 
+//TODO: remove text from bottom bar, only keep hint text and icons.
   @override
   Widget build(BuildContext context) {
     final int effectiveIndex = nav.currentIndex;
     return NavigationBar(
       selectedIndex: effectiveIndex,
       // Only show the label for the selected item. (hover effect)
-      labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+      labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
       onDestinationSelected: (i) {
         if (i == 0) {
           scaffoldKey.currentState?.openDrawer();
@@ -29,7 +30,7 @@ class BottomNavBar extends StatelessWidget {
         }
       },
       destinations: const [
-        NavigationDestination(icon: Icon(Icons.menu), label: 'More'),
+        NavigationDestination(icon: Icon(Icons.menu), label: 'Menu'),
         NavigationDestination(icon: Icon(Icons.shopping_cart), label: 'Shopping List'),
         NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
         NavigationDestination(icon: Icon(Icons.document_scanner), label: 'Scan Receipt'),
