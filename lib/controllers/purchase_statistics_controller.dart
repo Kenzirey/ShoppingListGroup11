@@ -19,7 +19,6 @@ class PurchaseStatisticsController {
     final endDate = DateTime(year, month + 1, 0);
 
     try {
-      print('Fetching purchases for month: $month/$year for profileId: $profileId');
       final response = await supabase
           .from('purchase_history')
           .select()
@@ -27,7 +26,6 @@ class PurchaseStatisticsController {
           .lte('purchased_at', endDate.toIso8601String())
           .eq('user_id', profileId!);
 
-      print('Retrieved ${response.length} purchases for month: $month/$year');
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
       return [];

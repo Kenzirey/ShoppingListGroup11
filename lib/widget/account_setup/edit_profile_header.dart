@@ -53,7 +53,7 @@ class ProfileHeader extends StatelessWidget {
                   );
                 case 'google':
                   return  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: Image.asset(
                       'assets/images/google_logo.png',
                       width: 18,
@@ -63,7 +63,7 @@ class ProfileHeader extends StatelessWidget {
                 default:
                   return const SizedBox.shrink();
               }
-            }).toList(),
+            }),
               const SizedBox(width: 8),
               Text(
                 currentUser.email,

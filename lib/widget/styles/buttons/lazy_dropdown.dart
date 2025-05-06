@@ -94,10 +94,11 @@ class _CustomLazyDropdownState extends ConsumerState<CustomLazyDropdown> {
   }
 
   void _toggle() {
-    if (_overlay == null)
+    if (_overlay == null) {
       _show();
-    else
+    } else {
       _hide();
+    }
   }
 
   void _hide() {
@@ -107,7 +108,7 @@ class _CustomLazyDropdownState extends ConsumerState<CustomLazyDropdown> {
 
   void _show() {
     _overlay = _buildOverlay();
-    Overlay.of(context)?.insert(_overlay!);
+    Overlay.of(context).insert(_overlay!);
     WidgetsBinding.instance.addPostFrameCallback((_) => _centerOnSelected());
   }
 

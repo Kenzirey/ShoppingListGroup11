@@ -14,7 +14,6 @@ class BottomNavBar extends StatelessWidget {
     required this.scaffoldKey,
   });
 
-//TODO: remove text from bottom bar, only keep hint text and icons.
   @override
   Widget build(BuildContext context) {
     final int effectiveIndex = nav.currentIndex;

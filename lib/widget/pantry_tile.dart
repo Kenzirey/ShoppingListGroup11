@@ -8,7 +8,7 @@ import 'package:shopping_list_g11/widget/styles/pantry_icons.dart';
 class PantryItemTile extends ConsumerStatefulWidget {
   final String? category;
   final String itemName;
-  final String unit;             // new unit field
+  final String unit; // new unit field
   final String quantity;
   final String expiration;
   final DateTime? expiryDate;
@@ -16,16 +16,16 @@ class PantryItemTile extends ConsumerStatefulWidget {
   final void Function(String id, DateTime newDate) onExpiryChanged;
 
   const PantryItemTile({
-    Key? key,
+    super.key,
     required this.category,
     required this.itemName,
-    required this.unit,          // unit param
+    required this.unit, // unit param
     required this.quantity,
     required this.expiration,
     required this.expiryDate,
     required this.itemId,
     required this.onExpiryChanged,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<PantryItemTile> createState() => _PantryItemTileState();
@@ -47,7 +47,6 @@ class _PantryItemTileState extends ConsumerState<PantryItemTile> {
 
   void _handleQuantityChanged(String newLabel) {
     setState(() => _quantityLabel = newLabel);
-    // TODO: persist quantity change if needed
   }
 
   void _handleExpiryChanged(String newValue) {
@@ -63,11 +62,12 @@ class _PantryItemTileState extends ConsumerState<PantryItemTile> {
     final color = theme.colorScheme.tertiary;
     final background = theme.colorScheme.primaryContainer;
 
-    // build display name with optional unit
-final unitLower = widget.unit.toLowerCase().trim();
-final displayName = (unitLower == 'pcs' || unitLower == 'stk' || unitLower.isEmpty)
-    ? widget.itemName
-    : '${widget.itemName} ${widget.unit.trim()}';
+    // build display name with optional  (not every unit will have it)
+    final unitLower = widget.unit.toLowerCase().trim();
+    final displayName =
+        (unitLower == 'pcs' || unitLower == 'stk' || unitLower.isEmpty)
+            ? widget.itemName
+            : '${widget.itemName} ${widget.unit.trim()}';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

@@ -47,7 +47,7 @@ class _PurchaseStatisticsState extends ConsumerState<PurchaseStatistics> {
     return Scaffold(
       body: statisticsState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error loading data')),
+        error: (error, stack) => const Center(child: Text('Error loading data')),
         data: (data) {
           final monthlyData = data['monthlyData'] as MonthlySpending;
           final yearlyData = data['yearlyData'] as YearlySpending;
