@@ -104,7 +104,7 @@ class MyDrawer extends ConsumerWidget {
                   color: Theme.of(context).colorScheme.tertiary,
                 ),
                 title: Text(
-                  'Purchase Statistics',
+                  'Statistics',
                   style:
                       TextStyle(color: Theme.of(context).colorScheme.tertiary),
                 ),
@@ -112,27 +112,6 @@ class MyDrawer extends ConsumerWidget {
                   Navigator.of(context).pop();
                   true; // Mark navigation as from the drawer
                   context.goNamed('purchaseStatistics');
-                },
-              ),
-              // Trending recipe (weekly? Biweekly?)
-              ListTile(
-                leading: PantryIcons(
-                  category:
-                      'trending',
-                  size: 24,
-                  color: Theme.of(context).colorScheme.tertiary,
-                ),
-                title: Text(
-                  'Trending Recipes',
-                  style:
-                      TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                ),
-                onTap: () {
-                  final target = router.namedLocation('trending');
-                  if (GoRouterState.of(context).uri.toString() != target) {
-                    Navigator.of(context).pop();
-                    context.goNamed('trending');
-                  }
                 },
               ),
               ListTile(
