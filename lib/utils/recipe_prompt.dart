@@ -1,6 +1,3 @@
-
-import 'package:flutter_gemini/flutter_gemini.dart';
-
 // Now reusable!
 const kRecipeSystemPrompt = '''
 You are an AI assistant that provides recipes. Please use the metric system.
@@ -31,15 +28,37 @@ Do not assume the user knows any quantities beyond what you listed in the **Ingr
 When grouping ingredients into sub‑sections, always prefix the subgroup with “For the [subgroup name]:” (including the colon), then list its ingredients with “* ” bullets.
 ''';
 
-/// Helper for generating a recipe using Gemini.
-/// Returns Gemini's answer already trimmed.
-Future<String> generateRecipeWithPrompt(String userRequest) async {
-  try {
-    final res = await Gemini.instance.prompt(parts: [
-      Part.text('$kRecipeSystemPrompt\n\nUser request: $userRequest')
-    ]);
-    return (res?.output ?? '').trim();
-  } catch (e) {
-    return '';
+/// Builds the user prompt to send to Gemini.
+String buildRecipePrompt(String userRequest) => '''
+$kRecipeSystemPrompt
+
+User request: $userRequest
+''';
+
+String extractRecipeText(Map<String, dynamic> raw) {
+  final candidates = raw['candidates'] as List<dynamic>?;
+  if (candidates == null || candidates.isEmpty) {
+    throw Exception('No candidates returned: $raw');
   }
+  final content = candidates.first['content'] as Map<String, dynamic>?;
+
+  // Case A: single text field
+  if (content?['text'] is String) {
+    final txt = (content!['text'] as String).trim();
+    if (txt.isNotEmpty) return txt;
+  }
+
+  // Case B: parts array
+  final parts = content?['parts'] as List<dynamic>?;
+  if (parts != null && parts.isNotEmpty) {
+    final buffer = StringBuffer();
+    for (final part in parts) {
+      final t = (part as Map<String, dynamic>)['text'] as String?;
+      if (t != null) buffer.write(t);
+    }
+    final joined = buffer.toString().trim();
+    if (joined.isNotEmpty) return joined;
+  }
+
+  throw Exception('Empty text in response: $raw');
 }

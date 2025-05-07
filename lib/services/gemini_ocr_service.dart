@@ -1,16 +1,18 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_gemini/flutter_gemini.dart';
 import '../models/receipt_data.dart';
 import '../models/receipt_item.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; 
 
 /// Service for performing OCR on receipts with Gemini AI
 class GeminiOcrService {
+  final _supa = Supabase.instance.client; 
   /// Extracts structured receipt data from an image file
   Future<ReceiptData?> extractReceiptData(File imageFile) async {
     try {
       final bytes = await imageFile.readAsBytes();
+      final b64    = base64Encode(bytes); 
 
 
       // System prompt to guide Gemini on data extraction
@@ -60,23 +62,59 @@ Format as valid JSON:
 Use reasonable defaults for missing information. Clean product names of promotional text.
 """;
 
-      final result = await Gemini.instance.textAndImage(
-        text: systemPrompt,
-        images: [bytes],
-      );
+    // Supabase Edge Function call
+    final fnRes = await _supa.functions.invoke(
+      'gemini-ocr',
+      body: {
+        'prompt'     : systemPrompt,
+        'imageBase64': b64,
+      },
+    );
 
-      final responseText = result?.output ?? '';
-      if (responseText.isEmpty) {
-        debugPrint('Empty response from Gemini');
-        return null;
-      }
-
-      return _parseResponseToReceiptData(responseText);
-    } catch (e) {
-      debugPrint('Error extracting receipt data: $e');
+    // Handle errors
+    if (fnRes.status >= 400 || fnRes.data == null) {
+      debugPrint('OCR edge failed: status ${fnRes.status}, body=${fnRes.data}');
       return null;
     }
-  }
+
+    final payload = fnRes.data is String
+        ? jsonDecode(fnRes.data as String)
+        : fnRes.data as Map<String, dynamic>;
+
+        final candidates = payload['candidates'] as List<dynamic>?;
+        if (candidates == null || candidates.isEmpty) {
+          debugPrint('No candidates in response: $payload');
+          return null;
+        }
+
+        final first = candidates.first as Map<String, dynamic>;
+        final content = first['content'] as Map<String, dynamic>?;
+        if (content == null) {
+          debugPrint('No content in first candidate: $first');
+          return null;
+        }
+
+        final parts = content['parts'] as List<dynamic>?;
+        if (parts == null || parts.isEmpty) {
+          debugPrint('No parts in content: $content');
+          return null;
+        }
+
+        final responseText = (parts.first as Map<String, dynamic>)['text'] as String?;
+        if (responseText == null || responseText.isEmpty) {
+          debugPrint('First part has no text: $parts');
+          return null;
+        }
+
+
+
+
+          return _parseResponseToReceiptData(responseText);
+        } catch (e) {
+          debugPrint('Error extracting receipt data: $e');
+          return null;
+        }
+      }
 
   /// Parses Gemini response into structured ReceiptData
   ReceiptData? _parseResponseToReceiptData(String response) {

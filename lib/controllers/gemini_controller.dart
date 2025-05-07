@@ -1,131 +1,54 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shopping_list_g11/main.dart';
-import 'package:shopping_list_g11/models/recipe.dart';
+
+import 'package:shopping_list_g11/services/gemini_service.dart';
+import 'package:shopping_list_g11/utils/recipe_prompt.dart';
 import 'package:shopping_list_g11/providers/chat_provider.dart';
 import 'package:shopping_list_g11/providers/chat_recipe_provider.dart';
 import 'package:shopping_list_g11/providers/recipe_provider.dart';
-import 'package:shopping_list_g11/utils/recipe_prompt.dart';
-import '../services/gemini_service.dart';
+import 'package:shopping_list_g11/models/recipe.dart';
 
-/// Controller for handling user-interaction with the Gemini Api.
+
 class GeminiController {
   final WidgetRef ref;
   final TextEditingController controller;
 
-  GeminiController({required this.ref, required this.controller});
+  GeminiController({ required this.ref, required this.controller });
 
-  /// Makes a single, non-streaming prompt call to Gemini, returning the entire response at once.
-  Future<String> _getGeminiResponse(String message) async {
-    try {
-      final output = await generateRecipeWithPrompt(message);
-      if (output.isEmpty) return "Error: No output from Gemini.";
-      return output;
-    } catch (e) {
-      debugPrint("Gemini Error: $e");
-      if (e.toString().contains("Status Code: 429")) {
-        return "Error: Rate limit exceeded. Please wait and try again.";
-      }
-      return "Error: Could not get response.";
-    }
-  }
+  Future<void> sendMessage() async {
+    final userMessage = controller.text.trim();
+    if (userMessage.isEmpty) return;
 
-  /// Sends a message to Gemini, gets the entire result at once, then parses.
-  void sendMessage() async {
-    // If user typed nothing, do nothing.
-    if (controller.text.trim().isEmpty) return;
-
-    final userMessage = controller.text;
-    ref.read(chatProvider.notifier).sendMessage(
-          text: userMessage,
-          isUser: true,
-        );
+    ref.read(chatProvider.notifier).sendMessage(text: userMessage, isUser: true);
     controller.clear();
+    ref.read(chatProvider.notifier)
+       .sendMessage(text: 'Thinking of recipe...', isUser: false);
 
-    // Temporary message while waiting
-    ref.read(chatProvider.notifier).sendMessage(
-          text: 'Thinking of recipe...',
-          isUser: false,
-        );
+    final prompt = buildRecipePrompt(userMessage);
+    final rawJson = await geminiRaw(prompt: prompt, query: userMessage);
+    String markdown;
+  try {
+    markdown = extractRecipeText(rawJson);
+  } catch (e, st) {
+    debugPrint(' Error extracting recipe text: $e\n$st');
+    ref.read(chatProvider.notifier).updateLastBotMessage(
+      'Something went wrong parsing the recipe. Please try again.'
+    );
+    return;
+  }
+    debugPrint('Gemini raw output:\n$markdown');
 
-    // then parse it via the factory method
-    final geminiResponse = await _getGeminiResponse(userMessage);
-    final parsedRecipe = Recipe.fromString(geminiResponse);
-
-    // only store it if it is valid
-    if (parsedRecipe.name.isNotEmpty &&
-        parsedRecipe.ingredients.isNotEmpty &&
-        parsedRecipe.instructions.isNotEmpty) {
-      ref.read(recipeProvider.notifier).state = parsedRecipe;
-      ref.read(chatRecipeProvider.notifier).update((_) => parsedRecipe);
-      ref.read(chatProvider.notifier).updateLastBotMessage(geminiResponse);
+    final parsed = Recipe.fromString(markdown);
+    if (parsed.name.isNotEmpty &&
+        parsed.ingredients.isNotEmpty &&
+        parsed.instructions.isNotEmpty) {
+      ref.read(recipeProvider.notifier).state = parsed;
+      ref.read(chatRecipeProvider.notifier).update((_) => parsed);
+      ref.read(chatProvider.notifier).updateLastBotMessage(markdown);
     } else {
       debugPrint("Error: Recipe parsing failed.");
-      // update the temporary message with an error message.
-      ref.read(chatProvider.notifier).updateLastBotMessage(
-          "Something went wrong. Please try asking for a new recipe.");
-    }
-  }
-
-  /// Fetches (currently all) receipt items (products) from the database, and sends them to Gemini for categorization.
-  /// Returns a json array of objects, where each object has 'name', 'category', and 'type' keys.
-  /// Where Category is the main product category (e.g., dry food, dairy, frozen meats) and the specific product type (e.g., milk, yogurt, chicken breast).
-  /// Will be replaced later with a different type of product fetch.
-  Future<List<Map<String, dynamic>>> processProducts() async {
-    final response = await supabase.from('receipt_items').select('name');
-    try {
-      if (response.isEmpty) {
-        debugPrint("No products found in the database.");
-        return [];
-      }
-
-      List<String> productNames =
-          response.map((item) => item['name'] as String).toList();
-
-      if (productNames.isEmpty) {
-        return [];
-      }
-
-      // Enclose product names in quotes, as some items in database has , in the name, which confused Gemini.
-      List<String> quotedNames = productNames.map((name) => '"$name"').toList();
-
-      final prompt = """
-        Categorize the following product names. Provide the main product category (e.g., dry food, dairy, frozen meats) and the specific product type (e.g., milk, yogurt, chicken breast). 
-        Also add what sort of storage typing it has, from these 3 storage types (fridge, freezer, dry storage)
-        Return the response as a JSON array of objects, where each object has 'name', 'category', 'type', 'storage' keys.
-
-        Products: ${quotedNames.join(", ")}
-
-        JSON Response:
-      """;
-
-      debugPrint("Gemini Prompt: $prompt");
-
-      final raw = await geminiRaw(prompt: prompt, query: '');
-      String? text = raw['candidates']?[0]?['content']?['parts']?[0]?['text'];
-      debugPrint("Gemini Response Text: $text");
-
-      if (text != null) {
-        text = text.replaceAll('```json', '').replaceAll('```', '').trim();
-
-        try {
-          List<dynamic> jsonResponse = jsonDecode(text);
-
-          debugPrint("Parsed JSON Response: $jsonResponse");
-
-          return jsonResponse.cast<Map<String, dynamic>>();
-        } catch (e) {
-          debugPrint('Error parsing Gemini JSON: $e, text: $text');
-          return [];
-        }
-      } else {
-        debugPrint("Gemini returned null response :().");
-        return [];
-      }
-    } catch (e) {
-      debugPrint('Error processing products: $e');
-      return [];
+      ref.read(chatProvider.notifier)
+         .updateLastBotMessage("Something went wrong. Please try again.");
     }
   }
 }
