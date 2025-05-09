@@ -11,27 +11,18 @@ class ReceiptDisplayScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Return to receipt scanning'),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+      ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Scanned Receipt',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.tertiary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
               const Divider(),
               const SizedBox(height: 8),
-              
               // Receipt Card
               Card(
                 color: Theme.of(context).colorScheme.primaryContainer,

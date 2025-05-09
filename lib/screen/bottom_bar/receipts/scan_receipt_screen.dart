@@ -8,6 +8,7 @@ import 'package:shopping_list_g11/screen/bottom_bar/receipts/view_scanned_receip
 import 'package:shopping_list_g11/services/image_processing.dart';
 import 'package:shopping_list_g11/services/kassal_service.dart';
 import 'package:shopping_list_g11/services/supabase_ocr_service.dart';
+import 'package:shopping_list_g11/widget/styles/pantry_icons.dart';
 import 'package:shopping_list_g11/widget/user_feedback/regular_custom_snackbar.dart';
 import '../../../services/gemini_ocr_service.dart';
 
@@ -119,10 +120,6 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
     }
   }
 
-  void _scanBarcodePlaceholder() {
-    debugPrint('Barcode scanning is not implemented yet.');
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -132,7 +129,7 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Scan Receipt or Barcode',
+              'Scan Receipt',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -188,10 +185,11 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
                           const SizedBox(height: 14),
                           // Scan Barcode Button
                           ElevatedButton.icon(
-                            onPressed: _scanBarcodePlaceholder,
-                            icon: const Icon(Icons.qr_code_scanner, size: 32),
+                            onPressed: () => _scanReceipt(ImageSource.gallery),
+
+                            icon: PantryIcons(category: 'gallery', size: 32, color: Theme.of(context).colorScheme.primary),
                             label: const Text(
-                              'Scan Barcode',
+                              'Scan Existing',
                               style: TextStyle(fontSize: 18),
                             ),
                             style: ElevatedButton.styleFrom(
