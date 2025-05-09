@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Screen that shows currently popular recipes amongst fellow users.
+///
+/// Currently not being used, future scope.
 class TrendingRecipeScreen extends ConsumerStatefulWidget {
   const TrendingRecipeScreen({super.key});
 
@@ -39,7 +41,7 @@ class TrendingRecipesState extends ConsumerState<TrendingRecipeScreen> {
   ];
 
   // Filter options.
-  final List<String> filters = ['All', 'Vegan', 'Vegetarian']; // todo: add all the ones from the account details to match options
+  final List<String> filters = ['All', 'Vegan', 'Vegetarian']; // should be fetched from  user settings and such later
   String selectedFilter = 'All';
 
   // Returns a filtered list based on the current selected filter. 

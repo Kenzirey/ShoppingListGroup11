@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shopping_list_g11/widget/styles/dialog/add_product_dialog.dart';
-import 'package:shopping_list_g11/widget/navigation/search_bar.dart';
 import 'package:shopping_list_g11/widget/shopping_list_item.dart';
 import 'package:shopping_list_g11/models/shopping_item.dart';
 import 'package:shopping_list_g11/providers/shopping_items_provider.dart';
@@ -76,25 +75,26 @@ class _ShoppingListState extends ConsumerState<ShoppingListScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CustomSearchBarWidget(
-                        suggestions: items.map((e) => e.itemName).toList(),
-                        onSuggestionSelected: (suggestion) {
-                          debugPrint("Selected: $suggestion");
-                        },
-                        hintText: 'Search products...',
-                      ),
-                      const SizedBox(height: 16.0),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Shopping List',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.normal,
-                              color: Theme.of(context).colorScheme.tertiary,
-                            ),
+                      // Title setup like the other screens
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Shopping List',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.tertiary,
                           ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Divider(), //
+                      const SizedBox(height: 8),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          // the sort & clear button section here
                           Row(
                             children: [
                               TextButton.icon(
@@ -192,7 +192,9 @@ class _ShoppingListState extends ConsumerState<ShoppingListScreen> {
                                 padding: const EdgeInsets.only(right: 16),
                                 margin: const EdgeInsets.only(bottom: 12),
                                 decoration: BoxDecoration(
-                                  color: Colors.red,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .error,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Icon(Icons.delete,

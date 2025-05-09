@@ -74,7 +74,7 @@ class _PurchaseStatisticsState extends ConsumerState<PurchaseStatistics> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title and header (unchanged)
+                  // Title and header
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(

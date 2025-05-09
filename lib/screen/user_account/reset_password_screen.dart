@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shopping_list_g11/controllers/auth_controller.dart';
 import 'package:shopping_list_g11/utils/error_utils.dart';
 
+///// Screen for allowing the user to reset their password.
 class ResetPasswordScreen extends ConsumerStatefulWidget {
   const ResetPasswordScreen({super.key});
 

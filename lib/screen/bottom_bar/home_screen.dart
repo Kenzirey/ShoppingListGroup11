@@ -10,7 +10,7 @@ import '../../providers/home_screen_provider.dart';
 import '../../providers/pantry_items_provider.dart';
 
 /// Home screen for the app.
-/// Displays "Expiring Soon" items and "Meal Suggestions" upon the above items.
+/// Displays "Expiring Soon" items and "Meal Suggestions" based upon the above items.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -105,99 +105,117 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       final days = diff.toString();
                       final category = item.category?.toLowerCase() ?? '';
 
-                      return Dismissible(
-                        key: ValueKey(item.id),
-                        direction: DismissDirection.endToStart,
-                        background: Container(
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(right: 20),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(
-                                8), // match tile border type
-                          ),
-                          child: const Icon(Icons.delete, color: Colors.white),
-                        ),
-                        onDismissed: (_) {
-                          final removedItem = item;
-                          pantryController.removePantryItem(item.id!);
-                          ScaffoldMessenger.of(context)
-                            ..hideCurrentSnackBar()
-                            ..showSnackBar(
-                              CustomSnackbar.buildSnackBar(
-                                title: 'Removed',
-                                message: '${item.name} removed',
-                                innerPadding:
-                                    const EdgeInsets.symmetric(horizontal: 16),
-                                actionText: 'Undo',
-                                onAction: () {
-                                  pantryController.addPantryItem(removedItem);
-                                  ScaffoldMessenger.of(context)
-                                    ..hideCurrentSnackBar()
-                                    ..showSnackBar(
-                                      CustomSnackbar.buildSnackBar(
-                                        title: 'Restored',
-                                        message:
-                                            '${item.name} restored successfully',
-                                        innerPadding:
-                                            const EdgeInsets.symmetric(
-                                                horizontal: 16),
-                                      ),
-                                    );
-                                },
+                      return Padding(
+                        padding: const EdgeInsets.only(
+                            bottom: 12), // external spacing
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Dismissible(
+                            key: ValueKey(item.id),
+                            direction: DismissDirection.endToStart,
+
+                            background: const SizedBox.shrink(),
+
+                            // keep it same size as the tile itselfbr
+                            secondaryBackground: Container(
+                              decoration: BoxDecoration(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .error,
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                            );
-                        },
-                        child: Container(
-                          height: 56,
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.symmetric(horizontal: 14),
-                          decoration: BoxDecoration(
-                            color: theme.primaryContainer,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Row(
-                                  children: [
-                                    PantryIcons(
-                                      category: category,
-                                      size: 20,
-                                      color: theme.tertiary,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Flexible(
-                                      child: Text(
-                                        item.name,
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 20),
+                              child:
+                                  const Icon(Icons.delete, color: Colors.white),
+                            ),
+
+                            onDismissed: (_) {
+                              final removedItem = item;
+                              pantryController.removePantryItem(item.id!);
+
+                              ScaffoldMessenger.of(context)
+                                ..hideCurrentSnackBar()
+                                ..showSnackBar(
+                                  CustomSnackbar.buildSnackBar(
+                                    title: 'Removed',
+                                    message: '${item.name} removed',
+                                    innerPadding: const EdgeInsets.symmetric(
+                                        horizontal: 16),
+                                    actionText: 'Undo',
+                                    onAction: () {
+                                      pantryController
+                                          .addPantryItem(removedItem);
+                                      ScaffoldMessenger.of(context)
+                                        ..hideCurrentSnackBar()
+                                        ..showSnackBar(
+                                          CustomSnackbar.buildSnackBar(
+                                            title: 'Restored',
+                                            message:
+                                                '${item.name} restored successfully',
+                                            innerPadding:
+                                                const EdgeInsets.symmetric(
+                                                    horizontal: 16),
+                                          ),
+                                        );
+                                    },
+                                  ),
+                                );
+                            },
+
+                            // the tile itself; no internal margin, fixed 56 px height & clipped
+                            child: Container(
+                              height: 56,
+                              color: theme.primaryContainer,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 14),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        PantryIcons(
+                                          category: category,
+                                          size: 20,
                                           color: theme.tertiary,
                                         ),
-                                        overflow: TextOverflow.ellipsis,
+                                        const SizedBox(width: 10),
+                                        Flexible(
+                                          child: Text(
+                                            item.name,
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                              color: theme.tertiary,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.access_time,
+                                        size: 20,
+                                        color: theme.tertiary.withOpacity(0.7),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Row(
-                                children: [
-                                  Icon(Icons.access_time,
-                                      size: 20,
-                                      color: theme.tertiary.withOpacity(0.7)),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    days,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: theme.tertiary.withOpacity(0.7),
-                                    ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        days,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color:
+                                              theme.tertiary.withOpacity(0.7),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
                       );

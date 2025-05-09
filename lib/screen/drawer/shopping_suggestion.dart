@@ -7,6 +7,7 @@ import 'package:shopping_list_g11/widget/user_feedback/regular_custom_snackbar.d
 import '../../providers/shopping_items_provider.dart';
 
 /// Screen that displays shopping suggestions based on user preferences.
+/// Allows user to add these suggested items to their shopping list.
 class ShoppingSuggestionsScreen extends ConsumerStatefulWidget {
   const ShoppingSuggestionsScreen({super.key});
 
@@ -106,17 +107,29 @@ class _ShoppingSuggestionsScreenState
     final selected = shoppingItems.where((item) => selectedItems.contains(item.id)).toList();
 
     if (selected.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No items selected')),
-      );
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          CustomSnackbar.buildSnackBar(
+            title: 'No Selection',
+            message: 'No items selected',
+            innerPadding: const EdgeInsets.symmetric(horizontal: 16),
+          ),
+        );
       return;
     }
 
     final user = ref.read(currentUserValueProvider);
     if (user == null || user.profileId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User not logged in')),
-      );
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          CustomSnackbar.buildSnackBar(
+            title: 'Not Logged In',
+            message: 'User not logged in',
+            innerPadding: const EdgeInsets.symmetric(horizontal: 16),
+          ),
+        );
       return;
     }
 
@@ -132,15 +145,18 @@ class _ShoppingSuggestionsScreenState
         ),
       );
     }
-
+    // As user may be adding multiple items, track so we can show a summary of items
+    final names = selected.map((e) => e.itemName).join(', ');
     // Show success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      CustomSnackbar.buildSnackBar(
-        title: 'Added to Shopping List',
-        message: '${selected.length} item${selected.length == 1 ? '' : 's'} added',
-        innerPadding: const EdgeInsets.symmetric(horizontal: 16),
-      ),
-    );
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          CustomSnackbar.buildSnackBar(
+            title: 'Added to Shopping List',
+            message: 'Added: $names',
+            innerPadding: const EdgeInsets.symmetric(horizontal: 16),
+          ),
+        );
 
     // Clear selected items
     setState(() {
@@ -279,7 +295,7 @@ class _ShoppingSuggestionsScreenState
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              '${item.itemName} | ${item.quantity ?? "1 unit"}',
+                              item.itemName,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w500,

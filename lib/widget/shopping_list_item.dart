@@ -51,7 +51,6 @@ class _ShoppingListItemState extends State<ShoppingListItem> {
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [

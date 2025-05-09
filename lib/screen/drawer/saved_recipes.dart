@@ -19,8 +19,7 @@ class SavedRecipesScreen extends ConsumerStatefulWidget {
   const SavedRecipesScreen({super.key});
 
   @override
-  ConsumerState<SavedRecipesScreen> createState() =>
-      _SavedRecipesScreenState();
+  ConsumerState<SavedRecipesScreen> createState() => _SavedRecipesScreenState();
 }
 
 class _SavedRecipesScreenState extends ConsumerState<SavedRecipesScreen> {
@@ -97,8 +96,7 @@ class _SavedRecipesScreenState extends ConsumerState<SavedRecipesScreen> {
             Text(
               'Saved Recipes',
               style: TextStyle(
-                  fontSize: 18,
-                  color: Theme.of(context).colorScheme.tertiary),
+                  fontSize: 18, color: Theme.of(context).colorScheme.tertiary),
             ),
             const SizedBox(height: 8),
             Expanded(
@@ -113,76 +111,69 @@ class _SavedRecipesScreenState extends ConsumerState<SavedRecipesScreen> {
                           recipe.yields.replaceAll(RegExp(r'[^\d]'), '')) ??
                       1;
 
-                  return Dismissible(
-                    key: Key(recipe.name),
-                    direction: DismissDirection.endToStart,
-                    background: Container(
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      color: Colors.red,
-                      child: const Icon(Icons.delete, color: Colors.white),
-                    ),
-                    onDismissed: (_) {
-                      final user = ref.read(currentUserValueProvider);
-                      if (user == null || user.profileId == null) return;
+                  // the new dismissible so that it is actually the same size as item.
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Dismissible(
+                        key: Key(recipe.name),
+                        direction: DismissDirection.endToStart,
+                        background: const SizedBox.shrink(),
+                        secondaryBackground: Container(
+                          height: 56, // same as pantry tile etc
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 20),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.error,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.delete, color: Colors.white),
+                        ),
+                        onDismissed: (_) {
+                          final user = ref.read(currentUserValueProvider);
+                          if (user == null || user.profileId == null) return;
 
-                      ref
-                          .read(savedRecipesControllerProvider)
-                          .removeRecipe(user.profileId!, savedRecipe);
+                          ref
+                              .read(savedRecipesControllerProvider)
+                              .removeRecipe(user.profileId!, savedRecipe);
 
-                      _showDeleteSnackBar(
-                        context: context,
-                        profileId: user.profileId!,
-                        removedRecipe: savedRecipe,
-                        removedIndex: index,
-                      );
-                    },
-
-                    // List item with gesture feedback
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Material(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .primaryContainer,
-                          child: InkWell(
-                            onTap: () {
-                              ref.read(recipeProvider.notifier).state = recipe;
-                              if (!mounted) return;
-                              context.goNamed('recipe');
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 6, horizontal: 14),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    servings > 1
-                                        ? Icons.people
-                                        : Icons.person,
-                                    size: 20,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .tertiary,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '$servings',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
+                          _showDeleteSnackBar(
+                            context: context,
+                            profileId: user.profileId!,
+                            removedRecipe: savedRecipe,
+                            removedIndex: index,
+                          );
+                        },
+                        child: SizedBox(
+                          height: 56, // exact match to pantry items
+                          child: Material(
+                            color:
+                                Theme.of(context).colorScheme.primaryContainer,
+                            child: InkWell(
+                              onTap: () {
+                                ref.read(recipeProvider.notifier).state =
+                                    recipe;
+                                if (!mounted) return;
+                                context.goNamed('recipe');
+                              },
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 14),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      servings > 1
+                                          ? Icons.people
+                                          : Icons.person,
+                                      size: 20,
                                       color: Theme.of(context)
                                           .colorScheme
                                           .tertiary,
                                     ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      recipe.name,
-                                      overflow: TextOverflow.ellipsis,
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '$servings',
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w500,
@@ -191,49 +182,22 @@ class _SavedRecipesScreenState extends ConsumerState<SavedRecipesScreen> {
                                             .tertiary,
                                       ),
                                     ),
-                                  ),
-                                  IconButton(
-                                    iconSize: 20,
-                                    constraints: const BoxConstraints(),
-                                    padding: EdgeInsets.zero,
-                                    icon: Icon(Icons.delete,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .tertiary),
-                                    onPressed: () {
-                                      final user =
-                                          ref.read(currentUserValueProvider);
-                                      if (user == null ||
-                                          user.profileId == null) {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          CustomSnackbar.buildSnackBar(
-                                            title: 'Error',
-                                            message:
-                                                'You must be logged in to remove a recipe.',
-                                            innerPadding:
-                                                const EdgeInsets.symmetric(
-                                                    horizontal: 16),
-                                          ),
-                                        );
-                                        return;
-                                      }
-
-                                      ref
-                                          .read(
-                                              savedRecipesControllerProvider)
-                                          .removeRecipe(
-                                              user.profileId!, savedRecipe);
-
-                                      _showDeleteSnackBar(
-                                        context: context,
-                                        profileId: user.profileId!,
-                                        removedRecipe: savedRecipe,
-                                        removedIndex: index,
-                                      );
-                                    },
-                                  ),
-                                ],
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        recipe.name,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .tertiary,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),

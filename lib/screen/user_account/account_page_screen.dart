@@ -8,8 +8,11 @@ import 'package:shopping_list_g11/widget/dietary_preference.dart';
 import 'package:shopping_list_g11/widget/user_feedback/logout_confirmation_dialog.dart';
 import 'package:shopping_list_g11/widget/profile_menu_item.dart';
 import 'package:shopping_list_g11/widget/styles/profile_header.dart';
+import 'package:shopping_list_g11/widget/user_feedback/regular_custom_snackbar.dart';
 
 /// The main account page screen.
+/// Allows users to view and edit their account information, such as password,
+/// dietary preferences.
 class AccountPageScreen extends ConsumerStatefulWidget {
   const AccountPageScreen({super.key});
 
@@ -120,19 +123,24 @@ class _AccountPageScreenState extends ConsumerState<AccountPageScreen>
                     iconColor: Colors.greenAccent,
                     backgroundColor: Colors.greenAccent.withOpacity(0.1),
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Help page coming soon'),
-                        ),
-                      );
+                      ScaffoldMessenger.of(context)
+                        ..hideCurrentSnackBar()
+                        ..showSnackBar(
+                          CustomSnackbar.buildSnackBar(
+                            title: 'Coming Soon',
+                            message: 'Help page coming soon',
+                            innerPadding: const EdgeInsets.symmetric(horizontal: 16),
+                          ),
+                        );
+
                     },
                   ),
                   ProfileMenuItem(
                     title: 'Logout',
                     icon: Icons.exit_to_app,
-                    textColor: Colors.redAccent,
-                    iconColor: Colors.redAccent,
-                    backgroundColor: Colors.redAccent.withOpacity(0.1),
+                    textColor: Theme.of(context).colorScheme.tertiary,
+                    iconColor: Theme.of(context).colorScheme.error,
+                    backgroundColor: Theme.of(context).colorScheme.error.withOpacity(0.1),
                     showTrailingIcon: false,
                     onTap: () => _showLogoutConfirmationDialog(context),
                   ),

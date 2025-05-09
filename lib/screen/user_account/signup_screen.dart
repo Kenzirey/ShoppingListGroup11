@@ -5,9 +5,11 @@ import 'package:shopping_list_g11/controllers/auth_controller.dart';
 import 'package:shopping_list_g11/utils/error_utils.dart';
 import 'package:shopping_list_g11/utils/validators.dart';
 import 'package:shopping_list_g11/widget/password_requirements.dart';
+import 'package:shopping_list_g11/widget/user_feedback/regular_custom_snackbar.dart';
 
 
-/// A visually enhanced sign up screen with animations, validation, and improved UI
+/// A sign-up screen for new users.
+/// It includes fields for username, email, and password.
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
 
@@ -84,22 +86,29 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
       await authController.signUp(email, password, userName: userName);
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Sign up successful!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            CustomSnackbar.buildSnackBar(
+              title: 'Success',
+              message: 'Sign up successful!',
+              innerPadding: const EdgeInsets.symmetric(horizontal: 16),
+            ),
+          );
         context.go('/');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Sign up failed: ${getUserFriendlyErrorMessage(e)}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            CustomSnackbar.buildSnackBar(
+              title: 'Error',
+              message: 'Sign up failed: ${getUserFriendlyErrorMessage(e)}',
+              innerPadding: const EdgeInsets.symmetric(horizontal: 16),
+            ),
+          );
+
       }
     } finally {
       if (mounted) {

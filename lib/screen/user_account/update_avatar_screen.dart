@@ -6,6 +6,7 @@ import 'package:lottie/lottie.dart';
 import 'package:shopping_list_g11/controllers/auth_controller.dart';
 import 'package:shopping_list_g11/providers/current_user_provider.dart';
 import 'package:shopping_list_g11/utils/error_utils.dart';
+import 'package:shopping_list_g11/widget/user_feedback/regular_custom_snackbar.dart';
 
 /// Screen for updating the user's profile picture avatar.
 class UpdateAvatarScreen extends ConsumerStatefulWidget {
@@ -257,11 +258,16 @@ class _UpdateAvatarScreenState extends ConsumerState<UpdateAvatarScreen>
                         onPressed: () async {
                           if (selectedAvatar == null) {
                             if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text('Please select an avatar')),
-                            );
-                            return;
+                              ScaffoldMessenger.of(context)
+                                ..hideCurrentSnackBar()
+                                ..showSnackBar(
+                                  CustomSnackbar.buildSnackBar(
+                                    title: 'Missing Selection',
+                                    message: 'Please select an avatar',
+                                    innerPadding: const EdgeInsets.symmetric(horizontal: 16),
+                                  ),
+                                );
+                              return;
                           }
 
                           try {
@@ -283,10 +289,15 @@ class _UpdateAvatarScreenState extends ConsumerState<UpdateAvatarScreen>
                             GoRouter.of(context).pop();
                           } catch (e) {
                             if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text(getUserFriendlyErrorMessage(e))),
-                            );
+                                ScaffoldMessenger.of(context)
+                                  ..hideCurrentSnackBar()
+                                  ..showSnackBar(
+                                    CustomSnackbar.buildSnackBar(
+                                      title: 'Error',
+                                      message: getUserFriendlyErrorMessage(e),
+                                      innerPadding: const EdgeInsets.symmetric(horizontal: 16),
+                                    ),
+                                  );
                           }
                         },
                         style: ElevatedButton.styleFrom(

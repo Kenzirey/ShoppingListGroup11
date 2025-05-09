@@ -5,10 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// https://pub.dev/packages/flutter_gemini
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Initialize Gemini (with Emma's key)
   // Initialize Supabase
   await Supabase.initialize(
     url: 'https://ympkztethjtejhdajsol.supabase.co',
@@ -40,6 +38,8 @@ void main() async {
 }
 
 final supabase = Supabase.instance.client;
+
+/// Main app widget.
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
@@ -65,6 +65,7 @@ class MyApp extends ConsumerWidget {
           primaryContainer: Color(0xff424242),
           onSurfaceVariant: Color(0xFFBDBDBD), // hint text, used by search bar inherently.
            onPrimary: Color(0xFF58855C),
+           error: Color(0xFF9A0007), // cherry red
         ),
       ),
       routerConfig: AppRouter.router, // Routes similar to vue, logic is in the routes folder.
