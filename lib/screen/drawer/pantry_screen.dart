@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shopping_list_g11/models/pantry_item.dart';
 import 'package:shopping_list_g11/widget/pantry_tile.dart';
 import 'package:shopping_list_g11/providers/pantry_items_provider.dart';
 import 'package:shopping_list_g11/providers/current_user_provider.dart';
+import 'package:shopping_list_g11/widget/user_feedback/regular_custom_snackbar.dart';
 
 /// Screen for showing which food items the user has in stock,
 /// from fridge to dry goods, canned food etc.
@@ -40,14 +42,6 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final pantryItems = ref.watch(pantryItemsProvider);
-    final fridgeItems =
-        pantryItems.where((p) => p.category == 'Fridge').toList();
-    final freezerItems =
-        pantryItems.where((p) => p.category == 'Freezer').toList();
-    final dryStorageItems =
-        pantryItems.where((p) => p.category == 'Dry Storage').toList();
-
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Padding(
@@ -69,105 +63,18 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
             const SizedBox(height: 4),
             const Divider(),
             const SizedBox(height: 8),
-
-            // Fridge
-            _buildSectionHeader('Fridge', showColumnLabels: true),
-            const SizedBox(height: 12),
-            if (fridgeItems.isEmpty)
-              _noItemsPlaceholder()
-            else
-              ...fridgeItems.map((item) => Dismissible(
-                    key: ValueKey(item.id),
-                    background: Container(
-                        color: Colors.redAccent,
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 16),
-                        child: const Icon(Icons.delete, color: Colors.white)),
-                    direction: DismissDirection.endToStart,
-                    onDismissed: (_) => _deleteItem(item.id!),
-                    child: PantryItemTile(
-                      category: item.category,
-                      itemName: item.name,
-                      expiration: _formatExpiration(item.expirationDate),
-                      quantity: item.quantity?.toString() ?? 'N/A',
-                      expiryDate: item.expirationDate,
-                      itemId: item.id!,
-                      unit: item.unit!,
-                      onExpiryChanged: _updateExpiryDate,
-                    ),
-                  )),
-
-            const SizedBox(height: 24),
-
-            // Freezer
-            _buildSectionHeader('Freezer'),
-            const SizedBox(height: 12),
-            if (freezerItems.isEmpty)
-              _noItemsPlaceholder()
-            else
-              ...freezerItems.map((item) => Dismissible(
-                    key: ValueKey(item.id),
-                    background: Container(
-                        color: Colors.redAccent,
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 16),
-                        child: const Icon(Icons.delete, color: Colors.white)),
-                    direction: DismissDirection.endToStart,
-                    onDismissed: (_) => _deleteItem(item.id!),
-                    child: PantryItemTile(
-                      category: item.category,
-                      itemName: item.name,
-                      expiration: _formatExpiration(item.expirationDate),
-                      quantity: item.quantity?.toString() ?? 'N/A',
-                      expiryDate: item.expirationDate,
-                      itemId: item.id!,
-                      unit: item.unit!,
-                      onExpiryChanged: _updateExpiryDate,
-                    ),
-                  )),
-
-            const SizedBox(height: 24),
-
-            // Dry Storage
-            _buildSectionHeader('Dry Storage'),
-            const SizedBox(height: 12),
-            if (dryStorageItems.isEmpty)
-              _noItemsPlaceholder()
-            else
-              ...dryStorageItems.map((item) => Dismissible(
-                    key: ValueKey(item.id),
-                    background: Container(
-                        color: Colors.redAccent,
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 16),
-                        child: const Icon(Icons.delete, color: Colors.white)),
-                    direction: DismissDirection.endToStart,
-                    onDismissed: (_) => _deleteItem(item.id!),
-                    child: PantryItemTile(
-                      category: item.category,
-                      itemName: item.name,
-                      expiration: _formatExpiration(item.expirationDate),
-                      quantity: item.quantity?.toString() ?? 'N/A',
-                      expiryDate: item.expirationDate,
-                      itemId: item.id!,
-                      unit: item.unit!,
-                      onExpiryChanged: _updateExpiryDate,
-                    ),
-                  )),
+            ..._buildCategorySection('Fridge', showColumnLabels: true),
+            ..._buildCategorySection('Freezer'),
+            ..._buildCategorySection('Dry Storage'),
           ],
         ),
       ),
     );
   }
 
-  void _deleteItem(String itemId) {
-    ref.read(pantryControllerProvider).removePantryItem(itemId);
-  }
-
   Widget _buildSectionHeader(String title, {bool showColumnLabels = false}) {
     return Row(
       children: [
-        // 1) Your section title
         Text(
           title,
           style: TextStyle(
@@ -176,12 +83,8 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
             color: Theme.of(context).colorScheme.tertiary,
           ),
         ),
-
-        // 2) Push labels all the way to the right edge of the name column
         const Spacer(),
-
         if (showColumnLabels) ...[
-          // 3) Quantity label over the 60px dropdown slot
           SizedBox(
             width: 50,
             child: Text(
@@ -194,11 +97,7 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
               ),
             ),
           ),
-
-          // 4) Space between the two dropdown columns
           const SizedBox(width: 12),
-
-          // 5) Days left label over the 80px dropdown slot
           SizedBox(
             width: 90,
             child: Text(
@@ -235,5 +134,84 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
     if (expiry == null) return '—';
     final diff = expiry.difference(DateTime.now()).inDays;
     return diff >= 0 ? '$diff d left' : '${-diff} d ago';
+  }
+
+  // Build entire pantry category section, with dismissible items.
+  List<Widget> _buildCategorySection(
+    String category, {
+    bool showColumnLabels = false,
+  }) {
+    final allItems = ref.watch(pantryItemsProvider);
+    final items = allItems.where((p) => p.category == category).toList();
+
+    return [
+      _buildSectionHeader(category, showColumnLabels: showColumnLabels),
+      const SizedBox(height: 12),
+      if (items.isEmpty)
+        _noItemsPlaceholder()
+      else
+        ...items.map(_buildDismissible),
+      const SizedBox(height: 24),
+    ];
+  }
+
+  // the dismissible (delete with swiping)
+  Widget _buildDismissible(PantryItem item) {
+    final pantryItems = ref.read(pantryItemsProvider);
+    final globalIndex = pantryItems.indexWhere((i) => i.id == item.id);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Dismissible(
+          key: ValueKey(item.id),
+          direction: DismissDirection.endToStart,
+
+          background: const SizedBox.shrink(),
+
+          // added the cherry red from the design guide by Solwr
+          secondaryBackground: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF9A0007),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 16),
+            child: const Icon(Icons.delete, color: Colors.white),
+          ),
+
+          onDismissed: (_) {
+            ref.read(pantryControllerProvider).removePantryItem(item.id!);
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                CustomSnackbar.buildSnackBar(
+                  title: 'Removed',
+                  message: '${item.name} removed',
+                  innerPadding: const EdgeInsets.symmetric(horizontal: 16),
+                  actionText: 'Undo',
+                  onAction: () {
+                    ref
+                        .read(pantryControllerProvider)
+                        .restorePantryItem(globalIndex, item);
+                  },
+                ),
+              );
+          },
+
+          child: PantryItemTile(
+            category: item.category,
+            itemName: item.name,
+            unit: item.unit!,
+            quantity: item.quantity?.toString() ?? 'N/A',
+            expiration: _formatExpiration(item.expirationDate),
+            expiryDate: item.expirationDate,
+            itemId: item.id!,
+            onExpiryChanged: _updateExpiryDate,
+          ),
+        ),
+      ),
+    );
   }
 }

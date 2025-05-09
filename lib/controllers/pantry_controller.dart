@@ -3,6 +3,8 @@ import '../models/pantry_item.dart';
 import '../providers/pantry_items_provider.dart';
 import '../services/pantry_service.dart';
 
+/// Controller for managing pantry items.
+/// This class handles the business logic.
 class PantryController {
   final Ref ref;
   final PantryService _service;
@@ -20,6 +22,14 @@ class PantryController {
     } catch (e) {
       rethrow;
     }
+  }
+
+  /// Restores a previously‐deleted [item] at [index].
+  Future<void> restorePantryItem(int index, PantryItem item) async {
+
+    final restored = await _service.addItem(item);
+    // insert into local state back to its original index (to not confuse the user)
+    ref.read(pantryItemsProvider.notifier).insertAt(index, restored);
   }
 
   /// Add an item to the users inventory

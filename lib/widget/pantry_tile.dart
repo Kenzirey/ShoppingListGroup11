@@ -70,11 +70,9 @@ class _PantryItemTileState extends ConsumerState<PantryItemTile> {
             : '${widget.itemName} ${widget.unit.trim()}';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
