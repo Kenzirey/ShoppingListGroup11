@@ -33,14 +33,14 @@ class InformationScreen extends StatelessWidget {
           child: ListView(
             children: [
               Text(
-                'Waste not',
+                'ShelfAware - May 2025',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                     ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Version: ?? :D',
+                'Version: 1.0',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                     ),
@@ -52,18 +52,8 @@ class InformationScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
-                'Phasellus id vestibulum neque. Pellentesque habitant morbi '
-                'tristique senectus et netus et malesuada fames ac turpis egestas. '
-                'Donec ultricies justo sit amet nibh fermentum vulputate.',
+                'This app was designed by Emma, Sten and Jonas to help reduce food waste, and simplify your meal planning.',
               ),
-              const SizedBox(height: 16),
-              const Text(
-                'Contact Information',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              const Text('Email: support@example.com'),
               const SizedBox(height: 16),
               const Text(
                 'Legal',
@@ -71,10 +61,7 @@ class InformationScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
-                'Aliquam sodales, massa non viverra sodales, sem elit pharetra '
-                'ligula, et fringilla orci purus eu sapien.\n\n'
-                'Terms of Service: [Link]\nPrivacy Policy: [Link]',
+                'Plan on deleting all user data after grade is registered. ',
               ),
             ],
           ),
