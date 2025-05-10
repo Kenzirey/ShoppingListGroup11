@@ -1,5 +1,5 @@
 name: shopping_list_g11
-description: "A new Flutter project."
+description: "Bachelor Project by Group 11"
 
 # Prevent accidental publishing to pub.dev.
 publish_to: 'none'
@@ -36,6 +36,7 @@ dependencies:
   dropdown_button2: ^2.3.9
   awesome_snackbar_content: ^0.1.5
   flutter_svg: ^2.1.0
+  flutter_launcher_icons: ^0.14.3
 
 dev_dependencies:
   flutter_test:
@@ -62,3 +63,8 @@ flutter:
     - assets/avatars/avatar6.png
     - assets/images/google_logo.png
     - assets/icons/ # to include ALL icons instead of individually
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icons/shopping.png"

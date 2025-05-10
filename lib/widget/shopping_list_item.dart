@@ -78,15 +78,15 @@ class _ShoppingListItemState extends State<ShoppingListItem> {
                   DropdownButtonHideUnderline(
                     child: Center(
                       child: 
-CustomLazyDropdown(
-  initialValue: initialValue,
-  onChanged: (value) {
-    final parsed = int.tryParse(value);
-    if (parsed != null && parsed > 0) {
-      widget.onQuantityChanged(parsed);
-    }
-  },
-),
+                        CustomLazyDropdown(
+                          initialValue: initialValue,
+                          onChanged: (value) {
+                            final parsed = int.tryParse(value);
+                            if (parsed != null && parsed > 0) {
+                              widget.onQuantityChanged(parsed);
+                            }
+                          },
+                        ),
 
                     ),
                   ),
@@ -99,7 +99,6 @@ CustomLazyDropdown(
               ),
             )
           else
-            // ───── text-field branch (unchanged) ─────
             IntrinsicWidth(
               child: TextField(
                 controller: _controller,
