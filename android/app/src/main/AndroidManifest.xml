@@ -30,7 +30,7 @@
             <category android:name="android.intent.category.DEFAULT"/>
             <category android:name="android.intent.category.BROWSABLE"/>
             <data
-                android:scheme="com.shoppinglistg11"
+                android:scheme="no.ntnu.shoppinglistg11"
                 android:host="app" />
             </intent-filter>
 

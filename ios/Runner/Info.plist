@@ -58,7 +58,7 @@
   <dict>
     <key>CFBundleURLSchemes</key>
     <array>
-      <string>com.shoppinglistg11</string>
+      <string>no.ntnu.shoppinglistg11</string>
     </array>
   </dict>
 </array>
