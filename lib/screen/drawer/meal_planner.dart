@@ -101,20 +101,12 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
       for (var day in days) day: entries.where((entry) => entry.day == day).toList()
     };
 
-    final allMeals = entries.map((e) => e.name).toSet().toList();
-
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CustomSearchBarWidget(
-              suggestions: allMeals,
-              hintText: 'Search meals...',
-              onSuggestionSelected: debugPrint,
-            ),
-            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

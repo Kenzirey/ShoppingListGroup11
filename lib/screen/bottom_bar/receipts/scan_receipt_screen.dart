@@ -50,6 +50,7 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
         setState(() {
           _isProcessing = false;
         });
+        if (!mounted) return; // Check if widget is still in the tree
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to extract receipt data')),
         );
@@ -108,6 +109,7 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
       setState(() {
         _isProcessing = false;
       });
+      if (!mounted) return; // Check if widget is still in the tree
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
@@ -118,6 +120,11 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
           ),
         );
     }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
@@ -154,21 +161,26 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           // Scan Receipt Button
-                          ElevatedButton.icon(
-                            onPressed: () => _scanReceipt(ImageSource.camera),
-                            icon: const Icon(Icons.camera_alt, size: 32),
-                            label: const Text(
-                              'Scan Receipt',
-                              style: TextStyle(fontSize: 18),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context)
-                                  .colorScheme
-                                  .primaryContainer,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 22, vertical: 18),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                          Semantics(
+                            label:
+                                "Scan Receipt: Scan a new receipt using the camera", 
+                            button: true,
+                            child: ElevatedButton.icon(
+                              onPressed: () => _scanReceipt(ImageSource.camera),
+                              icon: const Icon(Icons.camera_alt, size: 32),
+                              label: const Text(
+                                'Scan Receipt',
+                                style: TextStyle(fontSize: 18),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(context)
+                                    .colorScheme
+                                    .primaryContainer,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 22, vertical: 18),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
                             ),
                           ),
@@ -184,22 +196,32 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
                           ),
                           const SizedBox(height: 14),
                           // Scan Barcode Button
-                          ElevatedButton.icon(
-                            onPressed: () => _scanReceipt(ImageSource.gallery),
-
-                            icon: PantryIcons(category: 'gallery', size: 32, color: Theme.of(context).colorScheme.primary),
-                            label: const Text(
-                              'Scan Existing',
-                              style: TextStyle(fontSize: 18),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context)
-                                  .colorScheme
-                                  .primaryContainer,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 22, vertical: 18),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                          Semantics(
+                            label:
+                                "Scan Existing: Scan an existing image from the gallery",
+                            button: true,
+                            child: ElevatedButton.icon(
+                              onPressed: () =>
+                                  _scanReceipt(ImageSource.gallery),
+                              icon: PantryIcons(
+                                category: 'gallery',
+                                size: 32,
+                                color: Theme.of(context).colorScheme.primary,
+                                semanticLabel: "Gallery icon",
+                              ),
+                              label: const Text(
+                                'Scan Existing',
+                                style: TextStyle(fontSize: 18),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(context)
+                                    .colorScheme
+                                    .primaryContainer,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 22, vertical: 18),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
                             ),
                           ),
@@ -211,10 +233,5 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 }

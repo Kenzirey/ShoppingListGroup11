@@ -79,7 +79,6 @@ class _SavedRecipesScreenState extends ConsumerState<SavedRecipesScreen> {
   @override
   Widget build(BuildContext context) {
     final savedRecipes = ref.watch(savedRecipesProvider);
-    final recipeNames = savedRecipes.map((e) => e.recipe.name).toList();
 
     return Scaffold(
       body: Padding(
@@ -87,17 +86,14 @@ class _SavedRecipesScreenState extends ConsumerState<SavedRecipesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CustomSearchBarWidget(
-              suggestions: recipeNames,
-              hintText: 'Search for recipes to add...',
-              onSuggestionSelected: debugPrint,
-            ),
+
             const SizedBox(height: 16),
             Text(
               'Saved Recipes',
               style: TextStyle(
-                  fontSize: 18, color: Theme.of(context).colorScheme.tertiary),
+                  fontSize: 22, color: Theme.of(context).colorScheme.tertiary),
             ),
+            const Divider(),
             const SizedBox(height: 8),
             Expanded(
               child: ListView.builder(

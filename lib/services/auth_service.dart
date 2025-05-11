@@ -3,6 +3,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../models/app_user.dart';
 import 'package:shopping_list_g11/utils/error_utils.dart';
 
+/// Service for authentication and user management connection to Supabase.
 class AuthService {
   final SupabaseClient _client = Supabase.instance.client;
 

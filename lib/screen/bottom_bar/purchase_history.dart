@@ -102,6 +102,7 @@ class _PurchaseHistoryScreenState extends ConsumerState<PurchaseHistoryScreen> {
                 ),
                 DropdownButton<String>(
                   value: selectedMonth,
+                  alignment: Alignment.center,
                   items: months.map((month) {
                     final isCurrent = month == months.last;
                     final isSelected = month == selectedMonth;
@@ -138,7 +139,7 @@ class _PurchaseHistoryScreenState extends ConsumerState<PurchaseHistoryScreen> {
                   selectedItemBuilder: (BuildContext context) {
                     return months.map((month) {
                       return Align(
-                        alignment: Alignment.centerLeft,
+                        alignment: Alignment.center,
                         child: Text(
                           month,
                           style: TextStyle(

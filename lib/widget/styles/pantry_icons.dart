@@ -8,11 +8,13 @@ class PantryIcons extends StatelessWidget {
     required this.category,
     this.size = 24.0,
     this.color,
+    this.semanticLabel
   });
 
   final String? category;
   final double size;
   final Color? color;
+  final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -30,12 +32,14 @@ class PantryIcons extends StatelessWidget {
         colorFilter:
             color != null ? ColorFilter.mode(color!, BlendMode.srcIn) : null,
         placeholderBuilder: (_) => SizedBox(width: size, height: size),
+        semanticsLabel: semanticLabel,
       );
     } catch (_) {
       return Icon(
         Icons.local_grocery_store,
         size: size,
         color: color,
+        semanticLabel: semanticLabel,
       );
     }
   }

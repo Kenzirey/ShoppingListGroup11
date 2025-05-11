@@ -25,6 +25,7 @@ class _ShoppingListState extends ConsumerState<ShoppingListScreen> {
   late Future<void> _initialFetch;
   ShoppingItem? lastDeletedItem;
   int? lastDeletedIndex;
+  // ignore: unused_field, prefer_final_fields
   bool _loading = false; // this is false, it is actually being used..
 
   @override
@@ -45,6 +46,8 @@ class _ShoppingListState extends ConsumerState<ShoppingListScreen> {
             .fetchShoppingItems(next.profileId!);
       }
     });
+
+    final theme = Theme.of(context);
 
     return FutureBuilder<void>(
       future: _initialFetch,
@@ -83,85 +86,93 @@ class _ShoppingListState extends ConsumerState<ShoppingListScreen> {
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.tertiary,
+                            color: theme.colorScheme.tertiary,
                           ),
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Divider(), //
+                      const Divider(),
                       const SizedBox(height: 8),
-
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           // the sort & clear button section here
                           Row(
                             children: [
-                              TextButton.icon(
-                                onPressed: () async {
-                                  if (userId == null) return;
-                                  setState(() => _loading = true);
-                                  await ctrl.toggleSortOrder(userId);
-                                  setState(() => _loading = false);
-                                },
-                                icon: Icon(
-                                  Icons.swap_vert,
-                                  color: Theme.of(context).colorScheme.tertiary,
-                                ),
-                                label: Text(
-                                  // ascending==false newest first “Latest”
-                                  // ascending==true oldest first “Oldest”
-                                  ctrl.isAscending ? 'Oldest' : 'Latest',
-                                  style: TextStyle(
-                                    color:
-                                        Theme.of(context).colorScheme.tertiary,
+                              Tooltip(
+                                message:
+                                    "Sort items by ${ctrl.isAscending ? 'oldest first' : 'latest first'}",
+                                child: TextButton.icon(
+                                  onPressed: () async {
+                                    if (userId == null) return;
+                                    setState(() => _loading = true);
+                                    await ctrl.toggleSortOrder(userId);
+                                    setState(() => _loading = false);
+                                  },
+                                  icon: Icon(
+                                    Icons.swap_vert,
+                                    color: theme.colorScheme.tertiary,
+                                    semanticLabel: "Sort icon", // Added semanticLabel for the sort icon
+                                  ),
+                                  label: Text(
+                                    ctrl.isAscending ? 'Oldest' : 'Latest',
+                                    style: TextStyle(
+                                      color: theme.colorScheme.tertiary,
+                                    ),
                                   ),
                                 ),
                               ),
-                              TextButton.icon(
-                                onPressed: () async {
-                                  final user =
-                                      ref.read(currentUserValueProvider);
-                                  final items = ref.read(shoppingItemsProvider);
-                                  final count = items.length;
-                                  if (user == null ||
-                                      user.profileId == null ||
-                                      count == 0) return;
-                                  final profileId = user.profileId!;
-                                  final backup = List<ShoppingItem>.from(items);
-                                  await ref
-                                      .read(shoppingListControllerProvider)
-                                      .clearAll(profileId);
-                                  ScaffoldMessenger.of(context)
-                                    ..hideCurrentSnackBar()
-                                    ..showSnackBar(
-                                      CustomSnackbar.buildSnackBar(
-                                        title: 'Cleared',
-                                        message:
-                                            'Shopping list cleared $count item${count == 1 ? '' : 's'}',
-                                        innerPadding:
-                                            const EdgeInsets.symmetric(
-                                                horizontal: 16),
-                                        actionText: 'Undo',
-                                        onAction: () async {
-                                          await ref
-                                              .read(
-                                                  shoppingListControllerProvider)
-                                              .addShoppingItems(backup);
-                                        },
-                                      ),
-                                    );
-                                },
-                                icon: PantryIcons(
-                                  category: 'trash',
-                                  size: 20,
-                                  color: Theme.of(context).colorScheme.tertiary,
-                                ),
-                                label: Text(
-                                  'Clear',
-                                  style: TextStyle(
-                                    color:
-                                        Theme.of(context).colorScheme.tertiary,
+                              Tooltip(
+                                message:
+                                    "Clear all items from the shopping list", // This describes the button's action
+                                child: TextButton.icon(
+                                  onPressed: () async {
+                                    final user =
+                                        ref.read(currentUserValueProvider);
+                                    final currentItems =
+                                        ref.read(shoppingItemsProvider);
+                                    final count = currentItems.length;
+                                    if (user == null ||
+                                        user.profileId == null ||
+                                        count == 0) return;
+                                    final profileId = user.profileId!;
+                                    final backup =
+                                        List<ShoppingItem>.from(currentItems);
+                                    await ref
+                                        .read(shoppingListControllerProvider)
+                                        .clearAll(profileId);
+                                    ScaffoldMessenger.of(context)
+                                      ..hideCurrentSnackBar()
+                                      ..showSnackBar(
+                                        CustomSnackbar.buildSnackBar(
+                                          title: 'Cleared',
+                                          message:
+                                              'Shopping list cleared $count item${count == 1 ? '' : 's'}',
+                                          innerPadding:
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: 16),
+                                          actionText: 'Undo',
+                                          onAction: () async {
+                                            await ref
+                                                .read(
+                                                    shoppingListControllerProvider)
+                                                .addShoppingItems(backup);
+                                          },
+                                        ),
+                                      );
+                                  },
+                                  icon: PantryIcons(
+                                    category: 'trash',
+                                    size: 20,
+                                    color: theme.colorScheme.tertiary,
+                                    semanticLabel:
+                                        "Trash can icon", // This describes the icon itself
+                                  ),
+                                  label: Text(
+                                    'Clear',
+                                    style: TextStyle(
+                                      color: theme.colorScheme.tertiary,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -172,7 +183,8 @@ class _ShoppingListState extends ConsumerState<ShoppingListScreen> {
                       Expanded(
                         child: ListView.builder(
                           physics: const BouncingScrollPhysics(),
-                          padding: const EdgeInsets.only(bottom: 120.0),
+                          padding:
+                              const EdgeInsets.only(bottom: 120.0, top: 8.0),
                           itemCount: items.length,
                           itemBuilder: (context, index) {
                             final itemObj = items[index];
@@ -184,75 +196,91 @@ class _ShoppingListState extends ConsumerState<ShoppingListScreen> {
                             final String displayUnit =
                                 isCountBased ? '' : parsedUnit;
 
-                            return Dismissible(
-                              key: Key(itemObj.id ?? itemName),
-                              direction: DismissDirection.endToStart,
-                              background: Container(
-                                alignment: Alignment.centerRight,
-                                padding: const EdgeInsets.only(right: 16),
-                                margin: const EdgeInsets.only(bottom: 12),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .error,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Icon(Icons.delete,
-                                    color: Colors.white),
-                              ),
-                              onDismissed: (direction) async {
-                                lastDeletedItem = itemObj;
-                                lastDeletedIndex = index;
-                                if (itemObj.id != null) {
-                                  await ref
-                                      .read(shoppingListControllerProvider)
-                                      .removeShoppingItem(itemObj.id!);
-                                }
-                                ScaffoldMessenger.of(context)
-                                  ..hideCurrentSnackBar()
-                                  ..showSnackBar(
-                                    CustomSnackbar.buildSnackBar(
-                                      title: 'Removed',
-                                      message: '$itemName removed',
-                                      innerPadding: const EdgeInsets.symmetric(
-                                          horizontal: 16),
-                                      actionText: 'Undo',
-                                      onAction: () async {
-                                        if (lastDeletedItem != null &&
-                                            lastDeletedIndex != null) {
-                                          final currentUser = ref
-                                              .watch(currentUserValueProvider);
-                                          if (currentUser != null &&
-                                              currentUser.profileId != null) {
-                                            await ref
-                                                .read(
-                                                    shoppingListControllerProvider)
-                                                .addShoppingItem(
-                                                    lastDeletedItem!);
-                                          }
+                            return Padding(
+                              padding: const EdgeInsets.only(
+                                  bottom: 12.0), 
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8.0),
+                                child: Dismissible(
+                                  key: Key(itemObj.id ?? itemName),
+                                  direction: DismissDirection.endToStart, 
+                                  background: const SizedBox
+                                      .shrink(), 
+                                  secondaryBackground: Container(
+                                    color: theme.colorScheme
+                                        .error, 
+                                    alignment: Alignment.centerRight,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 20.0),
+                                    child: Semantics(
+                                      label: "Delete item",
+                                      child: const Icon(Icons.delete,
+                                          color: Colors.white),
+                                    ),
+                                  ),
+                                  onDismissed: (direction) async {
+                                    lastDeletedItem = itemObj;
+                                    lastDeletedIndex = index;
+                                    if (itemObj.id != null) {
+                                      await ref
+                                          .read(shoppingListControllerProvider)
+                                          .removeShoppingItem(itemObj.id!);
+                                    }
+                                    ScaffoldMessenger.of(context)
+                                      ..hideCurrentSnackBar()
+                                      ..showSnackBar(
+                                        CustomSnackbar.buildSnackBar(
+                                          title: 'Removed',
+                                          message: '$itemName removed',
+                                          innerPadding:
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: 16),
+                                          actionText: 'Undo',
+                                          onAction: () async {
+                                            if (lastDeletedItem != null &&
+                                                lastDeletedIndex != null) {
+                                              final currentUser = ref.read(
+                                                  currentUserValueProvider);
+                                              if (currentUser != null &&
+                                                  currentUser.profileId !=
+                                                      null) {
+                                                await ref
+                                                    .read(
+                                                        shoppingListControllerProvider)
+                                                    .addShoppingItem(
+                                                        lastDeletedItem!);
+                                              }
+                                            }
+                                          },
+                                        ),
+                                      );
+                                  },
+                                  child: Container( 
+                                    color: theme.colorScheme
+                                        .primaryContainer, 
+                                    child: ShoppingListItem(
+                                      item: itemName,
+                                      quantityText: quantityText,
+                                      unitLabel: displayUnit,
+                                      onQuantityChanged: (newQuantity) async {
+                                        if (itemObj.id != null) {
+                                          final oldUnit =
+                                              QuantityParser.parseUnit(
+                                                  itemObj.quantity ?? '');
+                                          final newQuantityString =
+                                              '$newQuantity $oldUnit'.trim();
+                                          await ref
+                                              .read(
+                                                  shoppingListControllerProvider)
+                                              .updateShoppingItem(
+                                                itemId: itemObj.id!,
+                                                newQuantity: newQuantityString,
+                                              );
                                         }
                                       },
                                     ),
-                                  );
-                              },
-                              child: ShoppingListItem(
-                                item: itemName,
-                                quantityText: quantityText,
-                                unitLabel: displayUnit,
-                                onQuantityChanged: (newQuantity) async {
-                                  if (itemObj.id != null) {
-                                    final oldUnit = QuantityParser.parseUnit(
-                                        itemObj.quantity ?? '');
-                                    final newQuantityString =
-                                        '$newQuantity $oldUnit'.trim();
-                                    await ref
-                                        .read(shoppingListControllerProvider)
-                                        .updateShoppingItem(
-                                          itemId: itemObj.id!,
-                                          newQuantity: newQuantityString,
-                                        );
-                                  }
-                                },
+                                  ),
+                                ),
                               ),
                             );
                           },
@@ -275,7 +303,7 @@ class _ShoppingListState extends ConsumerState<ShoppingListScreen> {
                         final amountValue = result['amount'] as int;
                         final unit = result['unit'] as String? ?? '';
                         final finalQuantity = '$amountValue $unit'.trim();
-                        final currentUser = ref.watch(currentUserValueProvider);
+                        final currentUser = ref.read(currentUserValueProvider);
                         if (currentUser != null &&
                             currentUser.profileId != null) {
                           await ref
@@ -292,14 +320,15 @@ class _ShoppingListState extends ConsumerState<ShoppingListScreen> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.secondary,
+                      backgroundColor: theme.colorScheme.secondary,
                       shape: const CircleBorder(),
                       padding: const EdgeInsets.all(16.0),
                     ),
                     child: Icon(
                       Icons.add,
                       size: 32.0,
-                      color: Theme.of(context).colorScheme.tertiary,
+                      color: theme.colorScheme.tertiary,
+                      semanticLabel: "Add new shopping item",
                     ),
                   ),
                 ),

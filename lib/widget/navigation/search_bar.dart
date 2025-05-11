@@ -24,15 +24,20 @@ class _CustomSearchBarWidgetState extends State<CustomSearchBarWidget> {
   @override
   void initState() {
     super.initState();
-    _focusNode.addListener(() {
-      setState(() {});
-    });
+    _focusNode.addListener(_rebuildOnFocusChange);
   }
 
   @override
   void dispose() {
+    _focusNode.removeListener(_rebuildOnFocusChange);
     _focusNode.dispose();
     super.dispose();
+  }
+
+  void _rebuildOnFocusChange() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   // Instead of using closeView when canceling, which caused pop bugs, clear text and unfocus.
@@ -42,68 +47,80 @@ class _CustomSearchBarWidgetState extends State<CustomSearchBarWidget> {
       _isSearchViewOpen = false;
     }
     FocusScope.of(context).unfocus();
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void _openSearch(SearchController controller) {
     controller.openView();
     _isSearchViewOpen = true;
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return SearchAnchor(
       builder: (BuildContext context, SearchController controller) {
-        return SearchBar(
-          controller: controller,
-          backgroundColor: WidgetStateProperty.all<Color>(
-            Theme.of(context).colorScheme.primaryContainer,
-          ),
-          autoFocus: false,
-          focusNode: _focusNode,
-          shape: WidgetStateProperty.all<OutlinedBorder>(
-            RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8.0), // less round than me
+        return MergeSemantics(
+          child: SearchBar(
+            controller: controller,
+            backgroundColor: WidgetStateProperty.all<Color>(
+              Theme.of(context).colorScheme.primaryContainer,
             ),
-          ),
-          padding: const WidgetStatePropertyAll<EdgeInsets>(
-            EdgeInsets.symmetric(horizontal: 16.0),
-          ),
-          onTap: () {
-            if (!_isSearchViewOpen) {
-              _openSearch(controller);
-            }
-          },
-          onChanged: (value) {
-            if (!_isSearchViewOpen) {
-              _openSearch(controller);
-            }
-            setState(() {});
-          },
-          // unfocuses and clears text when pressing outside the search bar.
-          onTapOutside: (event) {
-            _cancelSearch(controller);
-          },
-          leading: _focusNode.hasFocus && _isSearchViewOpen
-              ? IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () {
-                    _cancelSearch(controller);
-                  },
-                )
-              : const Icon(Icons.search),
-          trailing: <Widget>[
-            if (controller.text.isNotEmpty)
-              IconButton(
-                icon: const Icon(Icons.clear),
-                onPressed: () {
-                  controller.clear();
-                  setState(() {});
-                },
+            autoFocus: false,
+            focusNode: _focusNode,
+            shape: WidgetStateProperty.all<OutlinedBorder>(
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0), // less round than me
               ),
-          ],
-          hintText: widget.hintText,
+            ),
+            padding: const WidgetStatePropertyAll<EdgeInsets>(
+              EdgeInsets.symmetric(horizontal: 16.0),
+            ),
+            onTap: () {
+              if (!_isSearchViewOpen) {
+                _openSearch(controller);
+              }
+            },
+            onChanged: (value) {
+              if (!_isSearchViewOpen) {
+                _openSearch(controller);
+              }
+            },
+            // unfocuses and clears text when pressing outside the search bar.
+            onTapOutside: (event) {
+              _cancelSearch(controller);
+            },
+            leading: _focusNode.hasFocus && _isSearchViewOpen
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    tooltip: "Back", // Corrected: Use tooltip
+                    onPressed: () {
+                      _cancelSearch(controller);
+                    },
+                  )
+                : Semantics(
+                    label: "Search",
+                    child: const Icon(Icons.search),
+                  ),
+            trailing: <Widget>[
+              if (controller.text.isNotEmpty)
+                IconButton(
+                  icon: const Icon(Icons.clear),
+                  tooltip: "Clear search field", // Corrected: Use tooltip
+                  onPressed: () {
+                    controller.clear();
+                    if (mounted) {
+                      setState(() {});
+                    }
+                  },
+                ),
+            ],
+            hintText: widget.hintText ?? "Search...",
+          ),
         );
       },
       suggestionsBuilder: (BuildContext context, SearchController controller) {
@@ -113,6 +130,19 @@ class _CustomSearchBarWidgetState extends State<CustomSearchBarWidget> {
             : widget.suggestions
                 .where((s) => s.toLowerCase().contains(query.toLowerCase()))
                 .toList();
+
+        if (filtered.isEmpty && query.isNotEmpty) {
+          return <Widget>[
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'No results found for "$query".',
+                textAlign: TextAlign.center,
+              ),
+            )
+          ];
+        }
+
         return List<ListTile>.generate(filtered.length, (int index) {
           final String item = filtered[index];
           return ListTile(
@@ -125,7 +155,9 @@ class _CustomSearchBarWidgetState extends State<CustomSearchBarWidget> {
               if (widget.onSuggestionSelected != null) {
                 widget.onSuggestionSelected!(item);
               }
-              setState(() {});
+              if (mounted) {
+                setState(() {});
+              }
             },
           );
         });
