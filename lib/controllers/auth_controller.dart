@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shopping_list_g11/providers/current_user_provider.dart';
 import '../services/auth_service.dart';
 import '../models/app_user.dart';
 
@@ -56,23 +57,27 @@ class AuthController {
     }
   }
 
-/// Updates profile fields (name, avatar, dietary preferences) without requiring a password.
-Future<AppUser> updateProfileWithoutPassword({
-  String? newName,
-  String? avatarUrl,
-  List<String>? dietaryPreferences,
-}) async {
-  try {
-    final updatedUser = await _authService.updateProfileWithoutPassword(
-      newName: newName,
-      avatarUrl: avatarUrl,
-      dietaryPreferences: dietaryPreferences,
-    );
-    return updatedUser;
-  } catch (e) {
-    rethrow;
+  /// Updates profile fields (name, avatar, dietary preferences) without requiring a password.
+  Future<AppUser> updateProfileWithoutPassword({
+    String? newName,
+    String? avatarUrl,
+    List<String>? dietaryPreferences,
+  }) async {
+    try {
+      await _authService.updateProfileWithoutPassword(
+        newName: newName,
+        avatarUrl: avatarUrl,
+        dietaryPreferences: dietaryPreferences,
+      );
+      final AppUser? updatedUser = await ref.refresh(currentUserProvider.future); // now avatar updates on ui as well
+      if (updatedUser == null) {
+        throw Exception("Failed to refresh user data after profile update.");
+      }
+      return updatedUser;
+    } catch (e) {
+      rethrow;
+    }
   }
-}
 
 /// Changes the users password. (includes password verification.)
 Future<void> updatePassword(String newPassword) async {

@@ -33,13 +33,7 @@ class _UpdateAvatarScreenState extends ConsumerState<UpdateAvatarScreen>
     'assets/avatars/avatar3.png',
     'assets/avatars/avatar4.png',
     'assets/avatars/avatar5.png',
-    'assets/avatars/avatar6.png',
-    'assets/avatars/avatar3.png',
-    'assets/avatars/avatar3.png',
-    'assets/avatars/avatar3.png',
-    'assets/avatars/avatar3.png',
-    'assets/avatars/avatar3.png',
-    'assets/avatars/avatar3.png',
+    'assets/avatars/avatar6.png', //todo: remove sonic, add more
   ];
 
   @override
@@ -68,36 +62,54 @@ class _UpdateAvatarScreenState extends ConsumerState<UpdateAvatarScreen>
   @override
   void dispose() {
     _animationController.dispose();
+    _removeSuccessOverlay();
     super.dispose();
   }
 
-  Widget _buildAvatarOption(String assetPath) {
+  Widget _buildAvatarOption(String assetPath, int index) { // index for unique labeling of the avatars.
     final isSelected = selectedAvatar == assetPath;
     ImageProvider imageProvider;
-    if (assetPath.startsWith('http')) {
+    String semanticLabel;
+
+    if (assetPath.startsWith('http')) { //http check so that the profile pics load properly on android devices too
       imageProvider = NetworkImage(assetPath);
+      semanticLabel = "Current Google profile picture";
+      if (isSelected) {
+        semanticLabel += ", selected";
+      }
     } else {
       imageProvider = AssetImage(assetPath);
+      final avatarName = assetPath.split('/').last.split('.').first;
+      semanticLabel = "Avatar option ${index + 1}: $avatarName";
+      if (isSelected) {
+        semanticLabel += ", selected";
+      }
     }
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedAvatar = assetPath;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: isSelected ? const EdgeInsets.all(4) : EdgeInsets.zero,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: isSelected
-              ? Border.all(
-                  color: Theme.of(context).colorScheme.primary, width: 3)
-              : null,
-        ),
-        child: CircleAvatar(
-          backgroundImage: imageProvider,
-          radius: 40,
+
+    return Semantics(
+      label: semanticLabel,
+      button: true, // to let screen readers know it is a button
+      selected: isSelected,
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            selectedAvatar = assetPath;
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          padding: isSelected ? const EdgeInsets.all(4) : EdgeInsets.zero,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: isSelected
+                ? Border.all(
+                    color: Theme.of(context).colorScheme.primary, width: 3)
+                : Border.all(color: Colors.transparent, width: 3),
+          ),
+          child: CircleAvatar(
+            backgroundImage: imageProvider,
+            radius: 40,
+          ),
         ),
       ),
     );
@@ -168,9 +180,10 @@ class _UpdateAvatarScreenState extends ConsumerState<UpdateAvatarScreen>
       );
     }
 
+    // Initialize originalGoogleAvatarUrl only once and if it's a valid URL
     if (_originalGoogleAvatarUrl == null &&
-        !currentUser.canUsePassword &&
         currentUser.googleAvatarUrl != null &&
+        currentUser.googleAvatarUrl!.startsWith('http') && // u r l u r lick
         currentUser.googleAvatarUrl!.isNotEmpty) {
       _originalGoogleAvatarUrl = currentUser.googleAvatarUrl;
     }
@@ -180,6 +193,12 @@ class _UpdateAvatarScreenState extends ConsumerState<UpdateAvatarScreen>
         !availableAvatars.contains(_originalGoogleAvatarUrl)) {
       availableAvatars.insert(0, _originalGoogleAvatarUrl!);
     }
+
+    // Ensure selectedAvatar is initialized if current user's avatar is in the list
+    if (selectedAvatar == null && currentUser.avatarUrl != null && availableAvatars.contains(currentUser.avatarUrl)) {
+      selectedAvatar = currentUser.avatarUrl;
+    }
+
 
     return Scaffold(
       appBar: AppBar(
@@ -213,7 +232,7 @@ class _UpdateAvatarScreenState extends ConsumerState<UpdateAvatarScreen>
                     Text(
                       'Select a new profile picture',
                       style: theme.textTheme.titleLarge?.copyWith(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.tertiary,
                         fontWeight: FontWeight.bold,
                       ),
                       textAlign: TextAlign.center,
@@ -229,7 +248,8 @@ class _UpdateAvatarScreenState extends ConsumerState<UpdateAvatarScreen>
                         ),
                         itemCount: availableAvatars.length,
                         itemBuilder: (context, index) {
-                          return _buildAvatarOption(availableAvatars[index]);
+                          // Pass index to _buildAvatarOption for unique labeling
+                          return _buildAvatarOption(availableAvatars[index], index);
                         },
                       ),
                     ),
@@ -254,10 +274,12 @@ class _UpdateAvatarScreenState extends ConsumerState<UpdateAvatarScreen>
                           ),
                         ],
                       ),
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          if (selectedAvatar == null) {
-                            if (!context.mounted) return;
+                      child: Tooltip( // tooltips for screen reader
+                        message: "Save selected avatar",
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            if (selectedAvatar == null) {
+                              if (!context.mounted) return;
                               ScaffoldMessenger.of(context)
                                 ..hideCurrentSnackBar()
                                 ..showSnackBar(
@@ -268,52 +290,53 @@ class _UpdateAvatarScreenState extends ConsumerState<UpdateAvatarScreen>
                                   ),
                                 );
                               return;
-                          }
+                            }
 
-                          try {
-                            await ref
-                                .read(authControllerProvider)
-                                .updateProfileWithoutPassword(
-                                  avatarUrl: selectedAvatar,
-                                  dietaryPreferences:
-                                      currentUser.dietaryPreferences,
-                                );
-
-                            if (!context.mounted) return;
-                            _showSuccessOverlay(context);
-
-                            await Future.delayed(const Duration(seconds: 2));
-
-                            if (!context.mounted) return;
-                            _removeSuccessOverlay();
-                            GoRouter.of(context).pop();
-                          } catch (e) {
-                            if (!context.mounted) return;
-                                ScaffoldMessenger.of(context)
-                                  ..hideCurrentSnackBar()
-                                  ..showSnackBar(
-                                    CustomSnackbar.buildSnackBar(
-                                      title: 'Error',
-                                      message: getUserFriendlyErrorMessage(e),
-                                      innerPadding: const EdgeInsets.symmetric(horizontal: 16),
-                                    ),
+                            try {
+                              await ref
+                                  .read(authControllerProvider)
+                                  .updateProfileWithoutPassword(
+                                    avatarUrl: selectedAvatar,
+                                    dietaryPreferences:
+                                        currentUser.dietaryPreferences,
                                   );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          elevation: 0,
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+
+                              if (!context.mounted) return;
+                              _showSuccessOverlay(context);
+
+                              await Future.delayed(const Duration(seconds: 2));
+
+                              if (!context.mounted) return;
+                              _removeSuccessOverlay();
+                              GoRouter.of(context).pop();
+                            } catch (e) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context)
+                                ..hideCurrentSnackBar()
+                                ..showSnackBar(
+                                  CustomSnackbar.buildSnackBar(
+                                    title: 'Error',
+                                    message: getUserFriendlyErrorMessage(e),
+                                    innerPadding: const EdgeInsets.symmetric(horizontal: 16),
+                                  ),
+                                );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            elevation: 0,
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          'Save Changes',
-                          style: TextStyle(
-                            color: theme.colorScheme.onPrimary,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                          child: const Text(
+                            'Save Changes',
+                            style: TextStyle(
+                              color: Colors.black87, // for contrast
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
