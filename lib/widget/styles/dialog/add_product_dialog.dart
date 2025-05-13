@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shopping_list_g11/widget/user_feedback/regular_custom_snackbar.dart';
 
 /// A dialog for adding a new product to the shopping list.
 /// Allows user to add their own grocery name, quantity of it and unit of measurement.
@@ -168,14 +169,19 @@ class _AddProductDialogState extends State<AddProductDialog> {
           onPressed: () {
             final name = productController.text.trim();
             final amount = int.tryParse(amountController.text.trim()) ?? 1;
-            if (name.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Please enter a product name.'),
-                ),
-              );
-              return;
-            }
+              if (name.isEmpty) {
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(
+                    CustomSnackbar.buildSnackBar(
+                      title: 'Missing Name',
+                      message: 'Please enter a product name before saving.',
+                      innerPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                  );
+                return;
+              }
+
             Navigator.of(context).pop({
               'name': name,
               'amount': amount,

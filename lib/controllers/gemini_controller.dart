@@ -8,7 +8,7 @@ import 'package:shopping_list_g11/providers/chat_recipe_provider.dart';
 import 'package:shopping_list_g11/providers/recipe_provider.dart';
 import 'package:shopping_list_g11/models/recipe.dart';
 
-
+/// Controller for handling chat messages and recipe generation using Gemini API
 class GeminiController {
   final WidgetRef ref;
   final TextEditingController controller;

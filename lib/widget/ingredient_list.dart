@@ -4,6 +4,7 @@ import 'package:shopping_list_g11/models/shopping_item.dart';
 import 'package:shopping_list_g11/providers/current_user_provider.dart';
 import 'package:shopping_list_g11/providers/shopping_items_provider.dart';
 import 'package:shopping_list_g11/utils/ingredient_parser.dart';
+import 'package:shopping_list_g11/widget/user_feedback/regular_custom_snackbar.dart';
 
 /// IngredientList that allows to select individual or all ingredients,
 /// to add them to shopping list.
@@ -117,11 +118,19 @@ class _IngredientListState extends ConsumerState<IngredientList> {
                   if (lines.isEmpty) return;
 
                   final user = ref.read(currentUserValueProvider);
-                  if (user?.profileId == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please log in first')));
-                    return;
-                  }
+                    if (user?.profileId == null) {
+                      ScaffoldMessenger.of(context)
+                        ..hideCurrentSnackBar()
+                        ..showSnackBar(
+                          CustomSnackbar.buildSnackBar(
+                            title: 'Not Logged In',
+                            message: 'Please log in before using this feature.',
+                            innerPadding: const EdgeInsets.symmetric(horizontal: 16),
+                          ),
+                        );
+                      return;
+                    }
+
 
                   final ctrl = ref.read(shoppingListControllerProvider);
                   final batch = lines.map((raw) {
@@ -140,11 +149,16 @@ class _IngredientListState extends ConsumerState<IngredientList> {
 
                   await ctrl.addShoppingItems(batch);
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text(
-                            '✔️ Added ${lines.length} item${lines.length == 1 ? '' : 's'}')),
-                  );
+                    ScaffoldMessenger.of(context)
+                      ..hideCurrentSnackBar()
+                      ..showSnackBar(
+                        CustomSnackbar.buildSnackBar(
+                          title: 'Success',
+                          message: 'Added ${lines.length} item${lines.length == 1 ? '' : 's'}',
+                          innerPadding: const EdgeInsets.symmetric(horizontal: 16),
+                        ),
+                      );
+
 
                   setState(() => _selected =
                       List<bool>.filled(widget.ingredients.length, false));

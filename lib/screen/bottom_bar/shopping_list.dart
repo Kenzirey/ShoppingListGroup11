@@ -316,9 +316,21 @@ class _ShoppingListState extends ConsumerState<ShoppingListScreen> {
                                   category: unit,
                                 ),
                               );
+                        if (mounted) {
+                          ScaffoldMessenger.of(context)
+                            ..hideCurrentSnackBar()
+                            ..showSnackBar(
+                              CustomSnackbar.buildSnackBar(
+                                title:   'Added',
+                                message: '"$name" has been added to your shopping list.',
+                                innerPadding: const EdgeInsets.symmetric(horizontal: 16),
+                                //  ⬆ nothing else – no actionText / onAction = no UNDO button
+                              ),
+                            );
                         }
                       }
-                    },
+                    }
+                  },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.colorScheme.secondary,
                       shape: const CircleBorder(),

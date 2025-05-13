@@ -120,50 +120,50 @@ class MealSuggestionService {
 
   Future<List<Recipe>> suggestionsBasedOnExpiring() async {
     try {
+      // find user :)
       final profileId = await _profileId();
       if (profileId == null) {
         debugPrint('User not logged in for suggestionsBasedOnExpiring');
         return const [];
       }
 
-      final nowIso = DateTime.now().toUtc().toIso8601String();
-      final in7Iso =
-          DateTime.now().toUtc().add(const Duration(days: 7)).toIso8601String();
+      final nowUtc = DateTime.now().toUtc();
+      final in7DaysUtc = nowUtc.add(const Duration(days: 7)); 
+
       final expiringRes = await supabase
-          .from('receipt_items')
-          .select('name, receipts!inner(user_id)')
-          .eq('receipts.user_id', profileId)
-          .gte('expiration_date', nowIso)
-          .lte('expiration_date', in7Iso);
+          .from('inventory')
+          .select('name')
+          .eq('user_id', profileId)
+          .gte('expiration_date', nowUtc.toIso8601String())
+          .lte('expiration_date', in7DaysUtc.toIso8601String());
 
       if (expiringRes.isEmpty) {
-        debugPrint('No expiring receipt items found.');
+        debugPrint('No expiring inventory items found.');
         return const [];
       }
+
       final expiringNames = (expiringRes as List<dynamic>)
-          .map((expiringItem) => expiringItem['name'] as String)
+          .map((row) => row['name'] as String)
+          .where((s) => s.trim().isNotEmpty)
+          .toSet()      // remove duplicates in case you have like 7 milk cartons like some sort of loon
           .toList();
+
       debugPrint('Expiring names from DB = $expiringNames');
       if (expiringNames.isEmpty) return const [];
 
-      // normalize norwegian brand names to generic cooking ingredients, so that it works with recipe screen
       Map<String, String> normalized;
       try {
         normalized = await _normalizeItems(expiringNames);
       } catch (e) {
-        debugPrint(
-            'Normalization step failed entirely: $e. Falling back for all items.');
-        normalized = {
-          for (final name in expiringNames) name: name.toLowerCase()
-        };
+        debugPrint('Normalization step failed: $e. Falling back.');
+        normalized = { for (final n in expiringNames) n: n.toLowerCase() };
       }
 
       final genericExpiring = normalized.values
-          .where((name) => name.isNotEmpty)
+          .where((s) => s.isNotEmpty)
           .toSet()
           .toList();
-      debugPrint(
-          'Generic expiring names for recipes (used for lookups/generation) = $genericExpiring');
+
       if (genericExpiring.isEmpty) return const [];
 
       final recipeRows = await supabase
