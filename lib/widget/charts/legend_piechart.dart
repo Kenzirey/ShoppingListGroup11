@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
-/// A widget for displaying a legend for a pie chart, showing the categories and their corresponding values.
+/// A widget for displaying a legend for a pie chart, showing the categories, amounts, and percentages.
 class PieChartLegend extends StatelessWidget {
   final List<Map<String, dynamic>> purchaseData;
   final Color textColor;
@@ -15,6 +16,9 @@ class PieChartLegend extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: purchaseData.map((data) {
+        final amount = data['amount'] as double?;
+        final percentage = data['value'];
+
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 4.0),
           child: Row(
@@ -33,8 +37,20 @@ class PieChartLegend extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
+              if (amount != null) ...[
+                Text(
+                  "${amount.toStringAsFixed(2)} kr",
+                  style: TextStyle(fontSize: 16, color: textColor),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '|',
+                  style: TextStyle(fontSize: 16, color: textColor),
+                ),
+                const SizedBox(width: 6),
+              ],
               Text(
-                "${data['value']}%",
+                "$percentage%",
                 style: TextStyle(fontSize: 16, color: textColor),
               ),
             ],

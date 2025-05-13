@@ -33,10 +33,10 @@ class _PurchaseStatisticsState extends ConsumerState<PurchaseStatistics> {
     (index) => 2020 + index,
   );
 
-  // Colors for the line chart.
+/*   // Colors for the line chart.
   final Color mainLineColor = Colors.blue;
   final Color belowLineColor = Colors.green;
-  final Color aboveLineColor = Colors.purple.withOpacity(0.7);
+  final Color aboveLineColor = Colors.purple.withOpacity(0.7); */
 
   double? _touchedValue;
 
@@ -58,6 +58,7 @@ class _PurchaseStatisticsState extends ConsumerState<PurchaseStatistics> {
               .map((cat) => {
             'category': cat.name,
             'value': ((cat.amount / totalAmount) * 100).roundToDouble(),
+            'amount': cat.amount,
             'color': cat.color,
           }).toList();
 
@@ -126,14 +127,15 @@ class _PurchaseStatisticsState extends ConsumerState<PurchaseStatistics> {
                     textColor: tertiaryColor,
                   ),
                   const SizedBox(height: 20),
-
+                  // Just commented out as we weren't quite near the proper usable state.
+                  /* 
                   // Yearly data section
                   Text(
                     'Money spent on groceries',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: tertiaryColor,
+                      color: tertiaryColor
                     ),
                   ),
                   const Divider(),
@@ -185,7 +187,7 @@ class _PurchaseStatisticsState extends ConsumerState<PurchaseStatistics> {
                     onValueTouched: (value) {
                       setState(() => _touchedValue = value);
                     },
-                  ),
+                  ), */
                 ],
               ),
             ),
