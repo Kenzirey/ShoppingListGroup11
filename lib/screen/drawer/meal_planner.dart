@@ -1,12 +1,9 @@
-// lib/screens/meal_planner_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shopping_list_g11/models/meal_plan_entry.dart';
 import 'package:shopping_list_g11/providers/meal_planner_provider.dart';
 import 'package:shopping_list_g11/providers/current_user_provider.dart';
-import 'package:shopping_list_g11/widget/navigation/search_bar.dart';
 import 'package:shopping_list_g11/widget/user_feedback/regular_custom_snackbar.dart';
 import '../../controllers/recipe_controller.dart';
 
@@ -115,6 +112,7 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
                         fontSize: 20,
                         color: Theme.of(context).colorScheme.tertiary)),
                 DropdownButton<int>(
+                  alignment: Alignment.center,
                   value: currentWeek,
                   dropdownColor: Theme.of(context).colorScheme.surface,
                   style: TextStyle(

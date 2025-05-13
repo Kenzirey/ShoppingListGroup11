@@ -165,7 +165,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                             // the tile itself; no internal margin, fixed 56 px height & clipped
                             child: Container(
-                              height: 56,
+                              constraints: const BoxConstraints(minHeight: 56),
                               color: theme.primaryContainer,
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 14),
@@ -188,7 +188,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                               fontWeight: FontWeight.w500,
                                               color: theme.tertiary,
                                             ),
-                                            overflow: TextOverflow.ellipsis,
+                                            overflow: TextOverflow.visible,
                                           ),
                                         ),
                                       ],
@@ -281,7 +281,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           },
                           child: Container(
                             margin: const EdgeInsets.only(bottom: 12),
-                            height: 56,
+                            constraints: const BoxConstraints(minHeight: 56),
                             child: Material(
                               color: theme.primaryContainer,
                               borderRadius: BorderRadius.circular(8),
@@ -294,7 +294,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   context.goNamed('recipe');
                                 },
                                 child: Container(
-                                  height: 56,
+                            constraints: const BoxConstraints(minHeight: 56),
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 14),
                                   child: Row(
@@ -320,13 +320,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       const SizedBox(width: 10),
                                       Expanded(
                                         child: Text(
+                                          
                                           recipe.name,
+                                          softWrap: true,
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w500,
                                             color: theme.tertiary,
                                           ),
-                                          overflow: TextOverflow.ellipsis,
+                                          overflow: TextOverflow.visible,
                                         ),
                                       ),
                                     ],
