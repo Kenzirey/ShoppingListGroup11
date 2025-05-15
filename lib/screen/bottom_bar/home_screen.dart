@@ -50,301 +50,290 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final pantryItemsAsync = ref.watch(homeScreenProvider);
 
+    // new setup to allow a text placeholder instead of infinite spinner
+    final pantryItems =
+        pantryItemsAsync.valueOrNull ?? []; // empty list while loading
+
+    final expiringItems = pantryItems.where((item) {
+      if (item.expirationDate == null) return false;
+      final diff = item.expirationDate!.difference(DateTime.now()).inDays;
+      return diff >= -4 && diff <= 7;
+    }).toList(); // should be made server-side in future.
+
     int servingsFromYield(String yields) {
       final m = RegExp(r'\d+').firstMatch(yields);
       return m != null ? int.parse(m.group(0)!) : 1;
     }
 
-    return pantryItemsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, st) => Center(child: Text('Error loading pantry: $err')),
-        data: (pantryItems) {
-          final expiringItems = pantryItems.where((item) {
-            if (item.expirationDate == null) return false;
-            final diff = item.expirationDate!.difference(DateTime.now()).inDays;
-            return diff >= -4 && diff <= 7;
-          }).toList();
+    return Scaffold(
+      backgroundColor: theme.surface,
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+        child: ListView(
+          children: [
+            // Title
+            Text(
+              'ShelfAware',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: theme.tertiary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Divider(),
+            const SizedBox(height: 8),
 
-          return Scaffold(
-            backgroundColor: theme.surface,
-            body: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-              child: ListView(
-                children: [
-                  // Title
-                  Text(
-                    'ShelfAware',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: theme.tertiary,
+            Text('Expiring Soon',
+                style: TextStyle(fontSize: 18, color: theme.tertiary)),
+            const SizedBox(height: 12),
+
+            // Placeholder if no expiring items (for example fresh user.)
+            if (expiringItems.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(width: 6),
+                    Text(
+                      'No expiring items within 7 days.',
+                      style: TextStyle(color: theme.onSurfaceVariant),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Divider(),
-                  const SizedBox(height: 8),
+                  ],
+                ),
+              )
+            else
+              ...expiringItems.map((item) {
+                final diff =
+                    item.expirationDate!.difference(DateTime.now()).inDays;
+                final days = diff.toString();
+                final category = item.category?.toLowerCase() ?? '';
 
-                  Text('Expiring Soon',
-                      style: TextStyle(fontSize: 18, color: theme.tertiary)),
-                  const SizedBox(height: 12),
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Dismissible(
+                      key: ValueKey(item.id),
+                      direction: DismissDirection.endToStart,
 
-                  if (expiringItems.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: Text(
-                        'No expiring items within 7 days.',
-                        style: TextStyle(color: theme.onSurfaceVariant),
-                      ),
-                    )
-                  else
-                    ...expiringItems.map((item) {
-                      final diff = item.expirationDate!
-                          .difference(DateTime.now())
-                          .inDays;
-                      final days = diff.toString();
-                      final category = item.category?.toLowerCase() ?? '';
+                      background: const SizedBox.shrink(),
 
-                      return Padding(
-                        padding: const EdgeInsets.only(
-                            bottom: 12), // external spacing
-                        child: ClipRRect(
+                      secondaryBackground: Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.error,
                           borderRadius: BorderRadius.circular(8),
-                          child: Dismissible(
-                            key: ValueKey(item.id),
-                            direction: DismissDirection.endToStart,
+                        ),
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 20),
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
 
-                            background: const SizedBox.shrink(),
+                      onDismissed: (_) {
+                        final removedItem = item;
+                        pantryController.removePantryItem(item.id!);
 
-                            // keep it same size as the tile itselfbr
-                            secondaryBackground: Container(
-                              decoration: BoxDecoration(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .error,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.only(right: 20),
-                              child:
-                                  const Icon(Icons.delete, color: Colors.white),
+                        ScaffoldMessenger.of(context)
+                          ..hideCurrentSnackBar()
+                          ..showSnackBar(
+                            CustomSnackbar.buildSnackBar(
+                              title: 'Removed',
+                              message: '${item.name} removed',
+                              innerPadding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              actionText: 'Undo',
+                              onAction: () {
+                                pantryController.addPantryItem(removedItem);
+                                ScaffoldMessenger.of(context)
+                                  ..hideCurrentSnackBar()
+                                  ..showSnackBar(
+                                    CustomSnackbar.buildSnackBar(
+                                      title: 'Restored',
+                                      message:
+                                          '${item.name} restored successfully',
+                                      innerPadding: const EdgeInsets.symmetric(
+                                          horizontal: 16),
+                                    ),
+                                  );
+                              },
                             ),
+                          );
+                      },
 
-                            onDismissed: (_) {
-                              final removedItem = item;
-                              pantryController.removePantryItem(item.id!);
-
-                              ScaffoldMessenger.of(context)
-                                ..hideCurrentSnackBar()
-                                ..showSnackBar(
-                                  CustomSnackbar.buildSnackBar(
-                                    title: 'Removed',
-                                    message: '${item.name} removed',
-                                    innerPadding: const EdgeInsets.symmetric(
-                                        horizontal: 16),
-                                    actionText: 'Undo',
-                                    onAction: () {
-                                      pantryController
-                                          .addPantryItem(removedItem);
-                                      ScaffoldMessenger.of(context)
-                                        ..hideCurrentSnackBar()
-                                        ..showSnackBar(
-                                          CustomSnackbar.buildSnackBar(
-                                            title: 'Restored',
-                                            message:
-                                                '${item.name} restored successfully',
-                                            innerPadding:
-                                                const EdgeInsets.symmetric(
-                                                    horizontal: 16),
-                                          ),
-                                        );
-                                    },
-                                  ),
-                                );
-                            },
-
-                            // the tile itself; no internal margin, fixed 56 px height & clipped
-                            child: Container(
-                              constraints: const BoxConstraints(minHeight: 56),
-                              color: theme.primaryContainer,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 14),
+                      // tile
+                      child: Container(
+                        constraints: const BoxConstraints(minHeight: 56),
+                        color: theme.primaryContainer,
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Row(
+                          children: [
+                            Expanded(
                               child: Row(
                                 children: [
-                                  Expanded(
-                                    child: Row(
-                                      children: [
-                                        PantryIcons(
-                                          category: category,
-                                          size: 20,
-                                          color: theme.tertiary,
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Flexible(
-                                          child: Text(
-                                            item.name,
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w500,
-                                              color: theme.tertiary,
-                                            ),
-                                            overflow: TextOverflow.visible,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                  PantryIcons(
+                                    category: category,
+                                    size: 20,
+                                    color: theme.tertiary,
                                   ),
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.access_time,
-                                        size: 20,
-                                        color: theme.tertiary.withOpacity(0.7),
+                                  const SizedBox(width: 10),
+                                  Flexible(
+                                    child: Text(
+                                      item.name,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                        color: theme.tertiary,
                                       ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        days,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                          color:
-                                              theme.tertiary.withOpacity(0.7),
-                                        ),
-                                      ),
-                                    ],
+                                      overflow: TextOverflow.visible,
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
-                          ),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.access_time,
+                                  size: 20,
+                                  color: theme.tertiary.withOpacity(0.7),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  days,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.tertiary.withOpacity(0.7),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                      );
-                    }),
+                      ),
+                    ),
+                  ),
+                );
+              }),
 
-                  const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-                  // Meal Suggestions section
-                  Text('Meal Suggestions',
-                      style: TextStyle(fontSize: 18, color: theme.tertiary)),
-                  const SizedBox(height: 12),
-                  // Fallback if no meal suggestions are available (no expiring items) etc
-                  if (mealSuggestions.isEmpty) ...[
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 24),
-                        child: Text(
-                          'No meal suggestions available, no expiring items within 7 days to use!',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: theme.onSurfaceVariant,
+            // Meal Suggestions section 😎🥹
+            Text('Meal Suggestions',
+                style: TextStyle(fontSize: 18, color: theme.tertiary)),
+            const SizedBox(height: 12),
+
+            // Fallback if no meal suggestions are available (no expiring items) etc
+            if (mealSuggestions.isEmpty) ...[
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Text(
+                    'No meal suggestions available, no expiring items within 7 days to use!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: theme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ),
+            ] else ...[
+              ...mealSuggestions.asMap().entries.map(
+                (entry) {
+                  final idx = entry.key;
+                  final recipe = entry.value;
+                  final servings = servingsFromYield(recipe.yields);
+
+                  return Dismissible(
+                    key: ValueKey(recipe.name),
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.delete, color: Colors.white),
+                    ),
+                    direction: DismissDirection.endToStart,
+                    onDismissed: (_) {
+                      final removed = recipe;
+                      mealNotifier.removeAt(idx);
+                      ScaffoldMessenger.of(context)
+                        ..hideCurrentSnackBar()
+                        ..showSnackBar(
+                          CustomSnackbar.buildSnackBar(
+                            title: 'Removed',
+                            message: '${recipe.name} removed',
+                            innerPadding:
+                                const EdgeInsets.symmetric(horizontal: 16),
+                            actionText: 'Undo',
+                            onAction: () => mealNotifier.insertAt(idx, removed),
+                          ),
+                        );
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      constraints: const BoxConstraints(minHeight: 56),
+                      child: Material(
+                        color: theme.primaryContainer,
+                        borderRadius: BorderRadius.circular(8),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: () {
+                            ref
+                                .read(recipeProvider.notifier)
+                                .update((_) => recipe);
+                            context.goNamed('recipe');
+                          },
+                          child: Container(
+                            constraints: const BoxConstraints(minHeight: 56),
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  servings > 1 ? Icons.people : Icons.person,
+                                  size: 20,
+                                  color: theme.tertiary,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '$servings',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: theme.tertiary,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    recipe.name,
+                                    softWrap: true,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                      color: theme.tertiary,
+                                    ),
+                                    overflow: TextOverflow.visible,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ] else ...[
-                    ...mealSuggestions.asMap().entries.map(
-                      (entry) {
-                        final idx = entry.key;
-                        final recipe = entry.value;
-                        final servings = servingsFromYield(recipe.yields);
-
-                        return Dismissible(
-                          key: ValueKey(recipe.name),
-                          background: Container(
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.only(right: 20),
-                            decoration: BoxDecoration(
-                              color: Colors.red, // what color should we use?
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child:
-                                const Icon(Icons.delete, color: Colors.white),
-                          ),
-                          direction: DismissDirection.endToStart,
-                          onDismissed: (_) {
-                            final removed = recipe;
-                            mealNotifier.removeAt(idx);
-                            ScaffoldMessenger.of(context)
-                              ..hideCurrentSnackBar()
-                              ..showSnackBar(
-                                CustomSnackbar.buildSnackBar(
-                                  title: 'Removed',
-                                  message: '${recipe.name} removed',
-                                  innerPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16),
-                                  actionText: 'Undo',
-                                  onAction: () =>
-                                      mealNotifier.insertAt(idx, removed),
-                                ),
-                              );
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            constraints: const BoxConstraints(minHeight: 56),
-                            child: Material(
-                              color: theme.primaryContainer,
-                              borderRadius: BorderRadius.circular(8),
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(8),
-                                onTap: () {
-                                  ref
-                                      .read(recipeProvider.notifier)
-                                      .update((_) => recipe);
-                                  context.goNamed('recipe');
-                                },
-                                child: Container(
-                            constraints: const BoxConstraints(minHeight: 56),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 14),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        servings > 1
-                                            ? Icons.people
-                                            : Icons.person,
-                                        size: 20,
-                                        color: theme.tertiary,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '$servings',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                          color: theme.tertiary,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: Text(
-                                          
-                                          recipe.name,
-                                          softWrap: true,
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500,
-                                            color: theme.tertiary,
-                                          ),
-                                          overflow: TextOverflow.visible,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ],
+                  );
+                },
               ),
-            ),
-          );
-        });
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }
