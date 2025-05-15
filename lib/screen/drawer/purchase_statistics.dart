@@ -20,7 +20,7 @@ class PurchaseStatistics extends ConsumerStatefulWidget {
 
 class _PurchaseStatisticsState extends ConsumerState<PurchaseStatistics> {
   // Dropdowns for month/year.
-  int selectedMonth = DateTime.now().month - 1; // zero-based index.
+  int selectedMonth = DateTime.now().month;
   int selectedYear = DateTime.now().year;
 
   final List<String> months = List<String>.generate(
