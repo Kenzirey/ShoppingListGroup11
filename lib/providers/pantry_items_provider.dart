@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shopping_list_g11/providers/current_user_provider.dart';
 import '../models/pantry_item.dart';
 import 'package:shopping_list_g11/services/pantry_service.dart';
 import 'package:shopping_list_g11/controllers/pantry_controller.dart';
@@ -36,8 +37,13 @@ class PantryItemsNotifier extends StateNotifier<List<PantryItem>> {
 }
 
 final pantryItemsProvider =
-    StateNotifierProvider<PantryItemsNotifier, List<PantryItem>>(
-  (ref) => PantryItemsNotifier(),
+    StateNotifierProvider.autoDispose<PantryItemsNotifier, List<PantryItem>>(
+  (ref) {
+    // watch auth stream (user), on logout / new login dispose old notifier and build fresh
+    ref.watch(currentUserProvider);
+
+    return PantryItemsNotifier();
+  },
 );
 
 

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shopping_list_g11/providers/current_user_provider.dart';
 import '../models/product.dart';
 import '../services/purchase_history_service.dart';
 
@@ -21,6 +22,12 @@ class PurchaseHistoryNotifier extends StateNotifier<AsyncValue<List<Product>>> {
   }
 }
 
-final purchaseHistoryProvider = StateNotifierProvider<PurchaseHistoryNotifier, AsyncValue<List<Product>>>(
-      (ref) => PurchaseHistoryNotifier(PurchaseHistoryService()),
+final purchaseHistoryProvider = StateNotifierProvider
+    .autoDispose<PurchaseHistoryNotifier, AsyncValue<List<Product>>>(
+  (ref) {
+    // watch auth stream (user), on logout / new login dispose old notifier and build fresh
+    ref.watch(currentUserProvider);
+
+    return PurchaseHistoryNotifier(PurchaseHistoryService());
+  },
 );

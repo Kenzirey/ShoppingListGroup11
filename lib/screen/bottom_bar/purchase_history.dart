@@ -44,6 +44,17 @@ class _PurchaseHistoryScreenState extends ConsumerState<PurchaseHistoryScreen> {
     final int start = _currentPage * _pageSize;
     int end = (_currentPage + 1) * _pageSize;
     if (end > sortedProducts.length) end = sortedProducts.length;
+  ref.listen<AsyncValue<List<Product>>>(purchaseHistoryProvider, (_, next) {
+    next.whenData((newList) {
+      setState(() {
+        // Reset and update the local list when new data arrives
+        sortedProducts = List.from(newList);
+        displayedProducts = [];
+        _currentPage = 0;
+      });
+      _fetchMoreProducts(sortedProducts);
+    });
+  });
 
     setState(() {
       displayedProducts.addAll(sortedProducts.sublist(start, end));
