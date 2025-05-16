@@ -130,21 +130,19 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
     );
   }
 
-/// Returns the difference in pure day difference,
-/// to remove the off by 1 problem we've had.
-String _formatExpiration(DateTime? expiry) {
-  if (expiry == null) return '—';
+  /// Returns the difference in pure day difference,
+  /// to remove the off by 1 problem we've had.
+  String _formatExpiration(DateTime? expiry) {
+    if (expiry == null) return '—';
 
-  final today    = DateTime.now();
-  final startOfToday   = DateTime(today.year,  today.month,  today.day);
-  final startOfExpiry  = DateTime(expiry.year, expiry.month, expiry.day);
+    final today = DateTime.now();
+    final startOfToday = DateTime(today.year, today.month, today.day);
+    final startOfExpiry = DateTime(expiry.year, expiry.month, expiry.day);
 
-  final diffDays = startOfExpiry.difference(startOfToday).inDays;
+    final diffDays = startOfExpiry.difference(startOfToday).inDays;
 
-  return diffDays >= 0 ? '$diffDays d left' : '${-diffDays} d ago';
-}
-
-
+    return diffDays >= 0 ? '$diffDays d left' : '${-diffDays} d ago';
+  }
 
   // Build entire pantry category section, with dismissible items.
   List<Widget> _buildCategorySection(
@@ -192,7 +190,9 @@ String _formatExpiration(DateTime? expiry) {
           ),
 
           onDismissed: (_) {
-            ref.read(pantryControllerProvider).removePantryItem(item.id!);
+            if (item.id != null) {
+              ref.read(pantryControllerProvider).removePantryItem(item.id!);
+            }
             ScaffoldMessenger.of(context)
               ..hideCurrentSnackBar()
               ..showSnackBar(
@@ -213,7 +213,7 @@ String _formatExpiration(DateTime? expiry) {
           child: PantryItemTile(
             category: item.category,
             itemName: item.name,
-            unit: item.unit!,
+            unit: item.unit ?? '',
             quantity: item.quantity?.toString() ?? 'N/A',
             expiration: _formatExpiration(item.expirationDate),
             expiryDate: item.expirationDate,

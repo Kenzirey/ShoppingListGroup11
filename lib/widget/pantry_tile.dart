@@ -8,7 +8,7 @@ import 'package:shopping_list_g11/widget/styles/pantry_icons.dart';
 class PantryItemTile extends ConsumerStatefulWidget {
   final String? category;
   final String itemName;
-  final String unit; // new unit field
+  final String? unit; // can be null
   final String quantity;
   final String expiration;
   final DateTime? expiryDate;
@@ -19,7 +19,7 @@ class PantryItemTile extends ConsumerStatefulWidget {
     super.key,
     required this.category,
     required this.itemName,
-    required this.unit, // unit param
+    this.unit,
     required this.quantity,
     required this.expiration,
     required this.expiryDate,
@@ -63,11 +63,12 @@ class _PantryItemTileState extends ConsumerState<PantryItemTile> {
     final background = theme.colorScheme.primaryContainer;
 
     // build display name with optional  (not every unit will have it)
-    final unitLower = widget.unit.toLowerCase().trim();
+    final unitLower = (widget.unit ?? '').toLowerCase().trim();
+
     final displayName =
         (unitLower == 'pcs' || unitLower == 'stk' || unitLower.isEmpty)
             ? widget.itemName
-            : '${widget.itemName} ${widget.unit.trim()}';
+            : '${widget.itemName} ${widget.unit?.trim() ?? ''}';
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),

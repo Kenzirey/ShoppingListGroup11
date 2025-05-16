@@ -161,7 +161,7 @@ class _ShoppingListItemState extends State<ShoppingListItem> {
           else
             IntrinsicWidth(
               child: Semantics(
-                // Konstruer den semantiske etiketten for å inkludere både synlig tekst og fullt enhetsnavn
+
                 label: () {
                   final String currentNumericValue = _controller?.text ?? initialValue;
                   final String visualUnit = widget.unitLabel;

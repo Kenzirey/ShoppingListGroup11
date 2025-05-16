@@ -4,7 +4,7 @@ class ReceiptItem {
   double quantity;
   double price;
   String? allergy;
-  String unit;
+  String? unit;
   DateTime? expirationDate;
   String category;
 
