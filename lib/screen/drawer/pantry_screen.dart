@@ -165,20 +165,25 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
 
   // the dismissible (delete with swiping)
   Widget _buildDismissible(PantryItem item) {
+    // Guard against null item id
+    if (item.id == null) {
+      return const SizedBox.shrink();
+    }
+
     final pantryItems = ref.read(pantryItemsProvider);
     final globalIndex = pantryItems.indexWhere((i) => i.id == item.id);
+
+    // Store the non-null id to use throughout the method
+    final String itemId = item.id!;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Dismissible(
-          key: ValueKey(item.id),
+          key: ValueKey(itemId),
           direction: DismissDirection.endToStart,
-
           background: const SizedBox.shrink(),
-
-          // added the cherry red from the design guide by Solwr
           secondaryBackground: Container(
             decoration: BoxDecoration(
               color: const Color(0xFF9A0007),
@@ -188,11 +193,8 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
             padding: const EdgeInsets.only(right: 16),
             child: const Icon(Icons.delete, color: Colors.white),
           ),
-
           onDismissed: (_) {
-            if (item.id != null) {
-              ref.read(pantryControllerProvider).removePantryItem(item.id!);
-            }
+            ref.read(pantryControllerProvider).removePantryItem(itemId);
             ScaffoldMessenger.of(context)
               ..hideCurrentSnackBar()
               ..showSnackBar(
@@ -209,7 +211,6 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
                 ),
               );
           },
-
           child: PantryItemTile(
             category: item.category,
             itemName: item.name,
@@ -217,7 +218,7 @@ class _PantryListScreenState extends ConsumerState<PantryListScreen> {
             quantity: item.quantity?.toString() ?? 'N/A',
             expiration: _formatExpiration(item.expirationDate),
             expiryDate: item.expirationDate,
-            itemId: item.id!,
+            itemId: itemId,
             onExpiryChanged: _updateExpiryDate,
           ),
         ),
