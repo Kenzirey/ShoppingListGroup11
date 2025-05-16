@@ -54,9 +54,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final pantryItems =
         pantryItemsAsync.valueOrNull ?? []; // empty list while loading
 
+    /// Returns the calendar-day gap, to fix the - 1 issue and potential hour difference.
+    int daysBetween(DateTime expiry) {
+      final todayStart  = DateTime.now();
+      final startOfToday  = DateTime(todayStart.year,  todayStart.month,  todayStart.day);
+      final startOfExpiry = DateTime(expiry.year,      expiry.month,      expiry.day);
+      return startOfExpiry.difference(startOfToday).inDays;
+    }
+
     final expiringItems = pantryItems.where((item) {
       if (item.expirationDate == null) return false;
-      final diff = item.expirationDate!.difference(DateTime.now()).inDays;
+      final diff = daysBetween(item.expirationDate!);
       return diff >= -4 && diff <= 7;
     }).toList(); // should be made server-side in future.
 
@@ -105,9 +113,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               )
             else
               ...expiringItems.map((item) {
-                final diff =
-                    item.expirationDate!.difference(DateTime.now()).inDays;
-                final days = diff.toString();
+                // no more - 1 jippi
+                final days = daysBetween(item.expirationDate!).toString();
                 final category = item.category?.toLowerCase() ?? '';
 
                 return Padding(
