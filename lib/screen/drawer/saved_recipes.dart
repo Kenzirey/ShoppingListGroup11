@@ -7,7 +7,6 @@ import 'package:shopping_list_g11/widget/user_feedback/regular_custom_snackbar.d
 import '../../controllers/saved_recipe_controller.dart';
 import '../../providers/recipe_provider.dart';
 import '../../providers/saved_recipe_provider.dart';
-import 'package:shopping_list_g11/widget/navigation/search_bar.dart';
 import 'package:shopping_list_g11/providers/current_user_provider.dart';
 
 /// Screen that shows recipes that users have chosen to save for later.

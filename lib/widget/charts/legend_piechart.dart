@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 /// A widget for displaying a legend for a pie chart, showing the categories, amounts, and percentages.
 class PieChartLegend extends StatelessWidget {
