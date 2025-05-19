@@ -99,10 +99,13 @@ class Recipe {
 
     // Extract yields aka serving size (how many people).
     final yieldsMatch = RegExp(
-      r"\*\*Yields:\*\*\s*(.+?)(?=\n\*\*Prep Time:|\n\*\*Cook Time:|\n\*\*Ingredients:|\n|$)",
+      r"\*\*Yields:\*\*\s*(?:Approximately|Approx\.?)\s*(.+?)(?=\n\*\*Prep Time:|\n\*\*Cook Time:|\n\*\*Ingredients:|\n|$)",
+      caseSensitive: false,
       dotAll: true,
     ).firstMatch(response);
+
     final yieldsRaw = cleanText(yieldsMatch?.group(1) ?? "Unknown");
+
 
     // Extract prep time here.
     final prepTimeMatch = RegExp(
