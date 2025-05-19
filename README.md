@@ -10,9 +10,13 @@ Therefore, for testing of the application, please use the provided apk named app
 In order to get it on a device, connect phone via usb cable and choose option to allow file transfer. Copy over the app-release.apk, then on your phone click on the apk in the folder you transfered it to, and press install. May need to give permission and allow to install without scan.
 
 The APK can be found in this github repository, or within the appendix zip folder uploaded to inspera.
-![alt text](image-1.png)
+![alt text](app-release-repository.png)
 
-![alt text](image-2.png)
+![alt text](app-release-zip.png)
+
+### no IPA
+There is no IPA for iPhone, as it requires the developer fee to be paid to have a signed version that works on physical devices.
+
 
 This project used a starting point by Flutter, see:
 [simple app state management
