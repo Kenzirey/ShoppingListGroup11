@@ -91,6 +91,14 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    // Remove "approx" from yields just in case.
+    final rawYields = recipe.yields;
+    final cleanedYields = rawYields
+      .replaceAll(
+        RegExp(r'\bApprox[^\d]*\s*', caseSensitive: false),
+        '',
+      )
+      .trim();
     final saved = ref
         .watch(savedRecipesProvider)
         .any((sr) => sr.recipe.name == recipe.name);
@@ -147,7 +155,7 @@ class _MealRecipeScreenState extends ConsumerState<MealRecipeScreen> {
               children: [
                 _meta(theme, Icons.timer_outlined, recipe.prepTime),
                 _meta(theme, Icons.local_fire_department, recipe.cookTime),
-                _meta(theme, Icons.people, recipe.yields),
+                _meta(theme, Icons.people, cleanedYields),
               ],
             ),
             const SizedBox(height: 12),
